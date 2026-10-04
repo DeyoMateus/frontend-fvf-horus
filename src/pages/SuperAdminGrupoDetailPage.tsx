@@ -451,6 +451,7 @@ export function SuperAdminGrupoDetailPage() {
               <label>E-mail</label>
               <input
                 type="email"
+                autoComplete="off"
                 value={formNovoUsuario.email}
                 onChange={(ev) =>
                   setFormNovoUsuario((f) => ({ ...f, email: ev.target.value }))
@@ -462,6 +463,7 @@ export function SuperAdminGrupoDetailPage() {
               <label>Senha inicial</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 minLength={8}
                 value={formNovoUsuario.senha}
                 onChange={(ev) =>
@@ -553,6 +555,7 @@ export function SuperAdminGrupoDetailPage() {
                         <label>E-mail</label>
                         <input
                           type="email"
+                          autoComplete="off"
                           value={formUsuario.email}
                           onChange={(ev) =>
                             setFormUsuario((f) => ({

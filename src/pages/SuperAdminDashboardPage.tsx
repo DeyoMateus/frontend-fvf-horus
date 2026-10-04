@@ -152,6 +152,7 @@ export function SuperAdminDashboardPage() {
               <label>E-mail do admin inicial</label>
               <input
                 type="email"
+                autoComplete="off"
                 value={form.emailAdmin}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, emailAdmin: e.target.value }))
@@ -163,6 +164,7 @@ export function SuperAdminDashboardPage() {
               <label>Senha inicial do admin</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 minLength={8}
                 value={form.senhaAdmin}
                 onChange={(e) =>
