@@ -13,6 +13,8 @@ export interface CreateTratamentoInput {
   timestampEvento: string;
   motivo: string;
   registroReferenciaId?: string;
+  /** Fuso do motorista no instante do ajuste (min a leste do UTC). */
+  fusoOffsetMin?: number;
 }
 
 export function createTratamento(

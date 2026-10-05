@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link, useNavigate } from "react-router-dom";
 import { listAlertasByEmpresa, marcarAlertaVisualizado } from "../api/alertas";
 import { listSolicitacoesPendentes } from "../api/solicitacoesAjuste";
@@ -48,7 +49,7 @@ function notificarAlertaNoDesktop(alerta: AlertaJornada) {
       : "Alerta de jornada";
   try {
     const notificacao = new Notification(titulo, {
-      body: alerta.mensagem,
+      body: renderizarHorarios(alerta.mensagem),
       tag: alerta.id, // evita duplicar a mesma notificação se o polling repetir o mesmo id
     });
     notificacao.onclick = () => {
@@ -264,7 +265,7 @@ export function NotificationBell() {
                     {new Date(alerta.createdAt).toLocaleString("pt-BR")}
                   </span>
                 </div>
-                <div className="notif-item-mensagem">{alerta.mensagem}</div>
+                <div className="notif-item-mensagem">{renderizarHorarios(alerta.mensagem)}</div>
                 {alerta.motorista && (
                   <div style={{ marginTop: 4 }}>
                     <Link

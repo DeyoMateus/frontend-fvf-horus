@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
 import {
   listAlertasByEmpresa,
@@ -10,6 +11,7 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
+import { dataLocalIso } from '../utils/mascaras';
 
 // Pedido do usuário: mesmos atalhos de 7/30/90 dias usados no gráfico de
 // evolução do Painel de operação, aqui aplicados ao filtro de período já
@@ -266,7 +268,7 @@ export function AlertasJornadaPage() {
                 style={{ padding: "4px 10px", fontSize: 12 }}
                 onClick={() => {
                   paginacao.setDataInicio(diasAtrasISO(o.dias));
-                  paginacao.setDataFim(new Date().toISOString().slice(0, 10));
+                  paginacao.setDataFim(dataLocalIso(new Date()));
                 }}
               >
                 {o.rotulo}
@@ -293,7 +295,7 @@ export function AlertasJornadaPage() {
                   paginacao.itensFiltrados.map((a) => [
                     a.severidade,
                     a.motorista?.nome ?? a.motoristaId,
-                    a.mensagem,
+                    renderizarHorarios(a.mensagem),
                     new Date(a.janelaInicio).toLocaleString("pt-BR"),
                     new Date(a.janelaFim).toLocaleString("pt-BR"),
                     minParaHoras(a.minutosAcumulados),
@@ -373,7 +375,7 @@ export function AlertasJornadaPage() {
                           a.motoristaId
                         )}
                       </td>
-                      <td>{a.mensagem}</td>
+                      <td>{renderizarHorarios(a.mensagem)}</td>
                       <td>
                         {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
                         {new Date(a.janelaFim).toLocaleString("pt-BR")}

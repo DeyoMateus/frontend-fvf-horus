@@ -10,6 +10,7 @@ import type {
   TipoAjusteBancoHoras,
 } from "../api/bancoHoras";
 import { minParaHoras } from "../utils/formatarDuracao";
+import { dataLocalIso } from '../utils/mascaras';
 
 const ROTULO_TIPO: Record<TipoAjusteBancoHoras, string> = {
   COMPENSACAO: "Compensação (folga tirada)",
@@ -19,11 +20,11 @@ const ROTULO_TIPO: Record<TipoAjusteBancoHoras, string> = {
 };
 
 function hoje(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dataLocalIso(new Date());
 }
 function inicioDoMes(): string {
   const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  return dataLocalIso(new Date(d.getFullYear(), d.getMonth(), 1));
 }
 /**
  * Banco de horas do motorista (Rodada 37) , só relevante quando a CCT

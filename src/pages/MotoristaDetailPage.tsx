@@ -1,5 +1,20 @@
+import { dataCalendarioBr } from "../utils/mascaras";
+import {
+  formatarRegistro,
+  offsetDoNavegador,
+  paraInputNoOffset,
+  renderizarHorarios,
+  resolverFusoDoAjuste,
+  rotuloUtc,
+  seloFusoMapa,
+} from "../utils/fusoHorario";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { AxiosError } from "axios";
 import { usePrompt } from "../components/PromptProvider";
 import {
@@ -87,14 +102,6 @@ function gerarUuid() {
 // conserta nada no meio dela. Pré-preencher com o horário do registro
 // escolhido dá um ponto de partida correto (o gestor ainda pode
 // ajustar minutos pra frente/trás, mas não parte mais de "agora").
-function formatarParaInputDatetimeLocal(data: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    `${data.getFullYear()}-${pad(data.getMonth() + 1)}-${pad(data.getDate())}` +
-    `T${pad(data.getHours())}:${pad(data.getMinutes())}`
-  );
-}
-
 export function MotoristaDetailPage() {
   const { motoristaId = "" } = useParams();
   const navigate = useNavigate();
@@ -448,8 +455,7 @@ export function MotoristaDetailPage() {
       setErroVeiculo(
         Array.isArray(msg)
           ? msg.join(" ")
-          : (msg ??
-            "Não foi possível salvar (placa em formato inválido)."),
+          : (msg ?? "Não foi possível salvar (placa em formato inválido)."),
       );
     } finally {
       setAtualizandoVeiculo(false);
@@ -474,7 +480,11 @@ export function MotoristaDetailPage() {
     if (motivo === null) return;
     setAceitandoDivergencia(sequencial);
     try {
-      await aceitarDivergenciaIntegridade(motoristaId, sequencial, motivo.trim());
+      await aceitarDivergenciaIntegridade(
+        motoristaId,
+        sequencial,
+        motivo.trim(),
+      );
       setIntegridade(await verificarIntegridade(motoristaId));
     } finally {
       setAceitandoDivergencia(null);
@@ -510,11 +520,17 @@ export function MotoristaDetailPage() {
     setErroTratamento(null);
     setLancandoTratamento(true);
     try {
+      // Rodada 150: a hora digitada vale no fuso em que o motorista estava
+      // naquele momento (não o do computador do gestor nem o de hoje).
+      const fusoDoAjuste = resolverFusoDoAjuste(timestampEvento, registros);
       const novoTratamento = await createTratamento(motoristaId, {
         tipoEvento,
-        timestampEvento: new Date(timestampEvento).toISOString(),
+        timestampEvento: new Date(fusoDoAjuste.instanteMs).toISOString(),
         motivo,
         registroReferenciaId: registroReferenciaId || undefined,
+        fusoOffsetMin: fusoDoAjuste.doMotorista
+          ? fusoDoAjuste.offsetMin
+          : undefined,
       });
 
       // Rodada 79: evidências escolhidas no formulário sobem logo em
@@ -546,9 +562,17 @@ export function MotoristaDetailPage() {
           `Tratamento lançado, mas ${falhasEvidencia} evidência(s) não subiram. Confira sua internet e lance um novo tratamento anexando de novo se precisar da prova.`,
         );
       }
-    } catch {
+    } catch (erro) {
+      // Rodada 139 , mostra o motivo real devolvido pelo servidor (ex.:
+      // o tipo escolhido não encaixa na jornada do motorista naquele
+      // horário), em vez de sempre culpar o tamanho do motivo.
+      const msg = (
+        erro as { response?: { data?: { message?: string | string[] } } }
+      )?.response?.data?.message;
+      const texto = Array.isArray(msg) ? msg.join(" ") : msg;
       setErroTratamento(
-        "Não foi possível lançar (motivo precisa ter pelo menos 10 caracteres).",
+        texto ||
+          "Não foi possível lançar (motivo precisa ter pelo menos 10 caracteres).",
       );
     } finally {
       setLancandoTratamento(false);
@@ -1291,14 +1315,15 @@ export function MotoristaDetailPage() {
               <tr key={r.id}>
                 <td>{r.sequencial}</td>
                 <td>{r.tipoEvento}</td>
-                <td>{new Date(r.timestampEvento).toLocaleString("pt-BR")}</td>
+                <td>{formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}</td>
                 <td style={{ fontSize: 11 }}>{r.deviceUuidUsado}</td>
                 <td>
                   {r.latitude != null && r.longitude != null ? (
+                    <>
                     <button
                       type="button"
                       className="botao-link-externo"
-                      title={`${r.latitude}, ${r.longitude}${r.precisaoGpsM != null ? ` (±${Math.round(Number(r.precisaoGpsM))}m)` : ""}`}
+                      title={`${r.latitude}, ${r.longitude}${r.precisaoGpsM != null ? ` (±${Math.round(Number(r.precisaoGpsM))}m)` : ""}${seloFusoMapa(r.timestampEvento, r.fusoOffsetMin)}`}
                       onClick={() =>
                         window.open(
                           `https://www.google.com/maps/search/?api=1&query=${r.latitude},${r.longitude}`,
@@ -1309,6 +1334,12 @@ export function MotoristaDetailPage() {
                     >
                       Ver no mapa
                     </button>
+                    {seloFusoMapa(r.timestampEvento, r.fusoOffsetMin) && (
+                      <span style={{ fontSize: 11, color: "#000000" }}>
+                        {seloFusoMapa(r.timestampEvento, r.fusoOffsetMin)}
+                      </span>
+                    )}
+                    </>
                   ) : (
                     <span style={{ color: "#000000" }}>,</span>
                   )}
@@ -1523,7 +1554,7 @@ export function MotoristaDetailPage() {
         <ul style={{ fontSize: 13 }}>
           {folgas.map((f) => (
             <li key={f.id}>
-              {new Date(f.data).toLocaleDateString("pt-BR")}
+              {dataCalendarioBr(f.data)}
               {f.observacao && `: ${f.observacao}`}
             </li>
           ))}
@@ -1568,7 +1599,7 @@ export function MotoristaDetailPage() {
         <ul style={{ fontSize: 13, marginTop: 16 }}>
           {folgasConcedidas.map((f) => (
             <li key={f.id}>
-              {new Date(f.data).toLocaleDateString("pt-BR")}
+              {dataCalendarioBr(f.data)}
               {f.motivo && `: ${f.motivo}`}
               {f.concedidaPorUsuario &&
                 ` (concedida por ${f.concedidaPorUsuario.nome})`}
@@ -1660,7 +1691,7 @@ export function MotoristaDetailPage() {
                     {a.severidade}
                   </span>
                 </td>
-                <td>{a.mensagem}</td>
+                <td>{renderizarHorarios(a.mensagem)}</td>
                 <td>
                   {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
                   {new Date(a.janelaFim).toLocaleString("pt-BR")}
@@ -1722,6 +1753,16 @@ export function MotoristaDetailPage() {
             onChange={(e) => setTimestampEvento(e.target.value)}
             required
           />
+          {timestampEvento && (
+            <p style={{ fontSize: 12, color: "#000000", marginTop: -4 }}>
+              {(() => {
+                const f = resolverFusoDoAjuste(timestampEvento, registros);
+                return f.doMotorista
+                  ? `Horário no fuso em que o motorista estava nesse momento (${rotuloUtc(f.offsetMin)}), não o do seu computador.`
+                  : `Horário no fuso do seu computador (${rotuloUtc(f.offsetMin)}); o motorista ainda não tem ponto com fuso registrado.`;
+              })()}
+            </p>
+          )}
           <label>Registro de referência (opcional)</label>
           <select
             value={registroReferenciaId}
@@ -1736,8 +1777,9 @@ export function MotoristaDetailPage() {
               const registro = registros.find((r) => r.id === id);
               if (registro) {
                 setTimestampEvento(
-                  formatarParaInputDatetimeLocal(
-                    new Date(registro.timestampEvento),
+                  paraInputNoOffset(
+                    registro.timestampEvento,
+                    registro.fusoOffsetMin ?? offsetDoNavegador(),
                   ),
                 );
               }
@@ -1747,7 +1789,7 @@ export function MotoristaDetailPage() {
             {registrosOrdenados.map((r) => (
               <option key={r.id} value={r.id}>
                 #{r.sequencial} · {r.tipoEvento} ·{" "}
-                {new Date(r.timestampEvento).toLocaleString("pt-BR")}
+                {formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}
               </option>
             ))}
           </select>
@@ -1869,7 +1911,7 @@ export function MotoristaDetailPage() {
             {tratamentosExibidos.map((t) => (
               <tr key={t.id}>
                 <td>{t.tipoEvento}</td>
-                <td>{new Date(t.timestampEvento).toLocaleString("pt-BR")}</td>
+                <td>{formatarRegistro(t.timestampEvento, t.fusoOffsetMin)}</td>
                 <td>{t.motivo}</td>
                 <td>{t.usuario?.nome ?? t.usuarioId}</td>
                 <td>{new Date(t.createdAt).toLocaleString("pt-BR")}</td>

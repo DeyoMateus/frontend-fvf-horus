@@ -9,13 +9,14 @@ import { baixarEspelhosRepPFiscalizacaoPdf } from "../api/fechamentoFiscal";
 import { listMotoristas } from "../api/motoristas";
 import type { Empresa, Motorista } from "../api/types";
 import { minParaHoras } from "../utils/formatarDuracao";
+import { dataLocalIso } from '../utils/mascaras';
 
 function hoje(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dataLocalIso(new Date());
 }
 function inicioDoMes(): string {
   const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  return dataLocalIso(new Date(d.getFullYear(), d.getMonth(), 1));
 }
 
 /**

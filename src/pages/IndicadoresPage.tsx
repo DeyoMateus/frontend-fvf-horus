@@ -5,6 +5,7 @@ import { BotaoAjuda } from "../components/BalaoAjuda";
 import { SolicitacoesAjustePage } from "./SolicitacoesAjustePage";
 import { FiscalizacaoPage } from "./FiscalizacaoPage";
 import type { Motorista } from "../api/types";
+import { dataLocalIso } from '../utils/mascaras';
 
 /**
  * "Fechamento" (nav) , fechamento de ponto (holerite em PDF, por
@@ -20,11 +21,11 @@ import type { Motorista } from "../api/types";
  */
 
 function hoje(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dataLocalIso(new Date());
 }
 function inicioDoMes(): string {
   const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  return dataLocalIso(new Date(d.getFullYear(), d.getMonth(), 1));
 }
 
 export function IndicadoresPage() {

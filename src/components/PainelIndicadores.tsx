@@ -11,6 +11,7 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { ModalDetalheTendencia, type PontoClicado } from "./TendenciaCharts";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
 import { RankingCompletoPopup } from "./RankingCompletoPopup";
+import { dataLocalIso } from '../utils/mascaras';
 
 /**
  * "Indicadores" (Rodada 36, banco de horas na Rodada 37) , acompanhamento
@@ -60,11 +61,11 @@ type ChaveIndicador =
 const CHAVE_GRAFICOS_MINIMIZADOS = "fvfhorus.painelGraficosMinimizados";
 
 function hoje(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dataLocalIso(new Date());
 }
 function inicioDoMes(): string {
   const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  return dataLocalIso(new Date(d.getFullYear(), d.getMonth(), 1));
 }
 function diasAtras(qtd: number): string {
   return new Date(Date.now() - qtd * 24 * 60 * 60 * 1000)

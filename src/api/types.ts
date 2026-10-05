@@ -52,6 +52,7 @@ export interface Empresa {
   cnpj: string;
   grupoId: string;
   registroInpiAfd?: string | null;
+  fusoHorario?: string;
   createdAt: string;
   regraSindicalId?: string | null;
   regraSindical?: { id: string; nome: string } | null;
@@ -187,6 +188,8 @@ export interface RegistroJornada {
   hashAtual: string;
   assinaturaDigital?: string | null;
   deviceUuidUsado: string;
+  /** Fuso do motorista no toque (min a leste do UTC; Brasília = -180). Rodada 146. */
+  fusoOffsetMin?: number | null;
   createdAt: string;
 }
 
@@ -228,6 +231,8 @@ export interface TratamentoPonto {
   tipoEvento: TipoEvento;
   timestampEvento: string;
   motivo: string;
+  /** Fuso do motorista no instante do ajuste (min a leste do UTC). */
+  fusoOffsetMin?: number | null;
   registroReferenciaId?: string | null;
   hashReferencia: string;
   hashRegistro: string;
@@ -372,6 +377,8 @@ export interface SolicitacaoTrocaDispositivo {
 // Espelha DashboardService.resumo/tendencia (backend/src/dashboard).
 export interface DashboardResumo {
   atualizadoEm: string;
+  /** Fuso IANA da transportadora (Rodada 146), só para exibição. */
+  fusoHorario?: string;
   motoristas: {
     totalAtivos: number;
     semNenhumRegistro: number;
@@ -517,6 +524,7 @@ export interface GrupoDetalhe {
     cnpj: string;
     ativo: boolean;
     registroInpiAfd: string | null;
+    fusoHorario?: string;
     totalMotoristas: number;
   }[];
   usuarios: UsuarioEmpresaListado[];
@@ -531,6 +539,7 @@ export interface UpdateEmpresaInput {
   razaoSocial?: string;
   cnpj?: string;
   registroInpiAfd?: string;
+  fusoHorario?: string;
 }
 
 export interface UpdateUsuarioSuperAdminInput {

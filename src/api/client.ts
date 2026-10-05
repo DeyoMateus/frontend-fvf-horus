@@ -32,8 +32,10 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  config.headers = config.headers ?? {};
+  // Rodada 148: fuso do computador de quem acessa (min a leste do UTC).
+  config.headers["x-fuso-offset-min"] = String(-new Date().getTimezoneOffset());
   if (accessToken) {
-    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
 import {
   getDashboardDetalhe,
@@ -22,6 +23,7 @@ import type {
   DashboardTendenciaDia,
   TipoAlertaJornada,
 } from "../api/types";
+import { dataLocalIso } from '../utils/mascaras';
 
 const INTERVALO_ATUALIZACAO_MS = 30_000; // "tempo real" o suficiente pra um painel de gestão , não precisa de websocket pra isto
 
@@ -97,10 +99,10 @@ const OPCOES_PERIODO = [
 function diasAtrasISO(qtd: number): string {
   const d = new Date();
   d.setDate(d.getDate() - qtd);
-  return d.toISOString().slice(0, 10);
+  return dataLocalIso(d);
 }
 function hojeISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return dataLocalIso(new Date());
 }
 
 const ROTULO_SEVERIDADE: Record<string, string> = {
@@ -227,7 +229,7 @@ function PainelDetalheCard({
   let linhasExportacao: string[][] = [];
   if (dados?.tipo === "motoristas") {
     cabecalhosExportacao = ["Motorista", "Detalhe"];
-    linhasExportacao = dados.itens.map((m) => [m.nome, m.detalhe ?? ""]);
+    linhasExportacao = dados.itens.map((m) => [m.nome, renderizarHorarios(m.detalhe ?? "")]);
   } else if (dados?.tipo === "alertas") {
     cabecalhosExportacao = ["Motorista", "Alerta", "Quando"];
     linhasExportacao = dados.itens.map((a) => [
@@ -344,7 +346,7 @@ function PainelDetalheCard({
                       </Link>
                     </td>
                     <td style={{ fontSize: 12, color: "#000000" }}>
-                      {m.detalhe ?? ","}
+                      {m.detalhe ? renderizarHorarios(m.detalhe) : ","}
                     </td>
                   </tr>
                 ))}

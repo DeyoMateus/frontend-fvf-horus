@@ -23,9 +23,14 @@ export function getDashboardTendencia(
 ) {
   return api
     .get<DashboardTendenciaDia[]>("/dashboard/tendencia", {
+      // fusoOffsetMin: os alertas por dia seguem o fuso do computador de quem vê.
       params: periodo
-        ? { desde: periodo.desde, ate: periodo.ate }
-        : { dias },
+        ? {
+            desde: periodo.desde,
+            ate: periodo.ate,
+            fusoOffsetMin: -new Date().getTimezoneOffset(),
+          }
+        : { dias, fusoOffsetMin: -new Date().getTimezoneOffset() },
     })
     .then((r) => r.data);
 }
@@ -43,7 +48,7 @@ export function getDashboardTendenciaDetalhe(
 ) {
   return api
     .get<DashboardTendenciaDetalhe>("/dashboard/tendencia-detalhe", {
-      params: { dia, indicador },
+      params: { dia, indicador, fusoOffsetMin: -new Date().getTimezoneOffset() },
     })
     .then((r) => r.data);
 }

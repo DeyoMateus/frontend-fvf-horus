@@ -12,11 +12,13 @@ import {
 import type { GrupoDetalhe, PapelUsuario } from "../api/types";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { useConfirm } from "../components/ConfirmProvider";
+import { fusoIanaDoNavegador } from "../utils/fusoHorario";
 
 type FormEmpresa = {
   razaoSocial: string;
   cnpj: string;
   registroInpiAfd: string;
+  fusoHorario: string;
 };
 type FormUsuario = { nome: string; email: string };
 type FormNovoUsuario = {
@@ -59,6 +61,7 @@ export function SuperAdminGrupoDetailPage() {
     razaoSocial: "",
     cnpj: "",
     registroInpiAfd: "",
+    fusoHorario: "America/Sao_Paulo",
   });
   const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(
     null,
@@ -132,6 +135,7 @@ export function SuperAdminGrupoDetailPage() {
       razaoSocial: e.razaoSocial,
       cnpj: e.cnpj,
       registroInpiAfd: e.registroInpiAfd ?? "",
+      fusoHorario: e.fusoHorario ?? "America/Sao_Paulo",
     });
     setErroEdicao(null);
     setEmpresaEditandoId(empresaId);
@@ -149,6 +153,7 @@ export function SuperAdminGrupoDetailPage() {
         registroInpiAfd: formEmpresa.registroInpiAfd.trim()
           ? formEmpresa.registroInpiAfd.trim()
           : undefined,
+        fusoHorario: formEmpresa.fusoHorario,
       });
       setEmpresaEditandoId(null);
       await carregar();
@@ -360,6 +365,43 @@ export function SuperAdminGrupoDetailPage() {
                             }))
                           }
                         />
+                      </div>
+                      <div>
+                        <label>Fuso da transportadora (só visualização)</label>
+                        <select
+                          value={formEmpresa.fusoHorario}
+                          onChange={(ev) =>
+                            setFormEmpresa((f) => ({
+                              ...f,
+                              fusoHorario: ev.target.value,
+                            }))
+                          }
+                        >
+                          <option value="America/Sao_Paulo">
+                            Brasília (UTC-3)
+                          </option>
+                          <option value="America/Cuiaba">
+                            Mato Grosso / MS / AM / RO / RR (UTC-4)
+                          </option>
+                          <option value="America/Rio_Branco">
+                            Acre (UTC-5)
+                          </option>
+                          <option value="America/Noronha">
+                            Fernando de Noronha (UTC-2)
+                          </option>
+                        </select>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() =>
+                            setFormEmpresa((f) => ({
+                              ...f,
+                              fusoHorario: fusoIanaDoNavegador(),
+                            }))
+                          }
+                        >
+                          Usar o fuso deste computador
+                        </button>
                       </div>
                       <button type="submit" disabled={salvando}>
                         Salvar

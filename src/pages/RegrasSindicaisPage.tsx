@@ -9,6 +9,8 @@ import {
 import type { RegraSindicalInput } from "../api/regrasSindicais";
 import { useAuth } from "../context/AuthContext";
 import { useConfirm } from "../components/ConfirmProvider";
+import { DuracaoInput } from "../components/DuracaoInput";
+import { minParaHoras } from "../utils/formatarDuracao";
 import { FeriadosPage } from "./FeriadosPage";
 import type {
   CategoriaTransporteSindical,
@@ -204,44 +206,32 @@ export function RegrasSindicaisPage() {
               }}
             >
               <div>
-                <label>Tolerância de marcação (minutos)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.toleranciaMarcacaoMin ?? 0}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      toleranciaMarcacaoMin: Number(e.target.value),
-                    }))
+                <label>Tolerância de marcação</label>
+                <DuracaoInput
+                  valorMin={form.toleranciaMarcacaoMin ?? 0}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, toleranciaMarcacaoMin: v ?? 0 }))
                   }
                 />
               </div>
               <div>
-                <label>Jornada normal antes de virar extra (minutos)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.limiteJornadaNormalMin ?? 480}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      limiteJornadaNormalMin: Number(e.target.value),
-                    }))
+                <label>Jornada normal antes de virar extra</label>
+                <DuracaoInput
+                  valorMin={form.limiteJornadaNormalMin ?? 480}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, limiteJornadaNormalMin: v ?? 480 }))
                   }
                 />
               </div>
 
               <div>
-                <label>Limite da 1ª faixa de hora extra (minutos)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.limiteHoraExtraFaixa1Min ?? 120}
-                  onChange={(e) =>
+                <label>Limite da 1ª faixa de hora extra</label>
+                <DuracaoInput
+                  valorMin={form.limiteHoraExtraFaixa1Min ?? 120}
+                  onChange={(v) =>
                     setForm((f) => ({
                       ...f,
-                      limiteHoraExtraFaixa1Min: Number(e.target.value),
+                      limiteHoraExtraFaixa1Min: v ?? 120,
                     }))
                   }
                 />
@@ -376,48 +366,36 @@ export function RegrasSindicaisPage() {
                 />
               </div>
               <div>
-                <label>
-                  Alerta do banco de horas ao acumular (minutos, opcional)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.bancoHorasLimiteAlertaMin ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      bancoHorasLimiteAlertaMin: e.target.value
-                        ? Number(e.target.value)
-                        : undefined,
-                    }))
+                <label>Alerta do banco de horas ao acumular (opcional)</label>
+                <DuracaoInput
+                  opcional
+                  valorMin={form.bancoHorasLimiteAlertaMin ?? undefined}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, bancoHorasLimiteAlertaMin: v }))
                   }
                 />
               </div>
 
               <div>
-                <label>1º período de descanso, mínimo (minutos)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.primeiroPeriodoDescansoMinimoMin ?? 180}
-                  onChange={(e) =>
+                <label>1º período de descanso, mínimo</label>
+                <DuracaoInput
+                  valorMin={form.primeiroPeriodoDescansoMinimoMin ?? 180}
+                  onChange={(v) =>
                     setForm((f) => ({
                       ...f,
-                      primeiroPeriodoDescansoMinimoMin: Number(e.target.value),
+                      primeiroPeriodoDescansoMinimoMin: v ?? 180,
                     }))
                   }
                 />
               </div>
               <div>
-                <label>Intervalo de refeição, mínimo (minutos)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.intervaloRefeicaoMinimoMin ?? 60}
-                  onChange={(e) =>
+                <label>Intervalo de refeição, mínimo</label>
+                <DuracaoInput
+                  valorMin={form.intervaloRefeicaoMinimoMin ?? 60}
+                  onChange={(v) =>
                     setForm((f) => ({
                       ...f,
-                      intervaloRefeicaoMinimoMin: Number(e.target.value),
+                      intervaloRefeicaoMinimoMin: v ?? 60,
                     }))
                   }
                 />
@@ -505,7 +483,7 @@ export function RegrasSindicaisPage() {
                       ? "Rodoviário"
                       : "Urbano"}
                   </td>
-                  <td>{(r.limiteJornadaNormalMin / 60).toFixed(1)}h</td>
+                  <td>{minParaHoras(r.limiteJornadaNormalMin)}</td>
                   <td>
                     {r.percentualHoraExtra1}% / {r.percentualHoraExtra2}%
                   </td>
@@ -585,10 +563,10 @@ export function RegrasSindicaisPage() {
               <li>
                 Descanso entre jornadas (interjornada): mínimo de 11h (CLT art.
                 66 / Lei 13.103). Só se aplica quando a jornada anterior já
-                tinha cumprido as 8h de direção (ou mais, com hora extra) ,
-                se a jornada anterior ficou incompleta (ex.: motorista
-                encerrou por engano e reabriu), a nova jornada conta como
-                complemento dela e não gera esse alerta.
+                tinha cumprido as 8h de direção (ou mais, com hora extra) , se a
+                jornada anterior ficou incompleta (ex.: motorista encerrou por
+                engano e reabriu), a nova jornada conta como complemento dela e
+                não gera esse alerta.
               </li>
             </ul>
             <p style={{ margin: "4px 0" }}>
