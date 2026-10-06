@@ -20,6 +20,7 @@ export function PerfilPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefoneWhatsapp, setTelefoneWhatsapp] = useState("");
+  const [telefoneGr, setTelefoneGr] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -34,6 +35,7 @@ export function PerfilPage() {
       setNome(dados.nome);
       setEmail(dados.email);
       setTelefoneWhatsapp(dados.telefoneWhatsapp ?? "");
+      setTelefoneGr(dados.telefoneGerenciamentoRisco ?? "");
     } catch {
       setErro("Não foi possível carregar seu perfil.");
     } finally {
@@ -55,6 +57,9 @@ export function PerfilPage() {
         nome: nome.trim(),
         email: email.trim(),
         telefoneWhatsapp: telefoneWhatsapp.trim() || undefined,
+        ...(perfil?.papel === "ADMIN"
+          ? { telefoneGerenciamentoRisco: telefoneGr.trim() || null }
+          : {}),
       });
       setPerfil(atualizado);
       setSucesso("Perfil atualizado com sucesso.");
@@ -111,6 +116,19 @@ export function PerfilPage() {
             value={telefoneWhatsapp}
             onChange={setTelefoneWhatsapp}
           />
+
+          {perfil?.papel === "ADMIN" && (
+            <>
+              <label style={{ marginTop: 8, display: "block" }}>
+                WhatsApp da equipe de Gerenciamento de Risco
+              </label>
+              <TelefoneInput value={telefoneGr} onChange={setTelefoneGr} />
+              <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
+                Os alertas da operação também chegam por WhatsApp neste número.
+                Deixe em branco para não enviar.
+              </p>
+            </>
+          )}
 
           <label style={{ marginTop: 12, display: "block" }}>
             Papel de acesso

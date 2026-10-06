@@ -494,6 +494,9 @@ export interface UsuarioEmpresaListado {
   papel: PapelUsuario;
   ativo: boolean;
   telefoneWhatsapp?: string | null;
+  telefoneGerenciamentoRisco?: string | null;
+  recebeWhatsappAlertas?: boolean;
+  recebeWhatsappEquipeGr?: boolean;
   createdAt: string;
 }
 
@@ -573,4 +576,6 @@ export interface UpdatePerfilProprioInput {
   nome?: string;
   email?: string;
   telefoneWhatsapp?: string;
+  /** Só ADMIN; null limpa. */
+  telefoneGerenciamentoRisco?: string | null;
 }

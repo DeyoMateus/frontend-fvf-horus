@@ -4,6 +4,7 @@ import {
   atualizarEmpresaSuperAdmin,
   atualizarGrupo,
   atualizarStatusEmpresaSuperAdmin,
+  atualizarDestinatariosWhatsapp,
   atualizarStatusUsuarioGrupo,
   atualizarUsuarioSuperAdmin,
   criarUsuarioGrupo,
@@ -229,6 +230,14 @@ export function SuperAdminGrupoDetailPage() {
     }
   }
 
+  async function alternarDestinatarioWhatsapp(
+    usuarioId: string,
+    mudanca: { recebeWhatsappAlertas?: boolean; recebeWhatsappEquipeGr?: boolean },
+  ) {
+    await atualizarDestinatariosWhatsapp(usuarioId, mudanca);
+    await carregar();
+  }
+
   async function alternarStatusUsuario(usuarioId: string, ativoAtual: boolean) {
     if (!grupoId) return;
     const acao = ativoAtual ? "desativar" : "reativar";
@@ -316,7 +325,7 @@ export function SuperAdminGrupoDetailPage() {
             {grupo.empresas.map((e) =>
               empresaEditandoId === e.id ? (
                 <tr key={e.id}>
-                  <td colSpan={6}>
+                  <td colSpan={8}>
                     <form
                       onSubmit={salvarEmpresa}
                       style={{
@@ -562,6 +571,8 @@ export function SuperAdminGrupoDetailPage() {
               <th>Papel</th>
               <th>Status</th>
               <th>Desde</th>
+              <th>WhatsApp: equipe de GR</th>
+              <th>WhatsApp: pessoal</th>
               <th></th>
             </tr>
           </thead>
@@ -628,6 +639,42 @@ export function SuperAdminGrupoDetailPage() {
                   <td>{u.papel}</td>
                   <td>{u.ativo ? "Ativo" : "Desativado"}</td>
                   <td>{new Date(u.createdAt).toLocaleDateString("pt-BR")}</td>
+                  <td>
+                    {u.telefoneGerenciamentoRisco ? (
+                      <label style={{ fontSize: 12 }}>
+                        <input
+                          type="checkbox"
+                          checked={u.recebeWhatsappEquipeGr !== false}
+                          onChange={(ev) =>
+                            alternarDestinatarioWhatsapp(u.id, {
+                              recebeWhatsappEquipeGr: ev.target.checked,
+                            })
+                          }
+                        />{" "}
+                        {u.telefoneGerenciamentoRisco}
+                      </label>
+                    ) : (
+                      <span style={{ fontSize: 12 }}>sem número de GR</span>
+                    )}
+                  </td>
+                  <td>
+                    {u.telefoneWhatsapp ? (
+                      <label style={{ fontSize: 12 }}>
+                        <input
+                          type="checkbox"
+                          checked={u.recebeWhatsappAlertas === true}
+                          onChange={(ev) =>
+                            alternarDestinatarioWhatsapp(u.id, {
+                              recebeWhatsappAlertas: ev.target.checked,
+                            })
+                          }
+                        />{" "}
+                        {u.telefoneWhatsapp}
+                      </label>
+                    ) : (
+                      <span style={{ fontSize: 12 }}>sem WhatsApp</span>
+                    )}
+                  </td>
                   <td style={{ display: "flex", gap: 6 }}>
                     <button
                       className="secondary"

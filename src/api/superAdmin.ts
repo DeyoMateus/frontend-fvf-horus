@@ -63,6 +63,18 @@ export async function atualizarStatusEmpresaSuperAdmin(
   return data;
 }
 
+/** Rodada 164: quem recebe alerta por WhatsApp (padrão: só a equipe de GR). */
+export async function atualizarDestinatariosWhatsapp(
+  usuarioId: string,
+  input: { recebeWhatsappAlertas?: boolean; recebeWhatsappEquipeGr?: boolean },
+) {
+  const { data } = await superAdminApi.patch(
+    `/super-admin/usuarios/${usuarioId}/whatsapp-alertas`,
+    input,
+  );
+  return data;
+}
+
 export async function atualizarUsuarioSuperAdmin(
   usuarioId: string,
   input: UpdateUsuarioSuperAdminInput,
