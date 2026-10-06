@@ -299,7 +299,9 @@ export type TipoAlertaJornada =
   // depois que uma amostra de hora confiável do mesmo boot do aparelho
   // chegou ao servidor (ver RelogioConfiavelService no backend). O
   // registro que gerou o alerta nunca é alterado/apagado (WORM).
-  | "RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE";
+  | "RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE"
+  // Rodada 165 , varredura automática achou divergência na cadeia de hashes.
+  | "INTEGRIDADE_CADEIA_VIOLADA";
 
 export type SeveridadeAlerta = "INFO" | "ATENCAO" | "CRITICO";
 

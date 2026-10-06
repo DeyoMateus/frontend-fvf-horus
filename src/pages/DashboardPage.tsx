@@ -45,6 +45,7 @@ const TIPOS_FRAUDE: TipoAlertaJornada[] = [
   // Rodada 92 , divergência de relógio confirmada retroativamente
   // contra uma amostra de hora confiável do mesmo boot do aparelho.
   "RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE",
+  "INTEGRIDADE_CADEIA_VIOLADA",
 ];
 
 function existeAlertaAbertoHaMuitoTempo(
@@ -84,6 +85,7 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   SINCRONIZACAO_TARDIA_SUSPEITA: "Evento sincronizado com atraso suspeito",
   RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE:
     "Relógio divergente confirmado após reconectar (retroativo)",
+  INTEGRIDADE_CADEIA_VIOLADA: "Integridade violada (cadeia de registros)",
 };
 
 const OPCOES_PERIODO = [
