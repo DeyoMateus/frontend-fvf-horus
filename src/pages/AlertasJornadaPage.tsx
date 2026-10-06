@@ -264,7 +264,12 @@ export function AlertasJornadaPage() {
               <button
                 key={o.dias}
                 type="button"
-                className="secondary"
+                className={
+                  paginacao.dataInicio === diasAtrasISO(o.dias) &&
+                  paginacao.dataFim === dataLocalIso(new Date())
+                    ? ""
+                    : "secondary"
+                }
                 style={{ padding: "4px 10px", fontSize: 12 }}
                 onClick={() => {
                   paginacao.setDataInicio(diasAtrasISO(o.dias));

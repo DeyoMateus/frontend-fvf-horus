@@ -345,7 +345,21 @@ function PainelDetalheCard({
                         {m.nome}
                       </Link>
                     </td>
-                    <td style={{ fontSize: 12, color: "#000000" }}>
+                    <td
+                      style={{
+                        fontSize: 12,
+                        color: m.detalhe?.includes("CRÍTICO")
+                          ? "#b91c1c"
+                          : m.detalhe?.includes("ATENÇÃO")
+                            ? "#b45309"
+                            : "#000000",
+                        fontWeight:
+                          m.detalhe?.includes("CRÍTICO") ||
+                          m.detalhe?.includes("ATENÇÃO")
+                            ? 600
+                            : 400,
+                      }}
+                    >
                       {m.detalhe ? renderizarHorarios(m.detalhe) : ","}
                     </td>
                   </tr>
@@ -801,7 +815,9 @@ export function DashboardPage() {
             <button
               key={o.dias}
               className={
-                !periodoPersonalizado && o.dias === periodoDias
+                (!periodoPersonalizado && o.dias === periodoDias) ||
+                (periodoPersonalizado?.desde === diasAtrasISO(o.dias) &&
+                  periodoPersonalizado?.ate === hojeISO())
                   ? ""
                   : "secondary"
               }

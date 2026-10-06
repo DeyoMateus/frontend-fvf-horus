@@ -20,13 +20,13 @@
  */
 export function minParaHoras(minutos: number): string {
   const sinal = minutos < 0 ? "-" : "";
-  const totalSegundos = Math.round(Math.abs(minutos) * 60);
-  const horas = Math.floor(totalSegundos / 3600);
-  const minutosRestantes = Math.floor((totalSegundos % 3600) / 60);
-  const segundosRestantes = totalSegundos % 60;
-
-  if (horas > 0) {
-    return `${sinal}${String(horas).padStart(2, "0")}:${String(minutosRestantes).padStart(2, "0")} h`;
+  // Rodada 159: abaixo de 1h mostra só o número de minutos ("55 m", nunca
+  // "55:00 m"); a partir de 1h, "HH:MM h".
+  const totalMin = Math.round(Math.abs(minutos));
+  if (totalMin >= 60) {
+    const horas = Math.floor(totalMin / 60);
+    const resto = totalMin % 60;
+    return `${sinal}${String(horas).padStart(2, "0")}:${String(resto).padStart(2, "0")} h`;
   }
-  return `${sinal}${String(minutosRestantes).padStart(2, "0")}:${String(segundosRestantes).padStart(2, "0")} m`;
+  return `${sinal}${totalMin} m`;
 }

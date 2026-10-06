@@ -574,7 +574,11 @@ export function PainelIndicadores() {
             <button
               key={o.dias}
               type="button"
-              className="secondary"
+              className={
+                inicio === diasAtras(o.dias) && fim === hoje()
+                  ? ""
+                  : "secondary"
+              }
               style={{ padding: "4px 10px", fontSize: 12 }}
               onClick={() => {
                 setInicio(diasAtras(o.dias));
@@ -873,7 +877,12 @@ export function PainelIndicadores() {
                     <button
                       key={o.dias}
                       type="button"
-                      className="secondary"
+                      className={
+                        inicioEvolucao === diasAtras(o.dias) &&
+                        fimEvolucao === hoje()
+                          ? ""
+                          : "secondary"
+                      }
                       style={{ padding: "4px 10px", fontSize: 12 }}
                       onClick={() => {
                         setInicioEvolucao(diasAtras(o.dias));
