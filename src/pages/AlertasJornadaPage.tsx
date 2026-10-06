@@ -326,7 +326,8 @@ export function AlertasJornadaPage() {
               onDataFim: paginacao.setDataFim,
               rotulo: "data do alerta",
             }}
-          />
+ tituloPopup="Alertas de jornada"
+>
           <table>
             <thead>
               <tr>
@@ -518,6 +519,7 @@ export function AlertasJornadaPage() {
               )}
             </tbody>
           </table>
+</ControlesListaPaginada>
         </div>
       )}
     </div>

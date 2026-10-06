@@ -5,6 +5,7 @@ import type {
   OcorrenciaAuditoria,
   RegistroAuditoria,
 } from "../api/types";
+import { ListaEmPopup } from "../components/ListaEmPopup";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 
 const ROTULO_ACTOR_TYPE: Record<ActorType, string> = {
@@ -274,7 +275,12 @@ export function AuditoriaPage() {
         <p>Carregando…</p>
       ) : (
         <div className="card">
-          <table>
+          <ListaEmPopup
+ ativo={pageSize === 100}
+ titulo="Auditoria"
+ onFechar={() => { setPageSize(50); setPage(1); }}
+>
+<table>
             <thead>
               <tr>
                 <th>Quando</th>
@@ -395,8 +401,8 @@ export function AuditoriaPage() {
               </button>
             )}
           </div>
-
-          {popupPaginacaoAberto && (
+</ListaEmPopup>
+{popupPaginacaoAberto && (
             <PaginacaoPopup
               paginaAtual={page}
               totalPaginas={totalPaginas}

@@ -401,7 +401,8 @@ export function MotoristasListPage() {
               onDataFim: paginacaoSolicitacoes.setDataFim,
               rotulo: "data do pedido",
             }}
-          />
+ tituloPopup="Solicitações de ajuste pendentes"
+>
           <table>
             <thead>
               <tr>
@@ -466,6 +467,7 @@ export function MotoristasListPage() {
               ))}
             </tbody>
           </table>
+</ControlesListaPaginada>
         </div>
       )}
 
@@ -524,7 +526,8 @@ export function MotoristasListPage() {
                 onDataFim: paginacaoMotoristas.setDataFim,
                 rotulo: "data de cadastro",
               }}
-            />
+ tituloPopup="Motoristas"
+>
             <table>
               <thead>
                 <tr>
@@ -599,6 +602,7 @@ export function MotoristasListPage() {
                 )}
               </tbody>
             </table>
+</ControlesListaPaginada>
           </>
         )}
       </div>

@@ -14,6 +14,7 @@ import type {
 } from "../api/documentosCarga";
 import { listMotoristas } from "../api/motoristas";
 import type { Motorista } from "../api/types";
+import { ListaEmPopup } from "../components/ListaEmPopup";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { BuscaDocumentosCargaPopup } from "../components/BuscaDocumentosCargaPopup";
 import { useConfirm } from "../components/ConfirmProvider";
@@ -310,7 +311,12 @@ export function DocumentosCargaPage() {
 
         {erroLista && <p className="error-text">{erroLista}</p>}
 
-        <table>
+        <ListaEmPopup
+ ativo={qtdPorPagina === 100}
+ titulo="Documentos de carga"
+ onFechar={() => { setQtdPorPagina(50); setPagina(1); }}
+>
+<table>
           <thead>
             <tr>
               <th>Tipo</th>
@@ -437,8 +443,8 @@ export function DocumentosCargaPage() {
             </button>
           )}
         </div>
-
-        {popupPaginacaoAberto && (
+</ListaEmPopup>
+{popupPaginacaoAberto && (
           <PaginacaoPopup
             paginaAtual={pagina}
             totalPaginas={totalPaginas}

@@ -15,6 +15,7 @@ import { useConfirm } from "../components/ConfirmProvider";
 import { useToast } from "../components/ToastProvider";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
+import { ListaEmPopup } from "../components/ListaEmPopup";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
 
@@ -268,7 +269,8 @@ export function SolicitacoesAjustePage() {
                 onDataFim: paginacao.setDataFim,
                 rotulo: "data do pedido",
               }}
-            />
+ tituloPopup="Solicitações de ajuste"
+>
             <table>
               <thead>
                 <tr>
@@ -378,6 +380,7 @@ export function SolicitacoesAjustePage() {
                 )}
               </tbody>
             </table>
+</ControlesListaPaginada>
           </>
         )}
       </div>
@@ -446,7 +449,12 @@ export function SolicitacoesAjustePage() {
               </button>
             </div>
 
-            <table>
+            <ListaEmPopup
+ ativo={qtdPorPaginaHist === 100}
+ titulo="Histórico de solicitações"
+ onFechar={() => { setQtdPorPaginaHist(50); setPaginaHist(1); }}
+>
+<table>
               <thead>
                 <tr>
                   <th>Motorista</th>
@@ -558,8 +566,8 @@ export function SolicitacoesAjustePage() {
                 </button>
               )}
             </div>
-
-            {popupPaginacaoHistAberto && (
+</ListaEmPopup>
+{popupPaginacaoHistAberto && (
               <PaginacaoPopup
                 paginaAtual={paginaHist}
                 totalPaginas={totalPaginasHist}

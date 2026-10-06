@@ -250,7 +250,8 @@ export function FeriadosPage() {
                 onDataFim: paginacao.setDataFim,
                 rotulo: "data do feriado",
               }}
-            />
+ tituloPopup="Feriados"
+>
             <table>
               <thead>
                 <tr>
@@ -309,6 +310,7 @@ export function FeriadosPage() {
                 )}
               </tbody>
             </table>
+</ControlesListaPaginada>
           </>
         )}
       </div>

@@ -43,7 +43,12 @@ export interface ListaPaginadaResultado<T> {
 export function useListaPaginada<T>(
   itens: T[],
   obterData: (item: T) => string | Date | null | undefined,
-  opts?: { qtdInicial?: QtdPorPagina; ordemInicial?: OrdemData },
+  opts?: {
+    qtdInicial?: QtdPorPagina;
+    ordemInicial?: OrdemData;
+    /** Desempate crescente quando duas datas são iguais (ex.: `sequencial` do ledger). */
+    desempate?: (a: T, b: T) => number;
+  },
 ): ListaPaginadaResultado<T> {
   const [ordem, setOrdem] = useState<OrdemData>(
     opts?.ordemInicial ?? "recente",
@@ -77,7 +82,10 @@ export function useListaPaginada<T>(
       const db = obterData(b);
       const ta = da != null ? new Date(da).getTime() : 0;
       const tb = db != null ? new Date(db).getTime() : 0;
-      return ordem === "recente" ? tb - ta : ta - tb;
+      const diff = ordem === "recente" ? tb - ta : ta - tb;
+      if (diff !== 0 || !opts?.desempate) return diff;
+      const d = opts.desempate(a, b);
+      return ordem === "recente" ? -d : d;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itens, dataInicio, dataFim, ordem]);

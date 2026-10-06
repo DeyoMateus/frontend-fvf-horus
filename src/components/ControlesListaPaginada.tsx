@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { ListaEmPopup } from "./ListaEmPopup";
 import { PaginacaoPopup } from "./PaginacaoPopup";
 import type { OrdemData, QtdPorPagina } from "../hooks/useListaPaginada";
 
@@ -29,6 +31,13 @@ interface ControlesListaPaginadaProps {
     /** Rótulo do campo de data filtrado, ex.: "data do evento". Só pra legenda do filtro. */
     rotulo?: string;
   };
+  /**
+   * Rodada 154: a tabela da tela. Quando passada e o usuário escolhe "100 por
+   * vez", controles + tabela abrem numa janela separada (ver `ListaEmPopup`).
+   */
+  children?: ReactNode;
+  /** Título da janela de 100 por vez. */
+  tituloPopup?: string;
 }
 
 export function ControlesListaPaginada({
@@ -43,8 +52,10 @@ export function ControlesListaPaginada({
   onFecharPopup,
   onSelecionarPagina,
   filtroData,
+  children,
+  tituloPopup,
 }: ControlesListaPaginadaProps) {
-  return (
+  const barra = (
     <div
       style={{
         display: "flex",
@@ -149,5 +160,17 @@ export function ControlesListaPaginada({
         />
       )}
     </div>
+  );
+
+  if (children === undefined) return barra;
+  return (
+    <ListaEmPopup
+      ativo={qtdPorPagina === 100}
+      titulo={tituloPopup}
+      onFechar={() => onMudarQtdPorPagina(50)}
+    >
+      {barra}
+      {children}
+    </ListaEmPopup>
   );
 }

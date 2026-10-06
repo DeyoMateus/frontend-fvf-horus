@@ -58,7 +58,11 @@ import {
   obterUrlEvidenciaTratamento,
 } from "../api/tratamentos";
 import { EvidenciasAnexo } from "../components/EvidenciasAnexo";
+import { ListaEmPopup } from "../components/ListaEmPopup";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
+import { baixarCsvTabela, imprimirTabela } from "../utils/exportarTabelaModal";
+import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
+import { useListaPaginada } from "../hooks/useListaPaginada";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { baixarHoleritePdf, calcularHolerite } from "../api/holerite";
 import { BancoHorasPainel } from "../components/BancoHorasPainel";
@@ -120,15 +124,6 @@ export function MotoristaDetailPage() {
     null,
   );
   const [tratamentos, setTratamentos] = useState<TratamentoPonto[]>([]);
-  // Rodada 77 , pedido do usuário: essa lista não pode crescer sem
-  // limite na tela. "Mostrar N por vez" (10/20/50) + popup dedicado de
-  // paginação quando passar disso (ver `PaginacaoPopup`).
-  const [qtdTratamentosPorPagina, setQtdTratamentosPorPagina] = useState<
-    10 | 20 | 50
-  >(10);
-  const [paginaTratamentos, setPaginaTratamentos] = useState(1);
-  const [popupPaginacaoTratamentosAberto, setPopupPaginacaoTratamentosAberto] =
-    useState(false);
   const [alertas, setAlertas] = useState<AlertaJornada[]>([]);
   // Rodada 107 , pedido do usuário: mesmo padrão da Rodada 77
   // (tratamentos de ponto) aplicado aqui , essa lista também não pode
@@ -232,7 +227,7 @@ export function MotoristaDetailPage() {
   async function onBaixarComprovante() {
     setBaixandoComprovante(true);
     try {
-      await baixarComprovante(motoristaId);
+      await baixarComprovante(motoristaId, periodoDosRegistros());
     } finally {
       setBaixandoComprovante(false);
     }
@@ -241,7 +236,7 @@ export function MotoristaDetailPage() {
   async function onBaixarAej() {
     setBaixandoAej(true);
     try {
-      await baixarAej(motoristaId);
+      await baixarAej(motoristaId, periodoDosRegistros());
     } finally {
       setBaixandoAej(false);
     }
@@ -250,7 +245,7 @@ export function MotoristaDetailPage() {
   async function onBaixarEspelhoRepP() {
     setBaixandoEspelhoRepP(true);
     try {
-      await baixarEspelhoRepP(motoristaId);
+      await baixarEspelhoRepP(motoristaId, periodoDosRegistros());
     } finally {
       setBaixandoEspelhoRepP(false);
     }
@@ -579,27 +574,56 @@ export function MotoristaDetailPage() {
     }
   }
 
-  // Rodada 77 , mais recentes primeiro (mesmo critério de leitura de
-  // "o que aconteceu por último"), fatiado pelo "mostrar N por vez".
-  const tratamentosOrdenados = [...tratamentos].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
-  const totalPaginasTratamentos = Math.max(
-    1,
-    Math.ceil(tratamentosOrdenados.length / qtdTratamentosPorPagina),
-  );
-  const paginaTratamentosEfetiva = Math.min(
-    paginaTratamentos,
-    totalPaginasTratamentos,
-  );
-  const tratamentosExibidos = tratamentosOrdenados.slice(
-    (paginaTratamentosEfetiva - 1) * qtdTratamentosPorPagina,
-    paginaTratamentosEfetiva * qtdTratamentosPorPagina,
+  // Rodada 155 , tratamentos: filtro por período (De/Até, pelo horário do
+  // ajuste), ordenação, "mostrar N por vez" (100 abre popup) e exportação do
+  // que está filtrado.
+  const listaTratamentos = useListaPaginada(
+    tratamentos,
+    (t) => t.timestampEvento,
   );
 
-  function onMudarQtdTratamentosPorPagina(qtd: 10 | 20 | 50) {
-    setQtdTratamentosPorPagina(qtd);
-    setPaginaTratamentos(1);
+  function linhasRelatorioTratamentos(): string[][] {
+    return listaTratamentos.itensFiltrados.map((t) => [
+      t.tipoEvento,
+      formatarRegistro(t.timestampEvento, t.fusoOffsetMin),
+      t.motivo,
+      t.usuario?.nome ?? t.usuarioId,
+      new Date(t.createdAt).toLocaleString("pt-BR"),
+      String(t.evidencias?.length ?? 0),
+    ]);
+  }
+  const CABECALHOS_RELATORIO_TRATAMENTOS = [
+    "Evento",
+    "Horário do ajuste",
+    "Motivo",
+    "Lançado por",
+    "Lançado em",
+    "Evidências",
+  ];
+  function rotuloPeriodoTratamentos() {
+    const { dataInicio, dataFim } = listaTratamentos;
+    if (!dataInicio && !dataFim) return "todos os tratamentos";
+    const f = (d: string) =>
+      new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
+    return `${dataInicio ? f(dataInicio) : "início"} a ${dataFim ? f(dataFim) : "hoje"}`;
+  }
+  function onBaixarCsvTratamentos() {
+    baixarCsvTabela(
+      `tratamentos-ponto-${motorista?.nome ?? motoristaId}.csv`.replace(
+        /\s+/g,
+        "-",
+      ),
+      CABECALHOS_RELATORIO_TRATAMENTOS,
+      linhasRelatorioTratamentos(),
+    );
+  }
+  function onImprimirTratamentos() {
+    imprimirTabela(
+      `Tratamentos de ponto - ${motorista?.nome ?? ""}`,
+      `Período: ${rotuloPeriodoTratamentos()}`,
+      CABECALHOS_RELATORIO_TRATAMENTOS,
+      linhasRelatorioTratamentos(),
+    );
   }
 
   // Rodada 107 , mais recentes primeiro (mesmo critério da Rodada 77),
@@ -631,6 +655,70 @@ export function MotoristaDetailPage() {
   const registrosOrdenados = [...registros].sort(
     (a, b) => b.sequencial - a.sequencial,
   );
+
+  // Pedido do usuário (Rodada 153): a tabela "Registros de jornada" não pode
+  // crescer sem limite. Filtro de período (De/Até), ordenação, "Mostrar
+  // 20/50" e, ao escolher 100, a lista abre num popup separado. Os botões de
+  // baixar seguem o mesmo período filtrado.
+  const listaRegistros = useListaPaginada(registros, (r) => r.timestampEvento, {
+    qtdInicial: 20,
+    desempate: (a, b) => a.sequencial - b.sequencial,
+  });
+  /** Período filtrado em ISO (início do dia / fim do dia no fuso deste computador), ou undefined sem filtro. */
+  function periodoDosRegistros() {
+    const { dataInicio, dataFim } = listaRegistros;
+    if (!dataInicio && !dataFim) return undefined;
+    return {
+      inicio: dataInicio
+        ? new Date(`${dataInicio}T00:00:00`).toISOString()
+        : undefined,
+      fim: dataFim
+        ? new Date(`${dataFim}T23:59:59.999`).toISOString()
+        : undefined,
+    };
+  }
+  const rotuloPeriodoRegistros =
+    listaRegistros.dataInicio || listaRegistros.dataFim
+      ? `${listaRegistros.dataInicio ? new Date(`${listaRegistros.dataInicio}T00:00:00`).toLocaleDateString("pt-BR") : "início"} a ${listaRegistros.dataFim ? new Date(`${listaRegistros.dataFim}T00:00:00`).toLocaleDateString("pt-BR") : "hoje"}`
+      : "todos os registros";
+
+  function linhaRegistroJornada(r: RegistroJornada) {
+    return (
+      <tr key={r.id}>
+        <td>{r.sequencial}</td>
+        <td>{r.tipoEvento}</td>
+        <td>{formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}</td>
+        <td style={{ fontSize: 11 }}>{r.deviceUuidUsado}</td>
+        <td>
+          {r.latitude != null && r.longitude != null ? (
+            <>
+              <button
+                type="button"
+                className="botao-link-externo"
+                title={`${r.latitude}, ${r.longitude}${r.precisaoGpsM != null ? ` (±${Math.round(Number(r.precisaoGpsM))}m)` : ""}${seloFusoMapa(r.timestampEvento, r.fusoOffsetMin)}`}
+                onClick={() =>
+                  window.open(
+                    `https://www.google.com/maps/search/?api=1&query=${r.latitude},${r.longitude}`,
+                    "_blank",
+                    "noopener,noreferrer",
+                  )
+                }
+              >
+                Ver no mapa
+              </button>
+              {seloFusoMapa(r.timestampEvento, r.fusoOffsetMin) && (
+                <span style={{ fontSize: 11, color: "#000000" }}>
+                  {seloFusoMapa(r.timestampEvento, r.fusoOffsetMin)}
+                </span>
+              )}
+            </>
+          ) : (
+            <span style={{ color: "#000000" }}>,</span>
+          )}
+        </td>
+      </tr>
+    );
+  }
 
   const opcoesHolerite: OpcoesHolerite = {
     direcaoEspera: holeriteDirecaoEspera,
@@ -1272,10 +1360,12 @@ export function MotoristaDetailPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
+            gap: 8,
           }}
         >
           <h3 style={{ marginTop: 0 }}>Registros de jornada</h3>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button
               onClick={onBaixarComprovante}
               disabled={baixandoComprovante}
@@ -1300,61 +1390,54 @@ export function MotoristaDetailPage() {
             </button>
           </div>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Evento</th>
-              <th>Quando</th>
-              <th>Aparelho</th>
-              <th>Localização</th>
-            </tr>
-          </thead>
-          <tbody>
-            {registrosOrdenados.map((r) => (
-              <tr key={r.id}>
-                <td>{r.sequencial}</td>
-                <td>{r.tipoEvento}</td>
-                <td>{formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}</td>
-                <td style={{ fontSize: 11 }}>{r.deviceUuidUsado}</td>
-                <td>
-                  {r.latitude != null && r.longitude != null ? (
-                    <>
-                    <button
-                      type="button"
-                      className="botao-link-externo"
-                      title={`${r.latitude}, ${r.longitude}${r.precisaoGpsM != null ? ` (±${Math.round(Number(r.precisaoGpsM))}m)` : ""}${seloFusoMapa(r.timestampEvento, r.fusoOffsetMin)}`}
-                      onClick={() =>
-                        window.open(
-                          `https://www.google.com/maps/search/?api=1&query=${r.latitude},${r.longitude}`,
-                          "_blank",
-                          "noopener,noreferrer",
-                        )
-                      }
-                    >
-                      Ver no mapa
-                    </button>
-                    {seloFusoMapa(r.timestampEvento, r.fusoOffsetMin) && (
-                      <span style={{ fontSize: 11, color: "#000000" }}>
-                        {seloFusoMapa(r.timestampEvento, r.fusoOffsetMin)}
-                      </span>
-                    )}
-                    </>
-                  ) : (
-                    <span style={{ color: "#000000" }}>,</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {registros.length === 0 && (
+        <p style={{ fontSize: 12, color: "#000000", margin: "0 0 8px" }}>
+          Os downloads seguem o período filtrado abaixo (agora:{" "}
+          {rotuloPeriodoRegistros}).
+        </p>
+        <ControlesListaPaginada
+          ordem={listaRegistros.ordem}
+          onAlternarOrdem={listaRegistros.alternarOrdem}
+          qtdPorPagina={listaRegistros.qtdPorPagina}
+          onMudarQtdPorPagina={listaRegistros.mudarQtdPorPagina}
+          pagina={listaRegistros.pagina}
+          totalPaginas={listaRegistros.totalPaginas}
+          popupAberto={listaRegistros.popupAberto}
+          onAbrirPopup={listaRegistros.abrirPopup}
+          onFecharPopup={listaRegistros.fecharPopup}
+          onSelecionarPagina={listaRegistros.irParaPagina}
+          filtroData={{
+            dataInicio: listaRegistros.dataInicio,
+            onDataInicio: listaRegistros.setDataInicio,
+            dataFim: listaRegistros.dataFim,
+            onDataFim: listaRegistros.setDataFim,
+            rotulo: "data do evento",
+          }}
+          tituloPopup="Registros de jornada"
+        >
+          <table>
+            <thead>
               <tr>
-                <td colSpan={5} style={{ color: "#000000" }}>
-                  Nenhum registro ainda (o motorista bate ponto pelo app).
-                </td>
+                <th>#</th>
+                <th>Evento</th>
+                <th>Quando</th>
+                <th>Aparelho</th>
+                <th>Localização</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {listaRegistros.itensExibidos.map(linhaRegistroJornada)}
+              {listaRegistros.itensFiltrados.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ color: "#000000" }}>
+                    {registros.length === 0
+                      ? "Nenhum registro ainda (o motorista bate ponto pelo app)."
+                      : "Nenhum registro no período filtrado."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </ControlesListaPaginada>
       </div>
 
       <div className="card">
@@ -1662,61 +1745,68 @@ export function MotoristaDetailPage() {
             </button>
           )}
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Severidade</th>
-              <th>Alerta</th>
-              <th>Janela</th>
-              <th>Duração</th>
-              <th>Quando</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {alertasExibidos.map((a) => (
-              <tr key={a.id} style={{ opacity: a.visualizadoEm ? 0.55 : 1 }}>
-                <td>
-                  <span
-                    style={{
-                      color:
-                        a.severidade === "CRITICO"
-                          ? "#b91c1c"
-                          : a.severidade === "ATENCAO"
-                            ? "#b45309"
-                            : "#374151",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {a.severidade}
-                  </span>
-                </td>
-                <td>{renderizarHorarios(a.mensagem)}</td>
-                <td>
-                  {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
-                  {new Date(a.janelaFim).toLocaleString("pt-BR")}
-                </td>
-                <td>{formatarMinutos(a.minutosAcumulados)}</td>
-                <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
-                <td>
-                  {!a.visualizadoEm && (
-                    <button onClick={() => onVisualizarAlerta(a.id)}>
-                      Marcar visto
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {alertas.length === 0 && (
+        <ListaEmPopup
+          ativo={qtdAlertasPorPagina === 100}
+          titulo="Alertas do motorista"
+          onFechar={() => {
+            onMudarQtdAlertasPorPagina(50);
+          }}
+        >
+          <table>
+            <thead>
               <tr>
-                <td colSpan={6} style={{ color: "#000000" }}>
-                  Nenhum alerta gerado até agora.
-                </td>
+                <th>Severidade</th>
+                <th>Alerta</th>
+                <th>Janela</th>
+                <th>Duração</th>
+                <th>Quando</th>
+                <th></th>
               </tr>
-            )}
-          </tbody>
-        </table>
-
+            </thead>
+            <tbody>
+              {alertasExibidos.map((a) => (
+                <tr key={a.id} style={{ opacity: a.visualizadoEm ? 0.55 : 1 }}>
+                  <td>
+                    <span
+                      style={{
+                        color:
+                          a.severidade === "CRITICO"
+                            ? "#b91c1c"
+                            : a.severidade === "ATENCAO"
+                              ? "#b45309"
+                              : "#374151",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {a.severidade}
+                    </span>
+                  </td>
+                  <td>{renderizarHorarios(a.mensagem)}</td>
+                  <td>
+                    {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
+                    {new Date(a.janelaFim).toLocaleString("pt-BR")}
+                  </td>
+                  <td>{formatarMinutos(a.minutosAcumulados)}</td>
+                  <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
+                  <td>
+                    {!a.visualizadoEm && (
+                      <button onClick={() => onVisualizarAlerta(a.id)}>
+                        Marcar visto
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {alertas.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ color: "#000000" }}>
+                    Nenhum alerta gerado até agora.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </ListaEmPopup>
         {popupPaginacaoAlertasAberto && (
           <PaginacaoPopup
             paginaAtual={paginaAlertasEfetiva}
@@ -1746,23 +1836,6 @@ export function MotoristaDetailPage() {
               </option>
             ))}
           </select>
-          <label>Horário considerado</label>
-          <input
-            type="datetime-local"
-            value={timestampEvento}
-            onChange={(e) => setTimestampEvento(e.target.value)}
-            required
-          />
-          {timestampEvento && (
-            <p style={{ fontSize: 12, color: "#000000", marginTop: -4 }}>
-              {(() => {
-                const f = resolverFusoDoAjuste(timestampEvento, registros);
-                return f.doMotorista
-                  ? `Horário no fuso em que o motorista estava nesse momento (${rotuloUtc(f.offsetMin)}), não o do seu computador.`
-                  : `Horário no fuso do seu computador (${rotuloUtc(f.offsetMin)}); o motorista ainda não tem ponto com fuso registrado.`;
-              })()}
-            </p>
-          )}
           <label>Registro de referência (opcional)</label>
           <select
             value={registroReferenciaId}
@@ -1801,6 +1874,23 @@ export function MotoristaDetailPage() {
               é permanente); só adiciona este ajuste à conferência da folha.
             </p>
           )}
+          <label>Horário considerado</label>
+          <input
+            type="datetime-local"
+            value={timestampEvento}
+            onChange={(e) => setTimestampEvento(e.target.value)}
+            required
+          />
+          {timestampEvento && (
+            <p style={{ fontSize: 12, color: "#000000", marginTop: -4 }}>
+              {(() => {
+                const f = resolverFusoDoAjuste(timestampEvento, registros);
+                return f.doMotorista
+                  ? `Horário no fuso em que o motorista estava nesse momento (${rotuloUtc(f.offsetMin)}), não o do seu computador.`
+                  : `Horário no fuso do seu computador (${rotuloUtc(f.offsetMin)}); o motorista ainda não tem ponto com fuso registrado.`;
+              })()}
+            </p>
+          )}
           <label>Motivo (mínimo 10 caracteres)</label>
           <textarea
             value={motivo}
@@ -1831,7 +1921,7 @@ export function MotoristaDetailPage() {
                     style={{ fontSize: 11, padding: "2px 6px" }}
                     onClick={() => onTirarEvidenciaParaAnexar(indice)}
                   >
-                    Tirar
+                    Remover
                   </button>
                 </li>
               ))}
@@ -1855,47 +1945,58 @@ export function MotoristaDetailPage() {
           </button>
         </form>
 
-        {/* Rodada 77 , "mostrar N por vez" + popup dedicado de página
-            quando passar disso, pra essa lista nunca crescer sem
-            limite na tela. */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginTop: 16,
+            gap: 8,
             flexWrap: "wrap",
+            marginTop: 16,
+            alignItems: "center",
           }}
         >
-          <label style={{ fontSize: 13 }}>
-            Mostrar{" "}
-            <select
-              value={qtdTratamentosPorPagina}
-              onChange={(e) =>
-                onMudarQtdTratamentosPorPagina(
-                  Number(e.target.value) as 10 | 20 | 50,
-                )
-              }
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>{" "}
-            por vez
-          </label>
-          {totalPaginasTratamentos > 1 && (
-            <button
-              type="button"
-              className="secondary"
-              style={{ fontSize: 13 }}
-              onClick={() => setPopupPaginacaoTratamentosAberto(true)}
-            >
-              Página {paginaTratamentosEfetiva} de {totalPaginasTratamentos},
-              trocar página
-            </button>
-          )}
+          <button
+            type="button"
+            className="secondary"
+            style={{ fontSize: 13 }}
+            disabled={listaTratamentos.itensFiltrados.length === 0}
+            onClick={onBaixarCsvTratamentos}
+          >
+            Baixar relatório (CSV)
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            style={{ fontSize: 13 }}
+            disabled={listaTratamentos.itensFiltrados.length === 0}
+            onClick={onImprimirTratamentos}
+          >
+            Imprimir / PDF
+          </button>
+          <span style={{ fontSize: 12, color: "#000000" }}>
+            O relatório segue o período filtrado (agora:{" "}
+            {rotuloPeriodoTratamentos()}).
+          </span>
         </div>
-
+        <ControlesListaPaginada
+          ordem={listaTratamentos.ordem}
+          onAlternarOrdem={listaTratamentos.alternarOrdem}
+          qtdPorPagina={listaTratamentos.qtdPorPagina}
+          onMudarQtdPorPagina={listaTratamentos.mudarQtdPorPagina}
+          pagina={listaTratamentos.pagina}
+          totalPaginas={listaTratamentos.totalPaginas}
+          popupAberto={listaTratamentos.popupAberto}
+          onAbrirPopup={listaTratamentos.abrirPopup}
+          onFecharPopup={listaTratamentos.fecharPopup}
+          onSelecionarPagina={listaTratamentos.irParaPagina}
+          filtroData={{
+            dataInicio: listaTratamentos.dataInicio,
+            onDataInicio: listaTratamentos.setDataInicio,
+            dataFim: listaTratamentos.dataFim,
+            onDataFim: listaTratamentos.setDataFim,
+            rotulo: "horário do ajuste",
+          }}
+          tituloPopup="Tratamentos de ponto"
+        >
         <table style={{ marginTop: 8 }}>
           <thead>
             <tr>
@@ -1908,7 +2009,7 @@ export function MotoristaDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {tratamentosExibidos.map((t) => (
+            {listaTratamentos.itensExibidos.map((t) => (
               <tr key={t.id}>
                 <td>{t.tipoEvento}</td>
                 <td>{formatarRegistro(t.timestampEvento, t.fusoOffsetMin)}</td>
@@ -1935,24 +2036,18 @@ export function MotoristaDetailPage() {
                 </td>
               </tr>
             ))}
-            {tratamentos.length === 0 && (
+            {listaTratamentos.itensFiltrados.length === 0 && (
               <tr>
                 <td colSpan={7} style={{ color: "#000000" }}>
-                  Nenhum tratamento lançado.
+                  {tratamentos.length === 0
+                    ? "Nenhum tratamento lançado."
+                    : "Nenhum tratamento no período filtrado."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-
-        {popupPaginacaoTratamentosAberto && (
-          <PaginacaoPopup
-            paginaAtual={paginaTratamentosEfetiva}
-            totalPaginas={totalPaginasTratamentos}
-            onSelecionarPagina={setPaginaTratamentos}
-            onFechar={() => setPopupPaginacaoTratamentosAberto(false)}
-          />
-        )}
+        </ControlesListaPaginada>
       </div>
 
       <div className="card">

@@ -118,7 +118,8 @@ export function EmpresasPage() {
                 onDataFim: paginacao.setDataFim,
                 rotulo: "data de cadastro",
               }}
-            />
+ tituloPopup="Empresas"
+>
             <table>
               <thead>
                 <tr>
@@ -142,6 +143,7 @@ export function EmpresasPage() {
                 )}
               </tbody>
             </table>
+</ControlesListaPaginada>
           </>
         )}
       </div>

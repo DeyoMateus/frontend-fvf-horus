@@ -283,7 +283,8 @@ export function AjudantesPage() {
                 onDataFim: paginacao.setDataFim,
                 rotulo: "data de cadastro",
               }}
-            />
+ tituloPopup="Ajudantes"
+>
             <table>
               <thead>
                 <tr>
@@ -402,6 +403,7 @@ export function AjudantesPage() {
                 )}
               </tbody>
             </table>
+</ControlesListaPaginada>
           </>
         )}
       </div>
