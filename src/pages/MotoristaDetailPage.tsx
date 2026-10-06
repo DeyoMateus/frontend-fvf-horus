@@ -582,6 +582,82 @@ export function MotoristaDetailPage() {
     (t) => t.timestampEvento,
   );
 
+  // Rodada 157 , integridade: a lista de divergências não pode crescer sem
+  // limite na tela. Por padrão só as PENDENTES; filtro de status e de período
+  // (De/Até pelo horário do evento), "mostrar N por vez" (100 abre popup) e
+  // exportação do que está filtrado.
+  const [filtroStatusDivergencia, setFiltroStatusDivergencia] = useState<
+    "PENDENTES" | "REGULARIZADAS" | "TODAS"
+  >("PENDENTES");
+  const divergenciasPorStatus = (integridade?.divergencias ?? []).filter((d) =>
+    filtroStatusDivergencia === "TODAS"
+      ? true
+      : filtroStatusDivergencia === "PENDENTES"
+        ? !d.aceita
+        : d.aceita,
+  );
+  const listaDivergencias = useListaPaginada(
+    divergenciasPorStatus,
+    (d) => d.timestampEvento,
+  );
+  const CABECALHOS_RELATORIO_DIVERGENCIAS = [
+    "Evento nº",
+    "Tipo",
+    "Horário do evento",
+    "Lançado em",
+    "Situação",
+    "Regularizado por",
+    "Regularizado em",
+    "Motivo da regularização",
+    "Explicação",
+  ];
+  function linhasRelatorioDivergencias(): string[][] {
+    return listaDivergencias.itensFiltrados.map((d) => [
+      String(d.sequencial),
+      d.tipoEvento ?? "",
+      d.timestampEvento
+        ? new Date(d.timestampEvento).toLocaleString("pt-BR")
+        : "",
+      d.criadoEm ? new Date(d.criadoEm).toLocaleString("pt-BR") : "",
+      d.aceita ? "Regularizada" : "Pendente",
+      d.aceite?.aceitoPorNome ?? "",
+      d.aceite ? new Date(d.aceite.aceitoEm).toLocaleString("pt-BR") : "",
+      d.aceite?.motivo ?? "",
+      d.explicacao,
+    ]);
+  }
+  function rotuloPeriodoDivergencias() {
+    const { dataInicio, dataFim } = listaDivergencias;
+    const status =
+      filtroStatusDivergencia === "PENDENTES"
+        ? "pendentes"
+        : filtroStatusDivergencia === "REGULARIZADAS"
+          ? "regularizadas"
+          : "todas";
+    if (!dataInicio && !dataFim) return `${status}, qualquer período`;
+    const f = (d: string) =>
+      new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
+    return `${status}, ${dataInicio ? f(dataInicio) : "início"} a ${dataFim ? f(dataFim) : "hoje"}`;
+  }
+  function onBaixarCsvDivergencias() {
+    baixarCsvTabela(
+      `integridade-divergencias-${motorista?.nome ?? motoristaId}.csv`.replace(
+        /\s+/g,
+        "-",
+      ),
+      CABECALHOS_RELATORIO_DIVERGENCIAS,
+      linhasRelatorioDivergencias(),
+    );
+  }
+  function onImprimirDivergencias() {
+    imprimirTabela(
+      `Integridade da cadeia: divergências - ${motorista?.nome ?? ""}`,
+      `Filtro: ${rotuloPeriodoDivergencias()}`,
+      CABECALHOS_RELATORIO_DIVERGENCIAS,
+      linhasRelatorioDivergencias(),
+    );
+  }
+
   function linhasRelatorioTratamentos(): string[][] {
     return listaTratamentos.itensFiltrados.map((t) => [
       t.tipoEvento,
@@ -1244,7 +1320,81 @@ export function MotoristaDetailPage() {
             </ul>
             {integridade.divergencias.length > 0 && (
               <div style={{ marginTop: -4 }}>
-                {integridade.divergencias.map((d) => (
+                <p style={{ fontSize: 13, color: "#000000", margin: "0 0 8px" }}>
+                  {integridade.divergencias.filter((d) => !d.aceita).length}{" "}
+                  pendente(s) e{" "}
+                  {integridade.divergencias.filter((d) => d.aceita).length}{" "}
+                  regularizada(s) no total.
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <label style={{ fontSize: 13 }}>
+                    Mostrar{" "}
+                    <select
+                      value={filtroStatusDivergencia}
+                      onChange={(e) => {
+                        setFiltroStatusDivergencia(
+                          e.target.value as
+                            | "PENDENTES"
+                            | "REGULARIZADAS"
+                            | "TODAS",
+                        );
+                        listaDivergencias.irParaPagina(1);
+                      }}
+                    >
+                      <option value="PENDENTES">Só as pendentes</option>
+                      <option value="REGULARIZADAS">Só as regularizadas</option>
+                      <option value="TODAS">Todas</option>
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="secondary"
+                    style={{ fontSize: 13 }}
+                    disabled={listaDivergencias.itensFiltrados.length === 0}
+                    onClick={onBaixarCsvDivergencias}
+                  >
+                    Baixar histórico (CSV)
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    style={{ fontSize: 13 }}
+                    disabled={listaDivergencias.itensFiltrados.length === 0}
+                    onClick={onImprimirDivergencias}
+                  >
+                    Imprimir / PDF
+                  </button>
+                </div>
+                <ControlesListaPaginada
+                  ordem={listaDivergencias.ordem}
+                  onAlternarOrdem={listaDivergencias.alternarOrdem}
+                  qtdPorPagina={listaDivergencias.qtdPorPagina}
+                  onMudarQtdPorPagina={listaDivergencias.mudarQtdPorPagina}
+                  pagina={listaDivergencias.pagina}
+                  totalPaginas={listaDivergencias.totalPaginas}
+                  popupAberto={listaDivergencias.popupAberto}
+                  onAbrirPopup={listaDivergencias.abrirPopup}
+                  onFecharPopup={listaDivergencias.fecharPopup}
+                  onSelecionarPagina={listaDivergencias.irParaPagina}
+                  filtroData={{
+                    dataInicio: listaDivergencias.dataInicio,
+                    onDataInicio: listaDivergencias.setDataInicio,
+                    dataFim: listaDivergencias.dataFim,
+                    onDataFim: listaDivergencias.setDataFim,
+                    rotulo: "horário do evento",
+                  }}
+                  tituloPopup="Divergências de integridade"
+                >
+                  <div>
+                    {listaDivergencias.itensExibidos.map((d) => (
                   <div
                     key={d.sequencial}
                     style={{
@@ -1295,7 +1445,14 @@ export function MotoristaDetailPage() {
                       </button>
                     )}
                   </div>
-                ))}
+                    ))}
+                    {listaDivergencias.itensFiltrados.length === 0 && (
+                      <p style={{ fontSize: 13, color: "#000000" }}>
+                        Nenhuma divergência neste filtro.
+                      </p>
+                    )}
+                  </div>
+                </ControlesListaPaginada>
               </div>
             )}
           </div>
