@@ -24,6 +24,7 @@ import { SuperAdminDashboardPage } from "./pages/SuperAdminDashboardPage";
 import { SuperAdminGrupoDetailPage } from "./pages/SuperAdminGrupoDetailPage";
 import { SuperAdminAuditoriaPage } from "./pages/SuperAdminAuditoriaPage";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
+import { EventoIntegridadePage } from "./pages/EventoIntegridadePage";
 import { EsqueciSenhaPage } from "./pages/EsqueciSenhaPage";
 import { RedefinirSenhaPage } from "./pages/RedefinirSenhaPage";
 import { SuperAdminEsqueciSenhaPage } from "./pages/SuperAdminEsqueciSenhaPage";
@@ -66,6 +67,10 @@ export function App() {
                     <Route
                       path="/motoristas/:motoristaId"
                       element={<MotoristaDetailPage />}
+                    />
+                    <Route
+                      path="/motoristas/:motoristaId/integridade/:sequencial"
+                      element={<EventoIntegridadePage />}
                     />
                     <Route path="/ajudantes" element={<AjudantesPage />} />
                     <Route

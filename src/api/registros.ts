@@ -17,6 +17,58 @@ export function verificarIntegridade(motoristaId: string) {
     .then((r) => r.data);
 }
 
+export interface ResumoEventoVizinho {
+  sequencial: number;
+  tipoEvento: string;
+  timestampEvento: string;
+  criadoEm: string;
+}
+
+/** Rodada 158: análise detalhada de um único evento da cadeia de integridade. */
+export interface AnaliseEventoIntegridade {
+  motoristaId: string;
+  divergente: boolean;
+  explicacao: string;
+  evento: {
+    sequencial: number;
+    tipoEvento: string;
+    timestampEvento: string;
+    criadoEm: string;
+    latitude: number | null;
+    longitude: number | null;
+    precisaoGpsM: number | null;
+    odometro: number | null;
+    observacao: string | null;
+    fusoOffsetMin: number | null;
+    deviceUuidUsado: string;
+  };
+  anterior: ResumoEventoVizinho | null;
+  proximo: ResumoEventoVizinho | null;
+  verificacao: {
+    hashAnteriorConfere: boolean;
+    hashAnteriorGravado: string;
+    hashAnteriorEsperado: string;
+    hashConfere: boolean;
+    hashGravado: string;
+    hashRecalculado: string;
+    payloadCanonico: string;
+    tentativas: Array<{ descricao: string; bate: boolean }>;
+    variacaoQueBate: string | null;
+  };
+  aceite: { motivo: string; aceitoPorNome: string; aceitoEm: string } | null;
+}
+
+export function analisarEventoIntegridade(
+  motoristaId: string,
+  sequencial: number,
+) {
+  return api
+    .get<AnaliseEventoIntegridade>(
+      `/registros-jornada/motorista/${motoristaId}/integridade/${sequencial}`,
+    )
+    .then((r) => r.data);
+}
+
 /** Pedido do usuário: aceitar/regularizar uma divergência específica, pra ela parar de aparecer como problema em aberto (fica documentada, nunca apagada). */
 export function aceitarDivergenciaIntegridade(
   motoristaId: string,

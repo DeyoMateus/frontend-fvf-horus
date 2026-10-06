@@ -1416,7 +1416,13 @@ export function MotoristaDetailPage() {
                       {d.criadoEm
                         ? `, lançado em ${new Date(d.criadoEm).toLocaleString("pt-BR")}`
                         : ""}
-                      .
+                      .{" "}
+                      <Link
+                        to={`/motoristas/${motoristaId}/integridade/${d.sequencial}`}
+                        style={{ fontSize: 12, fontWeight: 600 }}
+                      >
+                        Analisar evento →
+                      </Link>
                     </p>
                     <p style={{ margin: "0 0 8px" }}>{d.explicacao}</p>
                     {d.aceita && d.aceite ? (
