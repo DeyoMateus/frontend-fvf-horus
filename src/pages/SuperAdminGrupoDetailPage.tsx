@@ -501,7 +501,7 @@ export function SuperAdminGrupoDetailPage() {
             <div>
               <label>E-mail</label>
               <input
-                type="email"
+                type="email" maxLength={254}
                 autoComplete="off"
                 value={formNovoUsuario.email}
                 onChange={(ev) =>
@@ -513,7 +513,7 @@ export function SuperAdminGrupoDetailPage() {
             <div>
               <label>Senha inicial</label>
               <input
-                type="password"
+                type="password" maxLength={128}
                 autoComplete="new-password"
                 minLength={8}
                 value={formNovoUsuario.senha}
@@ -607,7 +607,7 @@ export function SuperAdminGrupoDetailPage() {
                       <div>
                         <label>E-mail</label>
                         <input
-                          type="email"
+                          type="email" maxLength={254}
                           autoComplete="off"
                           value={formUsuario.email}
                           onChange={(ev) =>

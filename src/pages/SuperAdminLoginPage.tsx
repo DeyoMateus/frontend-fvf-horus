@@ -37,9 +37,9 @@ export function SuperAdminLoginPage() {
         <p style={{ color: '#000000', fontSize: 13, marginTop: -8 }}>Super admin da plataforma</p>
         <form onSubmit={onSubmit}>
           <label>E-mail</label>
-          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="email" maxLength={254} autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <label>Senha</label>
-          <input type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+          <input type="password" maxLength={128} autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
           {erro && <p className="error-text">{erro}</p>}
           <button type="submit" disabled={enviando}>
             {enviando ? 'Entrando...' : 'Entrar'}

@@ -151,7 +151,7 @@ export function SuperAdminDashboardPage() {
             <div>
               <label>E-mail do admin inicial</label>
               <input
-                type="email"
+                type="email" maxLength={254}
                 autoComplete="off"
                 value={form.emailAdmin}
                 onChange={(e) =>
@@ -163,7 +163,7 @@ export function SuperAdminDashboardPage() {
             <div>
               <label>Senha inicial do admin</label>
               <input
-                type="password"
+                type="password" maxLength={128}
                 autoComplete="new-password"
                 minLength={8}
                 value={form.senhaAdmin}

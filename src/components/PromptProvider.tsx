@@ -103,7 +103,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
             {pedido.titulo && <h3>{pedido.titulo}</h3>}
             <p>{pedido.mensagem}</p>
             {pedido.multilinha ? (
-              <textarea
+              <textarea maxLength={400}
                 autoFocus
                 rows={3}
                 placeholder={pedido.placeholder}

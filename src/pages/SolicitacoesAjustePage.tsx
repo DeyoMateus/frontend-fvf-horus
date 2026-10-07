@@ -330,7 +330,7 @@ export function SolicitacoesAjustePage() {
                             ? "Processando..."
                             : "Aprovar"}
                         </button>
-                        <textarea
+                        <textarea maxLength={400}
                           placeholder="Motivo da rejeição (obrigatório se rejeitar)"
                           rows={2}
                           value={motivoRejeicao[s.id] ?? ""}

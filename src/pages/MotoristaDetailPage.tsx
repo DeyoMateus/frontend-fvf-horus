@@ -2055,7 +2055,7 @@ export function MotoristaDetailPage() {
             </p>
           )}
           <label>Motivo (mínimo 10 caracteres)</label>
-          <textarea
+          <textarea maxLength={400}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             rows={3}

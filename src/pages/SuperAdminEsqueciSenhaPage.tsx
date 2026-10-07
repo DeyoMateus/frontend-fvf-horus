@@ -37,7 +37,7 @@ export function SuperAdminEsqueciSenhaPage() {
           <form onSubmit={onSubmit}>
             <label>E-mail</label>
             <input
-              type="email"
+              type="email" maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

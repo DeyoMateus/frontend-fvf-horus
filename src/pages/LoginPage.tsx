@@ -49,7 +49,7 @@ export function LoginPage() {
         <form onSubmit={onSubmit}>
           <label>E-mail</label>
           <input
-            type="email"
+            type="email" maxLength={254}
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -57,7 +57,7 @@ export function LoginPage() {
           />
           <label>Senha</label>
           <input
-            type="password"
+            type="password" maxLength={128}
             autoComplete="current-password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}

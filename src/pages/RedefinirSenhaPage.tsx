@@ -40,7 +40,7 @@ export function RedefinirSenhaPage() {
         ) : (
           <form onSubmit={onSubmit}>
             <label>Nova senha</label>
-            <input type="password" autoComplete="new-password" minLength={8} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required />
+            <input type="password" maxLength={128} autoComplete="new-password" minLength={8} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required />
             {erro && <p className="error-text">{erro}</p>}
             <button type="submit" disabled={enviando}>
               {enviando ? 'Salvando...' : 'Redefinir senha'}

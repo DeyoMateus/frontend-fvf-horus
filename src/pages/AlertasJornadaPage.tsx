@@ -481,7 +481,7 @@ export function AlertasJornadaPage() {
                                   chegada" ou "corrigido via Tratamento de Ponto
                                   de dd/mm":
                                 </label>
-                                <textarea
+                                <textarea maxLength={400}
                                   value={observacaoPorAlerta[a.id] ?? ""}
                                   onChange={(e) =>
                                     setObservacaoPorAlerta((prev) => ({

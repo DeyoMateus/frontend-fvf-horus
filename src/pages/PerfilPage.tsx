@@ -99,7 +99,7 @@ export function PerfilPage() {
 
           <label style={{ marginTop: 8, display: "block" }}>E-mail</label>
           <input
-            type="email"
+            type="email" maxLength={254}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
