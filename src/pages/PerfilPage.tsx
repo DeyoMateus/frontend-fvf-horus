@@ -20,15 +20,23 @@ import { TelefoneInput } from "../components/TelefoneInput";
  * preciso sair e entrar de novo pra usar o e-mail novo no próximo
  * login (a sessão atual continua válida normalmente até então).
  */
+// A tela trabalha em horas (ex.: 4.75 = 4h45); a API continua em minutos.
+function minParaHoras(min: number): string {
+  return String(Math.round((min / 60) * 100) / 100);
+}
+function horasParaMin(h: string): number {
+  return Math.round(Number(String(h).replace(",", ".")) * 60);
+}
+
 export function PerfilPage() {
   const [perfil, setPerfil] = useState<UsuarioEmpresaListado | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefoneWhatsapp, setTelefoneWhatsapp] = useState("");
   const [telefoneGr, setTelefoneGr] = useState("");
-  const [limInfo, setLimInfo] = useState("180");
-  const [limAtencao, setLimAtencao] = useState("285");
-  const [limCritico, setLimCritico] = useState("300");
+  const [limInfo, setLimInfo] = useState("3");
+  const [limAtencao, setLimAtencao] = useState("4.75");
+  const [limCritico, setLimCritico] = useState("5");
   const [salvandoGr, setSalvandoGr] = useState(false);
   const [erroGr, setErroGr] = useState<string | null>(null);
   const [sucessoGr, setSucessoGr] = useState<string | null>(null);
@@ -49,9 +57,9 @@ export function PerfilPage() {
       setTelefoneGr(dados.telefoneGerenciamentoRisco ?? "");
       try {
         const l = await obterLimitesEspera();
-        setLimInfo(String(l.infoMin));
-        setLimAtencao(String(l.atencaoMin));
-        setLimCritico(String(l.criticoMin));
+        setLimInfo(minParaHoras(l.infoMin));
+        setLimAtencao(minParaHoras(l.atencaoMin));
+        setLimCritico(minParaHoras(l.criticoMin));
       } catch {
         /* mantém os padrões na tela */
       }
@@ -104,9 +112,9 @@ export function PerfilPage() {
         setPerfil(atualizado);
       }
       await atualizarLimitesEspera({
-        infoMin: Number(limInfo),
-        atencaoMin: Number(limAtencao),
-        criticoMin: Number(limCritico),
+        infoMin: horasParaMin(limInfo),
+        atencaoMin: horasParaMin(limAtencao),
+        criticoMin: horasParaMin(limCritico),
       });
       setSucessoGr("Configurações de GR salvas.");
     } catch (err: any) {
@@ -198,28 +206,28 @@ export function PerfilPage() {
 
           <h4 style={{ marginBottom: 4 }}>Limites de espera do motorista</h4>
           <p style={{ fontSize: 12, color: "#000000", marginTop: 0 }}>
-            Tempo acumulado de espera em carga/descarga na jornada, em minutos.
-            A referência legal é 300 min (5h). Padrão: 180 / 285 / 300.
+            Tempo acumulado de espera em carga/descarga na jornada, em horas
+            (ex.: 4,75 = 4h45). A referência legal é 5 h. Padrão: 3 / 4,75 / 5.
           </p>
-          <label>Aviso informativo (min)</label>
+          <label>Aviso informativo (horas)</label>
           <input
-            type="number" min={15} max={1440} step={1} required
+            type="number" min={0.25} max={24} step={0.25} required
             value={limInfo}
             onChange={(e) => setLimInfo(e.target.value)}
           />
           <label style={{ marginTop: 8, display: "block" }}>
-            Próximo do limite (min)
+            Próximo do limite (horas)
           </label>
           <input
-            type="number" min={15} max={1440} step={1} required
+            type="number" min={0.25} max={24} step={0.25} required
             value={limAtencao}
             onChange={(e) => setLimAtencao(e.target.value)}
           />
           <label style={{ marginTop: 8, display: "block" }}>
-            Limite atingido (min)
+            Limite atingido (horas)
           </label>
           <input
-            type="number" min={15} max={1440} step={1} required
+            type="number" min={0.25} max={24} step={0.25} required
             value={limCritico}
             onChange={(e) => setLimCritico(e.target.value)}
           />

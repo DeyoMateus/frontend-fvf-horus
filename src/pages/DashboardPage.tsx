@@ -62,6 +62,7 @@ function existeAlertaAbertoHaMuitoTempo(
 const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   DIRECAO_CONTINUA_PROXIMA_LIMITE: "Direção contínua perto do limite",
   DIRECAO_CONTINUA_EXCEDIDA: "Direção contínua excedida",
+  DIRECAO_RETOMADA_SEM_PAUSA: "Direção retomada sem pausa",
   JORNADA_DIRECAO_PROXIMA_LIMITE: "Jornada de direção perto do limite",
   JORNADA_DIRECAO_EXCEDIDA: "Jornada de direção excedida",
   ESPERA_PROXIMA_LIMITE: "Espera perto do limite",
