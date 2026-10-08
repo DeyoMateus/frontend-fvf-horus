@@ -48,6 +48,10 @@ export function ListaEmPopup({
             alignItems: "center",
             justifyContent: "center",
             zIndex: 45,
+            // Mesma folga em cima, embaixo, à esquerda e à direita, em
+            // qualquer tamanho de tela (5% da altura/largura, mínimo 16px).
+            boxSizing: "border-box",
+            padding: "max(16px, 5vh) max(16px, 5vw)",
           }}
         >
           <div
@@ -55,8 +59,11 @@ export function ListaEmPopup({
             className="card"
             style={{
               width: 1100,
-              maxWidth: "96vw",
-              maxHeight: "90vh",
+              maxWidth: "100%",
+              maxHeight: "100%",
+              boxSizing: "border-box",
+              // .card tem margin-bottom: 20px, que empurrava o popup para cima.
+              margin: 0,
               overflow: "auto",
               padding: 20,
             }}
