@@ -113,8 +113,8 @@ export function Layout() {
               <div>{usuario?.papel}</div>
             </div>
           )}
-          <NavLink to="/perfil" className="botao-perfil" title="Meu perfil">
-            {efetivamenteColapsada ? "PF" : "Perfil"}
+          <NavLink to="/perfil" className="botao-perfil" title="Configuração">
+            {efetivamenteColapsada ? "CF" : "Configuração"}
           </NavLink>
           <button className="secondary" onClick={sair} title="Sair">
             {efetivamenteColapsada ? "⏻" : "Sair"}

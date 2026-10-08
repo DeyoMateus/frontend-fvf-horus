@@ -31,3 +31,27 @@ export function atualizarMeuPerfil(input: UpdatePerfilProprioInput) {
     .patch<UsuarioEmpresaListado>("/usuarios-empresa/me", input)
     .then((r) => r.data);
 }
+
+// ===== Limites de espera do grupo (Rodada 174) =====
+export interface LimitesEspera {
+  infoMin: number;
+  atencaoMin: number;
+  criticoMin: number;
+}
+
+export function obterLimitesEspera() {
+  return api
+    .get<LimitesEspera & { padrao: LimitesEspera }>(
+      "/usuarios-empresa/limites-espera",
+    )
+    .then((r) => r.data);
+}
+
+export function atualizarLimitesEspera(input: LimitesEspera) {
+  return api
+    .patch<LimitesEspera & { padrao: LimitesEspera }>(
+      "/usuarios-empresa/limites-espera",
+      input,
+    )
+    .then((r) => r.data);
+}

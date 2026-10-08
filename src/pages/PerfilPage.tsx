@@ -1,5 +1,10 @@
 import { FormEvent, useEffect, useState } from "react";
-import { atualizarMeuPerfil, obterMeuPerfil } from "../api/usuariosEmpresa";
+import {
+  atualizarLimitesEspera,
+  atualizarMeuPerfil,
+  obterLimitesEspera,
+  obterMeuPerfil,
+} from "../api/usuariosEmpresa";
 import type { UsuarioEmpresaListado } from "../api/types";
 import { TelefoneInput } from "../components/TelefoneInput";
 
@@ -21,6 +26,12 @@ export function PerfilPage() {
   const [email, setEmail] = useState("");
   const [telefoneWhatsapp, setTelefoneWhatsapp] = useState("");
   const [telefoneGr, setTelefoneGr] = useState("");
+  const [limInfo, setLimInfo] = useState("180");
+  const [limAtencao, setLimAtencao] = useState("285");
+  const [limCritico, setLimCritico] = useState("300");
+  const [salvandoGr, setSalvandoGr] = useState(false);
+  const [erroGr, setErroGr] = useState<string | null>(null);
+  const [sucessoGr, setSucessoGr] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -36,6 +47,14 @@ export function PerfilPage() {
       setEmail(dados.email);
       setTelefoneWhatsapp(dados.telefoneWhatsapp ?? "");
       setTelefoneGr(dados.telefoneGerenciamentoRisco ?? "");
+      try {
+        const l = await obterLimitesEspera();
+        setLimInfo(String(l.infoMin));
+        setLimAtencao(String(l.atencaoMin));
+        setLimCritico(String(l.criticoMin));
+      } catch {
+        /* mantém os padrões na tela */
+      }
     } catch {
       setErro("Não foi possível carregar seu perfil.");
     } finally {
@@ -57,9 +76,6 @@ export function PerfilPage() {
         nome: nome.trim(),
         email: email.trim(),
         telefoneWhatsapp: telefoneWhatsapp.trim() || undefined,
-        ...(perfil?.papel === "ADMIN"
-          ? { telefoneGerenciamentoRisco: telefoneGr.trim() || null }
-          : {}),
       });
       setPerfil(atualizado);
       setSucesso("Perfil atualizado com sucesso.");
@@ -75,18 +91,49 @@ export function PerfilPage() {
     }
   }
 
+  async function salvarGr(e: FormEvent) {
+    e.preventDefault();
+    setErroGr(null);
+    setSucessoGr(null);
+    setSalvandoGr(true);
+    try {
+      if (perfil?.papel === "ADMIN") {
+        const atualizado = await atualizarMeuPerfil({
+          telefoneGerenciamentoRisco: telefoneGr.trim() || null,
+        });
+        setPerfil(atualizado);
+      }
+      await atualizarLimitesEspera({
+        infoMin: Number(limInfo),
+        atencaoMin: Number(limAtencao),
+        criticoMin: Number(limCritico),
+      });
+      setSucessoGr("Configurações de GR salvas.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      setErroGr(
+        Array.isArray(msg)
+          ? msg.join(" ")
+          : (msg ?? "Não foi possível salvar as configurações."),
+      );
+    } finally {
+      setSalvandoGr(false);
+    }
+  }
+
   if (carregando) return <p>Carregando…</p>;
 
   return (
     <div>
-      <h2>Meu perfil</h2>
+      <h2>Configuração</h2>
       <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
         Edite seu nome, contato (WhatsApp) e e-mail de acesso. Papel de acesso e
         status (ativo/inativo) são gerenciados pelo super admin da plataforma.
         Fale com quem administra sua conta FVF Hórus caso precise alterar isso.
       </p>
 
-      <div className="card" style={{ maxWidth: 480, margin: "0 auto" }}>
+      <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
+        <h3 style={{ marginTop: 0 }}>Dados do usuário</h3>
         <form onSubmit={onSubmit}>
           <label>Nome</label>
           <input
@@ -117,19 +164,6 @@ export function PerfilPage() {
             onChange={setTelefoneWhatsapp}
           />
 
-          {perfil?.papel === "ADMIN" && (
-            <>
-              <label style={{ marginTop: 8, display: "block" }}>
-                WhatsApp da equipe de Gerenciamento de Risco
-              </label>
-              <TelefoneInput value={telefoneGr} onChange={setTelefoneGr} />
-              <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
-                Os alertas da operação também chegam por WhatsApp neste número.
-                Deixe em branco para não enviar.
-              </p>
-            </>
-          )}
-
           <label style={{ marginTop: 12, display: "block" }}>
             Papel de acesso
           </label>
@@ -143,6 +177,64 @@ export function PerfilPage() {
           <div style={{ marginTop: 12 }}>
             <button type="submit" disabled={salvando}>
               {salvando ? "Salvando…" : "Salvar alterações"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="card" style={{ maxWidth: 480, margin: "0 auto" }}>
+        <h3 style={{ marginTop: 0 }}>Gerenciamento de Risco (GR)</h3>
+        <form onSubmit={salvarGr}>
+          {perfil?.papel === "ADMIN" && (
+            <>
+              <label>WhatsApp da equipe de Gerenciamento de Risco</label>
+              <TelefoneInput value={telefoneGr} onChange={setTelefoneGr} />
+              <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
+                Os alertas da operação também chegam por WhatsApp neste número.
+                Deixe em branco para não enviar.
+              </p>
+            </>
+          )}
+
+          <h4 style={{ marginBottom: 4 }}>Limites de espera do motorista</h4>
+          <p style={{ fontSize: 12, color: "#000000", marginTop: 0 }}>
+            Tempo acumulado de espera em carga/descarga na jornada, em minutos.
+            A referência legal é 300 min (5h). Padrão: 180 / 285 / 300.
+          </p>
+          <label>Aviso informativo (min)</label>
+          <input
+            type="number" min={15} max={1440} step={1} required
+            value={limInfo}
+            onChange={(e) => setLimInfo(e.target.value)}
+          />
+          <label style={{ marginTop: 8, display: "block" }}>
+            Próximo do limite (min)
+          </label>
+          <input
+            type="number" min={15} max={1440} step={1} required
+            value={limAtencao}
+            onChange={(e) => setLimAtencao(e.target.value)}
+          />
+          <label style={{ marginTop: 8, display: "block" }}>
+            Limite atingido (min)
+          </label>
+          <input
+            type="number" min={15} max={1440} step={1} required
+            value={limCritico}
+            onChange={(e) => setLimCritico(e.target.value)}
+          />
+          <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
+            Os valores precisam estar em ordem crescente. Vale para jornadas
+            novas e para as que ainda estão em andamento.
+          </p>
+
+          {erroGr && <p className="error-text">{erroGr}</p>}
+          {sucessoGr && (
+            <p style={{ color: "#166534", fontSize: 13 }}>{sucessoGr}</p>
+          )}
+          <div style={{ marginTop: 12 }}>
+            <button type="submit" disabled={salvandoGr}>
+              {salvandoGr ? "Salvando…" : "Salvar"}
             </button>
           </div>
         </form>
