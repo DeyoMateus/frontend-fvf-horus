@@ -39,6 +39,7 @@ const TIPOS_FRAUDE: TipoAlertaJornada[] = [
   "ODOMETRO_REGRESSIVO",
   "INTEGRIDADE_DISPOSITIVO_SUSPEITA",
   "OCIOSIDADE_DIRECAO_SUSPEITA",
+  "SEQUENCIA_EVENTOS_INCONSISTENTE",
   // Rodada 87 , mesma categoria (antifraude), evento sincronizado com
   // atraso suspeito demais pra ser só "ficou sem sinal".
   "SINCRONIZACAO_TARDIA_SUSPEITA",
@@ -63,6 +64,8 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   DIRECAO_CONTINUA_PROXIMA_LIMITE: "Direção contínua perto do limite",
   DIRECAO_CONTINUA_EXCEDIDA: "Direção contínua excedida",
   DIRECAO_RETOMADA_SEM_PAUSA: "Direção retomada sem pausa",
+  SEQUENCIA_EVENTOS_INCONSISTENTE: "Sequência de eventos inconsistente",
+  JORNADA_ABERTA_PROLONGADA: "Jornada aberta há muito tempo",
   JORNADA_DIRECAO_PROXIMA_LIMITE: "Jornada de direção perto do limite",
   JORNADA_DIRECAO_EXCEDIDA: "Jornada de direção excedida",
   ESPERA_PROXIMA_LIMITE: "Espera perto do limite",
@@ -699,12 +702,13 @@ export function DashboardPage() {
           style={{ borderColor: "#fca5a5", marginBottom: 24 }}
         >
           <strong style={{ color: "#b91c1c" }}>
-            Jornadas abertas há muito tempo
+            Jornadas aguardando encerramento pelo gestor
           </strong>
           <p style={{ fontSize: 12, color: "#000000", marginTop: 4 }}>
-            Início de jornada batido há mais de 16h sem o fim correspondente. O
-            motorista pode ter esquecido de encerrar, ou o turno está
-            anormalmente longo.
+            Início de jornada batido há mais de 14h sem o fim correspondente. O
+            sistema nunca encerra a jornada sozinho: é preciso encerrá-la aqui,
+            lançando o Fim de jornada com a justificativa. Enquanto estiver
+            aberta, o alerta crítico desta jornada não pode ser dispensado.
           </p>
           <table>
             <thead>
@@ -712,6 +716,7 @@ export function DashboardPage() {
                 <th>Motorista</th>
                 <th>Início da jornada</th>
                 <th>Horas em aberto</th>
+                <th>Ação</th>
               </tr>
             </thead>
             <tbody>
@@ -723,6 +728,13 @@ export function DashboardPage() {
                   <td>{new Date(j.desde).toLocaleString("pt-BR")}</td>
                   <td style={{ color: "#b91c1c", fontWeight: 600 }}>
                     {j.horasAberta}h
+                  </td>
+                  <td>
+                    <Link
+                      to={`/motoristas/${j.motoristaId}?secao=encerrar-jornada`}
+                    >
+                      Encerrar jornada
+                    </Link>
                   </td>
                 </tr>
               ))}

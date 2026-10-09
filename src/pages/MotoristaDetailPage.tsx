@@ -152,6 +152,17 @@ export function MotoristaDetailPage() {
   const [documentosCarga, setDocumentosCarga] = useState<DocumentoCarga[]>([]);
   const [carregando, setCarregando] = useState(true);
 
+  const cardTratamentoRef = useRef<HTMLDivElement | null>(null);
+  const veioParaEncerrarJornada =
+    searchParams.get("secao") === "encerrar-jornada";
+  useEffect(() => {
+    if (carregando || !veioParaEncerrarJornada) return;
+    cardTratamentoRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [carregando, veioParaEncerrarJornada]);
+
   useEffect(() => {
     if (carregando) return;
     if (searchParams.get("secao") !== "alertas-jornada") return;
@@ -319,6 +330,41 @@ export function MotoristaDetailPage() {
     const ordinal =
       ORDINAIS_PT[indiceCronologico] ?? `${indiceCronologico + 1}ª`;
     return `${ordinal} jornada do dia, de ${grupo.length}`;
+  }
+
+  // Rodada 186: ciclo legal = jornadas encadeadas (menos de 11h entre o fim
+  // de uma e o início da seguinte). A soma da direção do ciclo é o que
+  // dispara os alertas de 8h/10h, então o gestor precisa vê-la.
+  const cicloPorJornada = new Map<
+    (typeof jornadasDiariasOrdenadas)[number],
+    { totalDirecaoMin: number; qtd: number }
+  >();
+  {
+    const cronologicas = [...jornadasDiariasOrdenadas].reverse();
+    let grupoAtual: typeof cronologicas = [];
+    const fecharGrupo = () => {
+      if (grupoAtual.length === 0) return;
+      const info = {
+        totalDirecaoMin: grupoAtual.reduce(
+          (soma, x) => soma + x.totalDirecaoMin,
+          0,
+        ),
+        qtd: grupoAtual.length,
+      };
+      for (const x of grupoAtual) cicloPorJornada.set(x, info);
+      grupoAtual = [];
+    };
+    for (const j of cronologicas) {
+      const anterior = grupoAtual[grupoAtual.length - 1];
+      const encadeada =
+        anterior &&
+        !anterior.emAndamento &&
+        new Date(j.inicio).getTime() - new Date(anterior.fim).getTime() <
+          11 * 3_600_000;
+      if (!encadeada) fecharGrupo();
+      grupoAtual.push(j);
+    }
+    fecharGrupo();
   }
 
   const jornadasDiariasExibidas = jornadasDiariasOrdenadas.slice(
@@ -1638,22 +1684,33 @@ export function MotoristaDetailPage() {
             </select>
           </label>
         </div>
-        <p style={{ fontSize: 13, color: "#000000" }}>
-          Uma linha por JORNADA (um par início/fim de jornada), não por
-          dia-calendário. É normal, e legalmente relevante, o motorista abrir e
-          fechar jornada mais de uma vez na mesma data: quando isso acontece,
-          cada linha daquela data recebe o selo &quot;1ª/2ª jornada do dia&quot;
-          pra deixar claro que são jornadas distintas, não uma duplicação. O que
-          agrupa jornadas na mesma viagem não é mais um intervalo de tempo entre
-          elas: é o(s) CT-e que o motorista carrega. A viagem começa quando o 1º
-          CT-e é vinculado a ele e só termina quando todos os CT-e daquele grupo
-          forem entregues (um CT-e novo vinculado antes disso entra na mesma
-          viagem). A coluna &quot;Viagem&quot; mostra em qual jornada dela cada
-          linha está (ex.: 2/3 é a 2ª jornada de uma viagem com 3 jornadas); a
-          coluna &quot;CT-e&quot; mostra qual(is) CT-e definiram o agrupamento.
-          Uma jornada sem nenhum CT-e vinculado no período vira viagem avulsa
-          (1/1).
-        </p>
+        <div style={{ fontSize: 13, color: "#000000", marginBottom: 12 }}>
+          <p style={{ margin: "0 0 6px" }}>
+            Cada linha é uma <strong>jornada</strong> (do início ao fim de uma
+            jornada), e não um dia do calendário. Se o motorista encerrar e
+            abrir uma nova jornada no mesmo dia, as duas aparecem com o selo
+            &quot;1ª jornada do dia&quot; e &quot;2ª jornada do dia&quot;.
+          </p>
+          <p style={{ margin: "0 0 6px" }}>
+            <strong>Viagem:</strong> jornadas com o mesmo CT-e fazem parte da
+            mesma viagem. Ela começa quando o primeiro CT-e é vinculado ao
+            motorista e termina quando todos os CT-e do grupo são entregues. A
+            coluna mostra a posição da jornada na viagem (ex.: 2/3 = segunda
+            jornada de uma viagem com três).
+          </p>
+          <p style={{ margin: "0 0 6px" }}>
+            <strong>Direção do ciclo:</strong> soma da direção das jornadas
+            encadeadas, ou seja, aquelas com menos de 11h de descanso entre
+            uma e outra. É essa soma que dispara os alertas de 8h (atenção) e
+            10h (crítico). Fica em laranja a partir de 8h e em vermelho a
+            partir de 10h.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>CT-e:</strong> mostra quais CT-e formam a viagem. Se a
+            jornada não tem CT-e vinculado, ela é avulsa e a coluna Viagem fica
+            com &quot;-&quot;.
+          </p>
+        </div>
         <table>
           <thead>
             <tr>
@@ -1662,6 +1719,7 @@ export function MotoristaDetailPage() {
               <th>Fim</th>
               <th>Duração da jornada</th>
               <th>Direção</th>
+              <th>Direção do ciclo</th>
               <th>Espera</th>
               <th>Viagem</th>
               <th>CT-e</th>
@@ -1706,11 +1764,34 @@ export function MotoristaDetailPage() {
                   </td>
                   <td>{formatarMinutos(j.totalJornadaMin)}</td>
                   <td>{formatarMinutos(j.totalDirecaoMin)}</td>
+                  <td>
+                    {(() => {
+                      const ciclo = cicloPorJornada.get(j);
+                      if (!ciclo) return "-";
+                      const cor =
+                        ciclo.totalDirecaoMin >= 600
+                          ? "#b91c1c"
+                          : ciclo.totalDirecaoMin >= 480
+                            ? "#b45309"
+                            : "#000000";
+                      return (
+                        <span style={{ color: cor, fontWeight: 600 }}>
+                          {formatarMinutos(ciclo.totalDirecaoMin)}
+                          {ciclo.qtd > 1 && (
+                            <span style={{ fontSize: 11, fontWeight: 400 }}>
+                              {" "}
+                              ({ciclo.qtd} jornadas)
+                            </span>
+                          )}
+                        </span>
+                      );
+                    })()}
+                  </td>
                   <td>{formatarMinutos(j.totalEsperaMin)}</td>
                   <td>
                     {j.totalDiasViagem > 1
                       ? `${j.diaDaViagem}/${j.totalDiasViagem}`
-                      : ","}
+                      : "-"}
                   </td>
                   <td>
                     {j.ctesRelacionados.length > 0
@@ -1724,7 +1805,7 @@ export function MotoristaDetailPage() {
             })}
             {jornadasDiariasExibidas.length === 0 && (
               <tr>
-                <td colSpan={8} style={{ color: "#000000" }}>
+                <td colSpan={9} style={{ color: "#000000" }}>
                   Nenhuma jornada consolidada ainda.
                 </td>
               </tr>
@@ -1980,8 +2061,24 @@ export function MotoristaDetailPage() {
         )}
       </div>
 
-      <div className="card">
+      <div className="card" ref={cardTratamentoRef}>
         <h3 style={{ marginTop: 0 }}>Tratamento de ponto</h3>
+        {veioParaEncerrarJornada && (
+          <p
+            style={{
+              fontSize: 13,
+              color: "#b91c1c",
+              fontWeight: 600,
+              border: "1px solid #fca5a5",
+              borderRadius: 6,
+              padding: 8,
+            }}
+          >
+            Esta jornada está aberta há mais de 14h. Para encerrá-la, deixe o
+            evento "FIM_JORNADA", informe o horário em que o motorista
+            realmente terminou, escreva a justificativa e anexe a evidência.
+          </p>
+        )}
         <p style={{ fontSize: 13, color: "#000000" }}>
           Lançado pelo RH/gestor quando o motorista esquece de bater um evento.
           Não altera nenhum registro, é só informativo, entra na conferência da
