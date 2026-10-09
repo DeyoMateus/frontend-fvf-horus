@@ -11,6 +11,7 @@ import {
   rejeitarTrocaDispositivo,
 } from "../api/dispositivos";
 import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
+import { concederFolga } from "../api/folgaConcedida";
 import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import { useAuth } from "../context/AuthContext";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
@@ -120,6 +121,43 @@ export function MotoristasListPage() {
       await carregar();
     } finally {
       setProcessandoSolicitacao(null);
+    }
+  }
+
+
+  async function onTratarDiaSemInteracao(
+    motoristaId: string,
+    nome: string,
+    dia: string,
+  ) {
+    const dataBr = dia.slice(0, 10).split("-").reverse().join("/");
+    const apuracao = await prompt(
+      `Tratar ${dataBr} de ${nome}. O que foi apurado?`,
+      {
+        titulo: "Tratar dia sem interação",
+        multilinha: true,
+        textoConfirmar: "Tratar",
+        validar: (v) =>
+          v.trim().length < 5 ? "Descreva o que foi apurado (mín. 5 letras)." : null,
+      },
+    );
+    if (apuracao === null) return;
+    try {
+      await concederFolga(motoristaId, {
+        data: dia.slice(0, 10),
+        motivo: `Tratado no radar de dias sem interação: ${apuracao.trim()}`.slice(0, 400),
+      });
+      setSemInteracao((atual) =>
+        atual
+          .map((m) =>
+            m.motoristaId === motoristaId
+              ? { ...m, diasSemInteracao: m.diasSemInteracao.filter((d) => d !== dia) }
+              : m,
+          )
+          .filter((m) => m.diasSemInteracao.length > 0),
+      );
+    } catch {
+      window.alert("Não foi possível tratar este dia. Tente novamente.");
     }
   }
 
@@ -357,13 +395,26 @@ export function MotoristasListPage() {
             folga pelo app. Pode ser falta de sinal, esquecimento, ou algo mais
             grave que vale confirmar direto com ele.
           </p>
+          <p style={{ fontSize: 13, color: "#1e3a8a" }}>
+            Para tirar um dia do radar, clique no dia e informe o que foi
+            apurado (ex.: confirmado com o motorista, sem sinal, atestado). O
+            dia fica registrado como justificado, com o seu nome e a data.
+          </p>
           <ul style={{ fontSize: 13 }}>
             {semInteracao.map((m) => (
-              <li key={m.motoristaId}>
+              <li key={m.motoristaId} style={{ marginBottom: 6 }}>
                 <Link to={`/motoristas/${m.motoristaId}`}>{m.nome}</Link>:{" "}
-                {m.diasSemInteracao
-                  .map((d) => new Date(d).toLocaleDateString("pt-BR"))
-                  .join(", ")}
+                {m.diasSemInteracao.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    title="Tratar este dia"
+                    onClick={() => void onTratarDiaSemInteracao(m.motoristaId, m.nome, d)}
+                    style={{ fontSize: 12, padding: "2px 8px", marginRight: 6 }}
+                  >
+                    {d.slice(0, 10).split("-").reverse().join("/")} · Tratar
+                  </button>
+                ))}
               </li>
             ))}
           </ul>

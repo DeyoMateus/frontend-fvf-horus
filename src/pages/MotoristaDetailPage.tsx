@@ -1122,6 +1122,10 @@ export function MotoristaDetailPage() {
             >
               status {motorista.status}
             </span>{" "}
+            · cadastrado na plataforma em{" "}
+            <strong>
+              {new Date(motorista.createdAt).toLocaleString("pt-BR")}
+            </strong>{" "}
             <button
               type="button"
               onClick={onIniciarEdicaoCadastro}
@@ -1218,8 +1222,10 @@ export function MotoristaDetailPage() {
             <p>
               Aparelho atual: <code>{dispositivo.deviceUuid}</code>
               <br />
-              Vinculado em{" "}
-              {new Date(dispositivo.vinculadoEm!).toLocaleString("pt-BR")}
+              Telefone vinculado em{" "}
+              <strong>
+                {new Date(dispositivo.vinculadoEm!).toLocaleString("pt-BR")}
+              </strong>
             </p>
             <button className="danger" onClick={onRevogar}>
               Revogar vínculo
