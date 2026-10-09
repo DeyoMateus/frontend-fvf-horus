@@ -789,7 +789,7 @@ export function MotoristaDetailPage() {
               )}
             </>
           ) : (
-            <span style={{ color: "#000000" }}>,</span>
+            <span style={{ color: "#000000" }}>-</span>
           )}
         </td>
       </tr>
