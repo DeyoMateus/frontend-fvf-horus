@@ -29,6 +29,25 @@ export function createTratamento(
     .then((r) => r.data);
 }
 
+export interface CreateJornadaTratamentoInput {
+  eventos: { tipoEvento: TipoEvento; timestampEvento: string }[];
+  motivo: string;
+  fusoOffsetMin?: number;
+}
+
+/** Lança a jornada inteira (início ao fim) de uma vez; devolve um tratamento por evento. */
+export function createJornadaTratamento(
+  motoristaId: string,
+  input: CreateJornadaTratamentoInput,
+) {
+  return api
+    .post<TratamentoPonto[]>(
+      `/motoristas/${motoristaId}/tratamentos-ponto/jornada`,
+      input,
+    )
+    .then((r) => r.data);
+}
+
 // Anexa uma evidência (print de rastreador, print de WhatsApp etc.) a um
 // tratamento já lançado , a lei exige prova junto de todo fechamento de
 // ponto feito pelo gestor (ver Rodada 26).

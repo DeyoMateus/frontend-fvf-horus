@@ -11,6 +11,7 @@ import type {
   RegistroAuditoria,
 } from "../api/types";
 import { ListaEmPopup } from "../components/ListaEmPopup";
+import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 
 const ROTULO_ACTOR_TYPE: Record<ActorType, string> = {
@@ -384,30 +385,13 @@ export function SuperAdminAuditoriaPage() {
               padding: "10px 0 0",
             }}
           >
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              ← Anterior
-            </button>
-            <span style={{ fontSize: 13, color: "#000000" }}>
-              Página {page} de {totalPaginas} ({total} ocorrências)
-            </span>
-            <button
-              disabled={page >= totalPaginas}
-              onClick={() => setPage((p) => Math.min(totalPaginas, p + 1))}
-            >
-              Próxima →
-            </button>
-            {totalPaginas > 1 && (
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setPopupPaginacaoAberto(true)}
-              >
-                Ir para página…
-              </button>
-            )}
+            <Paginador
+              pagina={page}
+              totalPaginas={totalPaginas}
+              onMudarPagina={setPage}
+              onAbrirSeletor={() => setPopupPaginacaoAberto(true)}
+              sufixo={`(${total} ocorrências)`}
+            />
           </div>
 </ListaEmPopup>
 {popupPaginacaoAberto && (

@@ -11,7 +11,7 @@ import {
   rejeitarTrocaDispositivo,
 } from "../api/dispositivos";
 import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
-import { concederFolga } from "../api/folgaConcedida";
+import { TratarDiaSemInteracaoModal } from "../components/TratarDiaSemInteracaoModal";
 import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import { useAuth } from "../context/AuthContext";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
@@ -59,6 +59,11 @@ export function MotoristasListPage() {
     Record<string, string>
   >({});
   const [semInteracao, setSemInteracao] = useState<MotoristaSemInteracao[]>([]);
+  const [diaEmTratamento, setDiaEmTratamento] = useState<{
+    motoristaId: string;
+    nome: string;
+    dia: string;
+  } | null>(null);
 
   // Rodada 65 , busca por nome/CPF (inclusive de cadastros excluídos,
   // se a caixa "mostrar excluídos" estiver marcada): "Excluir cadastro"
@@ -124,43 +129,6 @@ export function MotoristasListPage() {
     }
   }
 
-
-  async function onTratarDiaSemInteracao(
-    motoristaId: string,
-    nome: string,
-    dia: string,
-  ) {
-    const dataBr = dia.slice(0, 10).split("-").reverse().join("/");
-    const apuracao = await prompt(
-      `Tratar ${dataBr} de ${nome}. O que foi apurado?`,
-      {
-        titulo: "Tratar dia sem interação",
-        multilinha: true,
-        textoConfirmar: "Tratar",
-        validar: (v) =>
-          v.trim().length < 5 ? "Descreva o que foi apurado (mín. 5 letras)." : null,
-      },
-    );
-    if (apuracao === null) return;
-    try {
-      await concederFolga(motoristaId, {
-        data: dia.slice(0, 10),
-        motivo: `Tratado no radar de dias sem interação: ${apuracao.trim()}`.slice(0, 400),
-      });
-      setSemInteracao((atual) =>
-        atual
-          .map((m) =>
-            m.motoristaId === motoristaId
-              ? { ...m, diasSemInteracao: m.diasSemInteracao.filter((d) => d !== dia) }
-              : m,
-          )
-          .filter((m) => m.diasSemInteracao.length > 0),
-      );
-      window.dispatchEvent(new Event("radar-sem-interacao-atualizado"));
-    } catch {
-      window.alert("Não foi possível tratar este dia. Tente novamente.");
-    }
-  }
 
   async function onRejeitarTroca(solicitacaoId: string) {
     const motivo = await prompt("Motivo da rejeição:", {
@@ -397,9 +365,10 @@ export function MotoristasListPage() {
             grave que vale confirmar direto com ele.
           </p>
           <p style={{ fontSize: 13, color: "#1e3a8a" }}>
-            Para tirar um dia do radar, clique no dia e informe o que foi
-            apurado (ex.: confirmado com o motorista, sem sinal, atestado). O
-            dia fica registrado como justificado, com o seu nome e a data.
+            Clique em um dia para tratá-lo: você informa se foi folga, falta,
+            atestado, outro motivo, ou se o ponto deixou de ser registrado (sem
+            sinal ou esquecimento) e então lança os horários no Tratamento de
+            ponto. O dia sai do radar depois de tratado.
           </p>
           <ul style={{ fontSize: 13 }}>
             {semInteracao.map((m) => (
@@ -410,7 +379,9 @@ export function MotoristasListPage() {
                     key={d}
                     type="button"
                     title="Tratar este dia"
-                    onClick={() => void onTratarDiaSemInteracao(m.motoristaId, m.nome, d)}
+                    onClick={() =>
+                      setDiaEmTratamento({ motoristaId: m.motoristaId, nome: m.nome, dia: d })
+                    }
                     style={{ fontSize: 12, padding: "2px 8px", marginRight: 6 }}
                   >
                     {d.slice(0, 10).split("-").reverse().join("/")} · Tratar
@@ -420,6 +391,34 @@ export function MotoristasListPage() {
             ))}
           </ul>
         </div>
+      )}
+
+      {diaEmTratamento && (
+        <TratarDiaSemInteracaoModal
+          motoristaId={diaEmTratamento.motoristaId}
+          motoristaNome={diaEmTratamento.nome}
+          dia={diaEmTratamento.dia}
+          onFechar={() => setDiaEmTratamento(null)}
+          onTratado={() => {
+            const { motoristaId, dia } = diaEmTratamento;
+            setSemInteracao((atual) =>
+              atual
+                .map((m) =>
+                  m.motoristaId === motoristaId
+                    ? {
+                        ...m,
+                        diasSemInteracao: m.diasSemInteracao.filter(
+                          (d) => d !== dia,
+                        ),
+                      }
+                    : m,
+                )
+                .filter((m) => m.diasSemInteracao.length > 0),
+            );
+            window.dispatchEvent(new Event("radar-sem-interacao-atualizado"));
+            setDiaEmTratamento(null);
+          }}
+        />
       )}
 
       {solicitacoes.length > 0 && (

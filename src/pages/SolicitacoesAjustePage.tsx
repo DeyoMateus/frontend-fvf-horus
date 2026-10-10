@@ -16,6 +16,7 @@ import { useToast } from "../components/ToastProvider";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { ListaEmPopup } from "../components/ListaEmPopup";
+import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
 
@@ -538,33 +539,13 @@ export function SolicitacoesAjustePage() {
                 flexWrap: "wrap",
               }}
             >
-              <button
-                disabled={paginaHist <= 1}
-                onClick={() => setPaginaHist((p) => Math.max(1, p - 1))}
-              >
-                ← Anterior
-              </button>
-              <span style={{ fontSize: 13, color: "#000000" }}>
-                Página {paginaHist} de {totalPaginasHist} ({totalHistorico}{" "}
-                solicitaç{totalHistorico === 1 ? "ão" : "ões"})
-              </span>
-              <button
-                disabled={paginaHist >= totalPaginasHist}
-                onClick={() =>
-                  setPaginaHist((p) => Math.min(totalPaginasHist, p + 1))
-                }
-              >
-                Próxima →
-              </button>
-              {totalPaginasHist > 1 && (
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setPopupPaginacaoHistAberto(true)}
-                >
-                  Ir para página…
-                </button>
-              )}
+              <Paginador
+              pagina={paginaHist}
+              totalPaginas={totalPaginasHist}
+              onMudarPagina={setPaginaHist}
+              onAbrirSeletor={() => setPopupPaginacaoHistAberto(true)}
+              sufixo={`(${totalHistorico} solicitaç${totalHistorico === 1 ? "ão" : "ões"})`}
+            />
             </div>
 </ListaEmPopup>
 {popupPaginacaoHistAberto && (

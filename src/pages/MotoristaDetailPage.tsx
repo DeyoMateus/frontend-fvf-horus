@@ -58,7 +58,9 @@ import {
   obterUrlEvidenciaTratamento,
 } from "../api/tratamentos";
 import { EvidenciasAnexo } from "../components/EvidenciasAnexo";
+import { LancarJornadaInteira } from "../components/LancarJornadaInteira";
 import { ListaEmPopup } from "../components/ListaEmPopup";
+import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { baixarCsvTabela, imprimirTabela } from "../utils/exportarTabelaModal";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
@@ -155,13 +157,21 @@ export function MotoristaDetailPage() {
   const cardTratamentoRef = useRef<HTMLDivElement | null>(null);
   const veioParaEncerrarJornada =
     searchParams.get("secao") === "encerrar-jornada";
+  // Rodada 193: vindo do radar ("sem sinal ou esquecimento"), abre o
+  // lançamento de jornada inteira já com a data do dia tratado.
+  const veioParaLancarJornada = searchParams.get("secao") === "lancar-jornada";
+  const dataParaLancarJornada = /^\d{4}-\d{2}-\d{2}$/.test(
+    searchParams.get("data") ?? "",
+  )
+    ? (searchParams.get("data") ?? undefined)
+    : undefined;
   useEffect(() => {
-    if (carregando || !veioParaEncerrarJornada) return;
+    if (carregando || !(veioParaEncerrarJornada || veioParaLancarJornada)) return;
     cardTratamentoRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
-  }, [carregando, veioParaEncerrarJornada]);
+  }, [carregando, veioParaEncerrarJornada, veioParaLancarJornada]);
 
   useEffect(() => {
     if (carregando) return;
@@ -2029,15 +2039,12 @@ export function MotoristaDetailPage() {
             por vez
           </label>
           {totalPaginasAlertas > 1 && (
-            <button
-              type="button"
-              className="secondary"
-              style={{ fontSize: 13 }}
-              onClick={() => setPopupPaginacaoAlertasAberto(true)}
-            >
-              Página {paginaAlertasEfetiva} de {totalPaginasAlertas}, trocar
-              página
-            </button>
+            <Paginador
+              pagina={paginaAlertasEfetiva}
+              totalPaginas={totalPaginasAlertas}
+              onMudarPagina={setPaginaAlertas}
+              onAbrirSeletor={() => setPopupPaginacaoAlertasAberto(true)}
+            />
           )}
         </div>
         <ListaEmPopup
@@ -2134,6 +2141,16 @@ export function MotoristaDetailPage() {
           Lançado pelo RH/gestor quando o motorista esquece de bater um evento.
           Não altera nenhum registro, é só informativo, entra na conferência da
           folha de ponto.
+        </p>
+        <LancarJornadaInteira
+          motoristaId={motoristaId}
+          registros={registros}
+          dataInicial={dataParaLancarJornada}
+          abrirInicialmente={veioParaLancarJornada}
+          onLancado={carregarTudo}
+        />
+        <p style={{ fontSize: 13, fontWeight: 600, margin: "8px 0 0" }}>
+          Ou lance um evento isolado:
         </p>
         <form onSubmit={onLancarTratamento}>
           <label>Evento</label>

@@ -15,6 +15,7 @@ import type {
 import { listMotoristas } from "../api/motoristas";
 import type { Motorista } from "../api/types";
 import { ListaEmPopup } from "../components/ListaEmPopup";
+import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { BuscaDocumentosCargaPopup } from "../components/BuscaDocumentosCargaPopup";
 import { useConfirm } from "../components/ConfirmProvider";
@@ -418,30 +419,13 @@ export function DocumentosCargaPage() {
             flexWrap: "wrap",
           }}
         >
-          <button
-            disabled={pagina <= 1}
-            onClick={() => setPagina((p) => Math.max(1, p - 1))}
-          >
-            ← Anterior
-          </button>
-          <span style={{ fontSize: 13, color: "#000000" }}>
-            Página {pagina} de {totalPaginas} ({total} documentos)
-          </span>
-          <button
-            disabled={pagina >= totalPaginas}
-            onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-          >
-            Próxima →
-          </button>
-          {totalPaginas > 1 && (
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setPopupPaginacaoAberto(true)}
-            >
-              Ir para página…
-            </button>
-          )}
+          <Paginador
+              pagina={pagina}
+              totalPaginas={totalPaginas}
+              onMudarPagina={setPagina}
+              onAbrirSeletor={() => setPopupPaginacaoAberto(true)}
+              sufixo={`(${total} documentos)`}
+            />
         </div>
 </ListaEmPopup>
 {popupPaginacaoAberto && (

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ListaEmPopup } from "./ListaEmPopup";
+import { Paginador } from "./Paginador";
 import { PaginacaoPopup } from "./PaginacaoPopup";
 import type { OrdemData, QtdPorPagina } from "../hooks/useListaPaginada";
 
@@ -129,14 +130,12 @@ export function ControlesListaPaginada({
         por vez
       </label>
       {totalPaginas > 1 && (
-        <button
-          type="button"
-          className="secondary"
-          style={{ fontSize: 13, whiteSpace: "nowrap" }}
-          onClick={onAbrirPopup}
-        >
-          Página {pagina} de {totalPaginas}, trocar página
-        </button>
+        <Paginador
+          pagina={pagina}
+          totalPaginas={totalPaginas}
+          onMudarPagina={onSelecionarPagina}
+          onAbrirSeletor={onAbrirPopup}
+        />
       )}
       {/* Pedido do usuário: "o mais recente primeiro fica por último na
           lista" , movido pro final da barra de controles. */}

@@ -30,3 +30,23 @@ export function listarDiasSemInteracao(dias = 7) {
     >("/motoristas/relatorios/dias-sem-interacao", { params: { dias } })
     .then((r) => r.data);
 }
+
+export type TipoTratamentoDiaSemInteracao =
+  | "FOLGA"
+  | "FALTA"
+  | "ATESTADO"
+  | "OUTRO";
+
+/** Trata um dia do radar (folga, falta, atestado ou outro). "Sem sinal/esquecimento" vai pelo tratamento de ponto. */
+export function tratarDiaSemInteracao(
+  motoristaId: string,
+  input: {
+    data: string;
+    tipo: TipoTratamentoDiaSemInteracao;
+    observacao: string;
+  },
+) {
+  return api
+    .post(`/motoristas/${motoristaId}/dias-sem-interacao/tratar`, input)
+    .then((r) => r.data);
+}
