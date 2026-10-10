@@ -3,6 +3,8 @@ import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link, useNavigate } from "react-router-dom";
 import { listAlertasByEmpresa, marcarAlertaVisualizado } from "../api/alertas";
 import { listSolicitacoesPendentes } from "../api/solicitacoesAjuste";
+import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
+import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
 
 const INTERVALO_POLL_MS = 30000; // mesmo intervalo já usado no dashboard (ver DashboardPage).
@@ -87,6 +89,10 @@ export function NotificationBell() {
   const [solicitacoesPendentes, setSolicitacoesPendentes] = useState<
     SolicitacaoAjustePonto[]
   >([]);
+  // Radar "dias sem interação" (Motoristas): também avisa no sininho até o
+  // gestor tratar cada dia (botão "Tratar" na lista de Motoristas).
+  const [semInteracao, setSemInteracao] = useState<MotoristaSemInteracao[]>([]);
+  const idsConhecidosRadarRef = useRef<Set<string> | null>(null);
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -134,6 +140,54 @@ export function NotificationBell() {
     }
   }
 
+  async function buscarRadar() {
+    try {
+      const dados = await listarDiasSemInteracao();
+      const chaves = dados.flatMap((m) =>
+        m.diasSemInteracao.map((d) => `${m.motoristaId}:${d}`),
+      );
+      if (idsConhecidosRadarRef.current === null) {
+        idsConhecidosRadarRef.current = new Set(chaves);
+      } else {
+        const novos = dados.filter((m) =>
+          m.diasSemInteracao.some(
+            (d) => !idsConhecidosRadarRef.current!.has(`${m.motoristaId}:${d}`),
+          ),
+        );
+        chaves.forEach((c) => idsConhecidosRadarRef.current!.add(c));
+        if (
+          novos.length > 0 &&
+          typeof window !== "undefined" &&
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          try {
+            new Notification("Radar: dias sem interação", {
+              body: `${novos.map((m) => m.nome).join(", ")} sem ponto nem folga em algum dia.`,
+              tag: "radar-sem-interacao",
+            });
+          } catch {
+            // Não é crítico.
+          }
+        }
+      }
+      setSemInteracao(dados);
+    } catch {
+      // Idem , sininho não trava o shell.
+    }
+  }
+
+  useEffect(() => {
+    void buscarRadar();
+    const id = setInterval(() => void buscarRadar(), INTERVALO_POLL_MS);
+    const aoTratar = () => void buscarRadar();
+    window.addEventListener("radar-sem-interacao-atualizado", aoTratar);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("radar-sem-interacao-atualizado", aoTratar);
+    };
+  }, []);
+
   useEffect(() => {
     void buscar();
     const id = setInterval(() => void buscar(), INTERVALO_POLL_MS);
@@ -163,7 +217,12 @@ export function NotificationBell() {
   const quantidadeCritico = alertas.filter(
     (a) => a.severidade === "CRITICO",
   ).length;
-  const quantidadeTotal = alertas.length + solicitacoesPendentes.length;
+  const diasRadar = semInteracao.reduce(
+    (soma, m) => soma + m.diasSemInteracao.length,
+    0,
+  );
+  const quantidadeTotal =
+    alertas.length + solicitacoesPendentes.length + (diasRadar > 0 ? 1 : 0);
   const agora = Date.now();
   const pulsando =
     alertas.some(
@@ -178,8 +237,14 @@ export function NotificationBell() {
     try {
       await marcarAlertaVisualizado(alerta.id);
       setAlertas((atual) => atual.filter((a) => a.id !== alerta.id));
-    } catch {
-      // Se falhar, o alerta continua na lista , o gestor pode tentar de novo.
+    } catch (erro) {
+      // O alerta continua na lista. Se o servidor recusou com explicação
+      // (ex.: jornada aberta há mais de 14h só pode ser dispensada depois
+      // que o gestor encerra a jornada), mostra o motivo em vez de falhar
+      // em silêncio.
+      const msg = (erro as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      if (msg) window.alert(msg);
     } finally {
       setCarregando(false);
     }
@@ -227,7 +292,7 @@ export function NotificationBell() {
             </button>
           </div>
 
-          {alertas.length === 0 && solicitacoesPendentes.length === 0 && (
+          {alertas.length === 0 && solicitacoesPendentes.length === 0 && diasRadar === 0 && (
             <div className="notif-dropdown-vazio">Nenhum alerta pendente.</div>
           )}
 
@@ -249,6 +314,29 @@ export function NotificationBell() {
                     style={{ fontSize: 12 }}
                   >
                     Ver e decidir →
+                  </Link>
+                </div>
+              </div>
+            )}
+            {diasRadar > 0 && (
+              <div className="notif-item">
+                <div className="notif-item-topo">
+                  <span className="badge neutro">Radar</span>
+                </div>
+                <div className="notif-item-mensagem">
+                  {diasRadar === 1
+                    ? "1 dia sem interação (sem ponto e sem folga)"
+                    : `${diasRadar} dias sem interação (sem ponto e sem folga)`}{" "}
+                  em {semInteracao.length === 1 ? "1 motorista" : `${semInteracao.length} motoristas`}:{" "}
+                  {semInteracao.map((m) => m.nome).join(", ")}.
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <Link
+                    to="/motoristas"
+                    onClick={() => setAberto(false)}
+                    style={{ fontSize: 12 }}
+                  >
+                    Ver e tratar →
                   </Link>
                 </div>
               </div>

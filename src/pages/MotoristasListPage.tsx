@@ -156,6 +156,7 @@ export function MotoristasListPage() {
           )
           .filter((m) => m.diasSemInteracao.length > 0),
       );
+      window.dispatchEvent(new Event("radar-sem-interacao-atualizado"));
     } catch {
       window.alert("Não foi possível tratar este dia. Tente novamente.");
     }

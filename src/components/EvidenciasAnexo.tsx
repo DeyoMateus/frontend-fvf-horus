@@ -51,6 +51,7 @@ function Miniatura({
 }) {
   const [url, setUrl] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(ehImagem(evidencia.contentType));
+  const [naoRenderiza, setNaoRenderiza] = useState(false);
 
   useEffect(() => {
     if (!ehImagem(evidencia.contentType)) return;
@@ -92,9 +93,10 @@ function Miniatura({
     flexShrink: 0,
   };
 
-  if (ehImagem(evidencia.contentType) && url) {
+  if (ehImagem(evidencia.contentType) && url && !naoRenderiza) {
     return (
       <img
+        onError={() => setNaoRenderiza(true)}
         src={url}
         alt={evidencia.nomeArquivo}
         title={`${evidencia.nomeArquivo}, clique para expandir`}
@@ -110,7 +112,7 @@ function Miniatura({
       onClick={onAbrir}
       title={`${evidencia.nomeArquivo}, clique para abrir`}
     >
-      {carregando ? "..." : "📄"}
+      {carregando ? "..." : naoRenderiza ? "🖼️ HEIC" : "📄"}
     </div>
   );
 }
@@ -125,6 +127,7 @@ export function EvidenciasAnexo({
   const confirm = useConfirm();
   const [expandida, setExpandida] = useState<EvidenciaAnexo | null>(null);
   const [urlExpandida, setUrlExpandida] = useState<string | null>(null);
+  const [erroPrevia, setErroPrevia] = useState(false);
   const [removendoId, setRemovendoId] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -192,7 +195,10 @@ export function EvidenciasAnexo({
             key={ev.id}
             evidencia={ev}
             obterUrl={obterUrl}
-            onAbrir={() => setExpandida(ev)}
+            onAbrir={() => {
+              setErroPrevia(false);
+              setExpandida(ev);
+            }}
           />
         ))}
       </div>
@@ -256,6 +262,10 @@ export function EvidenciasAnexo({
             {ehImagem(expandida.contentType) ? (
               urlExpandida ? (
                 <img
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    setErroPrevia(true);
+                  }}
                   src={urlExpandida}
                   alt={expandida.nomeArquivo}
                   style={{
@@ -270,6 +280,12 @@ export function EvidenciasAnexo({
             ) : (
               <p style={{ fontSize: 12, color: "#000000" }}>
                 Pré-visualização não disponível para este tipo de arquivo.
+              </p>
+            )}
+            {erroPrevia && (
+              <p style={{ fontSize: 12, color: "#000000" }}>
+                Este navegador não exibe imagens HEIC (foto do iPhone). Use
+                &quot;Baixar&quot; para abrir o arquivo.
               </p>
             )}
 

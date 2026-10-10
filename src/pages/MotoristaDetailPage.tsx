@@ -215,6 +215,7 @@ export function MotoristaDetailPage() {
   const [qtdJornadasExibidas, setQtdJornadasExibidas] = useState(7);
 
   const [alterandoStatus, setAlterandoStatus] = useState(false);
+  const [copiado, setCopiado] = useState<"id" | "key" | null>(null);
   const [erroStatus, setErroStatus] = useState<string | null>(null);
 
   const [editandoCadastro, setEditandoCadastro] = useState(false);
@@ -542,6 +543,19 @@ export function MotoristaDetailPage() {
     if (evidenciasParaAnexar.length >= MAXIMO_EVIDENCIAS_POR_TRATAMENTO) {
       setErroTratamento(
         `Limite de ${MAXIMO_EVIDENCIAS_POR_TRATAMENTO} evidências por tratamento.`,
+      );
+      return;
+    }
+    // Só imagem (JPG, PNG, WEBP, HEIC/HEIF do iPhone). O iPhone às vezes
+    // não informa o tipo do HEIC, então confere também a extensão. O
+    // servidor valida de novo pelo conteúdo do arquivo.
+    const nomeMin = arquivo.name.toLowerCase();
+    const ehImagemAceita =
+      /^image\/(jpeg|png|webp|heic|heif)$/.test(arquivo.type) ||
+      /\.(jpe?g|png|webp|heic|heif)$/.test(nomeMin);
+    if (!ehImagemAceita) {
+      setErroTratamento(
+        "Só é possível anexar imagens (JPG, PNG, WEBP ou HEIC/HEIF do iPhone). PDF e outros arquivos não são aceitos: tire um print ou uma foto do documento e anexe a imagem.",
       );
       return;
     }
@@ -923,8 +937,24 @@ export function MotoristaDetailPage() {
 
   if (carregando || !motorista) return <p>Carregando...</p>;
 
+  async function copiarTexto(texto: string, qual: "id" | "key") {
+    try {
+      await navigator.clipboard.writeText(texto);
+    } catch {
+      // Sem permissão da área de transferência: usa o método antigo.
+      const campo = document.createElement("textarea");
+      campo.value = texto;
+      document.body.appendChild(campo);
+      campo.select();
+      document.execCommand("copy");
+      document.body.removeChild(campo);
+    }
+    setCopiado(qual);
+    window.setTimeout(() => setCopiado((atual) => (atual === qual ? null : atual)), 2000);
+  }
+
   async function onCopiarIdMotorista() {
-    await navigator.clipboard.writeText(motorista!.id);
+    await copiarTexto(motorista!.id, "id");
   }
 
   // Desligar por MUDANÇA DE STATUS: INATIVO funciona como arquivo morto
@@ -1211,9 +1241,13 @@ export function MotoristaDetailPage() {
           <button
             type="button"
             onClick={onCopiarIdMotorista}
-            style={{ fontSize: 12, padding: "2px 8px" }}
+            style={{
+              fontSize: 12,
+              padding: "2px 8px",
+              ...(copiado === "id" ? { background: "#166534" } : {}),
+            }}
           >
-            Copiar
+            {copiado === "id" ? "Copiado!" : "Copiar"}
           </button>
         </p>
 
@@ -1268,6 +1302,17 @@ export function MotoristaDetailPage() {
             <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
               {deviceApiKeyGerada}
             </pre>
+            <button
+              type="button"
+              onClick={() => void copiarTexto(deviceApiKeyGerada!, "key")}
+              style={{
+                fontSize: 12,
+                padding: "2px 8px",
+                ...(copiado === "key" ? { background: "#166534" } : {}),
+              }}
+            >
+              {copiado === "key" ? "Copiado!" : "Copiar"}
+            </button>
             <p style={{ fontSize: 12, color: "#92400e" }}>
               Copie e grave no app do motorista agora. Depois de sair desta
               tela, não é possível recuperar.
@@ -2196,7 +2241,7 @@ export function MotoristaDetailPage() {
           {evidenciasParaAnexar.length < MAXIMO_EVIDENCIAS_POR_TRATAMENTO && (
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
               onChange={(e) => {
                 onEscolherEvidenciaParaAnexar(e.target.files?.[0]);
                 e.target.value = "";
@@ -2205,6 +2250,13 @@ export function MotoristaDetailPage() {
             />
           )}
 
+          <p style={{ fontSize: 12, color: "#000000", margin: "4px 0" }}>
+            Evidências: somente <strong>imagens</strong> (JPG, PNG, WEBP ou
+            HEIC/HEIF, o formato das fotos do iPhone), até 25MB cada. PDF e
+            outros arquivos não são aceitos, tire um print ou uma foto e anexe
+            a imagem. HEIC não aparece na miniatura em alguns navegadores, mas
+            é salvo normalmente e pode ser baixado.
+          </p>
           {erroTratamento && <p className="error-text">{erroTratamento}</p>}
           <button type="submit" disabled={lancandoTratamento}>
             {lancandoTratamento ? "Lançando..." : "Lançar tratamento"}
