@@ -24,9 +24,31 @@ export type SolicitacaoTitularPainel = {
   status: StatusSolicitacaoTitular;
   prazoEm: string;
   resposta: string | null;
+  respondidaEm: string | null;
+  respondidaPorNome: string | null;
   createdAt: string;
   vencida: boolean;
   motorista: { id: string; nome: string };
+};
+
+export type FiltroSolicitacoesTitular = {
+  status?: StatusSolicitacaoTitular;
+  tipo?: string;
+  busca?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  vencidas?: boolean;
+  ordem?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+};
+
+export type ListaSolicitacoesTitular = {
+  dados: SolicitacaoTitularPainel[];
+  total: number;
+  page: number;
+  pageSize: number;
+  resumo: { abertas: number; emAnalise: number; vencidas: number };
 };
 
 export type EmpresaEncarregado = {
@@ -52,9 +74,14 @@ export type CienciasPainel = {
 export const documentosPublicos = () =>
   api.get<DocumentosPublicos>("/privacidade/documentos").then((r) => r.data);
 
-export const listarSolicitacoesTitular = () =>
+export const listarSolicitacoesTitular = (filtro: FiltroSolicitacoesTitular) =>
   api
-    .get<SolicitacaoTitularPainel[]>("/privacidade/painel/solicitacoes")
+    .get<ListaSolicitacoesTitular>("/privacidade/painel/solicitacoes", {
+      params: {
+        ...filtro,
+        vencidas: filtro.vencidas ? "true" : undefined,
+      },
+    })
     .then((r) => r.data);
 
 export const responderSolicitacaoTitular = (
