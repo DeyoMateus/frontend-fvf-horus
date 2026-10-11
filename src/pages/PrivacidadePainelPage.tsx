@@ -314,7 +314,7 @@ function AbaPedidos() {
                     </tr>
                   );
                 })}
-                {(lista?.dados.length ?? 0) === 0 && (
+                {(lista?.dados?.length ?? 0) === 0 && (
                   <tr>
                     <td colSpan={6} style={{ color: "#000000" }}>
                       Nenhum pedido encontrado com este filtro.

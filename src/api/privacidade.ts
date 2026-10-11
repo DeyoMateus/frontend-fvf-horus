@@ -74,15 +74,40 @@ export type CienciasPainel = {
 export const documentosPublicos = () =>
   api.get<DocumentosPublicos>("/privacidade/documentos").then((r) => r.data);
 
-export const listarSolicitacoesTitular = (filtro: FiltroSolicitacoesTitular) =>
-  api
-    .get<ListaSolicitacoesTitular>("/privacidade/painel/solicitacoes", {
+export const listarSolicitacoesTitular = async (
+  filtro: FiltroSolicitacoesTitular,
+): Promise<ListaSolicitacoesTitular> => {
+  const r = await api.get<ListaSolicitacoesTitular | SolicitacaoTitularPainel[]>(
+    "/privacidade/painel/solicitacoes",
+    {
       params: {
         ...filtro,
         vencidas: filtro.vencidas ? "true" : undefined,
       },
-    })
-    .then((r) => r.data);
+    },
+  );
+  const corpo = r.data;
+  // Compatibilidade: backend antigo devolvia só um array (sem paginação).
+  if (Array.isArray(corpo)) {
+    return {
+      dados: corpo,
+      total: corpo.length,
+      page: 1,
+      pageSize: corpo.length || 50,
+      resumo: {
+        abertas: corpo.filter((p) => p.status === "ABERTA").length,
+        emAnalise: corpo.filter((p) => p.status === "EM_ANALISE").length,
+        vencidas: corpo.filter((p) => p.vencida).length,
+      },
+    };
+  }
+  return {
+    ...corpo,
+    dados: corpo?.dados ?? [],
+    total: corpo?.total ?? 0,
+    resumo: corpo?.resumo ?? { abertas: 0, emAnalise: 0, vencidas: 0 },
+  };
+};
 
 export const responderSolicitacaoTitular = (
   id: string,
