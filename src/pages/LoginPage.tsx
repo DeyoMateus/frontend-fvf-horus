@@ -76,6 +76,9 @@ export function LoginPage() {
         >
           Esqueci minha senha
         </button>
+        <p style={{ marginTop: 12, fontSize: 12, textAlign: "center" }}>
+          <a href="/privacidade">Política de Privacidade</a>
+        </p>
       </div>
     </div>
   );

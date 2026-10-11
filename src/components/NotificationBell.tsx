@@ -6,6 +6,8 @@ import { listSolicitacoesPendentes } from "../api/solicitacoesAjuste";
 import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
 import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
+import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
+import type { SolicitacaoPendenteSino } from "../api/privacidade";
 
 const INTERVALO_POLL_MS = 30000; // mesmo intervalo já usado no dashboard (ver DashboardPage).
 
@@ -88,6 +90,23 @@ function notificarSolicitacaoNoDesktop(solicitacao: SolicitacaoAjustePonto) {
   }
 }
 
+function notificarPedidoTitularNoDesktop(nome: string) {
+  if (typeof window === "undefined" || !("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+  try {
+    const n = new Notification("Novo pedido de privacidade (LGPD)", {
+      body: `${nome} fez um pedido sobre os próprios dados. Prazo de resposta: 15 dias.`,
+      tag: "pedido-titular",
+    });
+    n.onclick = () => {
+      window.focus();
+      n.close();
+    };
+  } catch {
+    // Não é crítico.
+  }
+}
+
 export function NotificationBell() {
   const [alertas, setAlertas] = useState<AlertaJornada[]>([]);
   // Pedido do usuário: solicitação de ajuste enviada pelo motorista
@@ -101,6 +120,11 @@ export function NotificationBell() {
   // gestor tratar cada dia (botão "Tratar" na lista de Motoristas).
   const [semInteracao, setSemInteracao] = useState<MotoristaSemInteracao[]>([]);
   const idsConhecidosRadarRef = useRef<Set<string> | null>(null);
+  // Rodada 207 (LGPD): pedidos novos dos titulares (motoristas).
+  const [pedidosTitular, setPedidosTitular] = useState<
+    SolicitacaoPendenteSino[]
+  >([]);
+  const idsConhecidosPedidosRef = useRef<Set<string> | null>(null);
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -147,6 +171,31 @@ export function NotificationBell() {
       // Idem , sininho não trava o resto do shell por isso.
     }
   }
+
+  async function buscarPedidosTitular() {
+    try {
+      const dados = await listarSolicitacoesTitularPendentes();
+      if (idsConhecidosPedidosRef.current === null) {
+        idsConhecidosPedidosRef.current = new Set(dados.map((p) => p.id));
+      } else {
+        for (const p of dados) {
+          if (!idsConhecidosPedidosRef.current.has(p.id)) {
+            idsConhecidosPedidosRef.current.add(p.id);
+            notificarPedidoTitularNoDesktop(p.motorista.nome);
+          }
+        }
+      }
+      setPedidosTitular(dados);
+    } catch {
+      // Sininho não trava o shell.
+    }
+  }
+
+  useEffect(() => {
+    void buscarPedidosTitular();
+    const id = setInterval(() => void buscarPedidosTitular(), INTERVALO_POLL_MS);
+    return () => clearInterval(id);
+  }, []);
 
   async function buscarRadar() {
     try {
@@ -230,7 +279,10 @@ export function NotificationBell() {
     0,
   );
   const quantidadeTotal =
-    alertas.length + solicitacoesPendentes.length + (diasRadar > 0 ? 1 : 0);
+    alertas.length +
+    solicitacoesPendentes.length +
+    pedidosTitular.length +
+    (diasRadar > 0 ? 1 : 0);
   const agora = Date.now();
   const pulsando =
     alertas.some(
@@ -300,7 +352,10 @@ export function NotificationBell() {
             </button>
           </div>
 
-          {alertas.length === 0 && solicitacoesPendentes.length === 0 && diasRadar === 0 && (
+          {alertas.length === 0 &&
+            solicitacoesPendentes.length === 0 &&
+            pedidosTitular.length === 0 &&
+            diasRadar === 0 && (
             <div className="notif-dropdown-vazio">Nenhum alerta pendente.</div>
           )}
 
@@ -322,6 +377,27 @@ export function NotificationBell() {
                     style={{ fontSize: 12 }}
                   >
                     Ver e decidir →
+                  </Link>
+                </div>
+              </div>
+            )}
+            {pedidosTitular.length > 0 && (
+              <div className="notif-item">
+                <div className="notif-item-topo">
+                  <span className="badge neutro">LGPD</span>
+                </div>
+                <div className="notif-item-mensagem">
+                  {pedidosTitular.length === 1
+                    ? `Novo pedido de privacidade de ${pedidosTitular[0].motorista.nome}.`
+                    : `${pedidosTitular.length} pedidos de privacidade aguardando resposta.`}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <Link
+                    to="/lgpd"
+                    onClick={() => setAberto(false)}
+                    style={{ fontSize: 12 }}
+                  >
+                    Ver e responder →
                   </Link>
                 </div>
               </div>

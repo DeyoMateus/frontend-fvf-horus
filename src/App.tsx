@@ -5,6 +5,8 @@ import { ConfirmProvider } from "./components/ConfirmProvider";
 import { PromptProvider } from "./components/PromptProvider";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PrivacidadePublicaPage } from "./pages/PrivacidadePublicaPage";
+import { PrivacidadePainelPage } from "./pages/PrivacidadePainelPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MotoristasListPage } from "./pages/MotoristasListPage";
 import { MotoristaDetailPage } from "./pages/MotoristaDetailPage";
@@ -47,6 +49,7 @@ export function App() {
               <Routes>
                 {/* ===== Painel do grupo (empresa/RH) ===== */}
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/privacidade" element={<PrivacidadePublicaPage />} />
                 <Route path="/esqueci-senha" element={<EsqueciSenhaPage />} />
                 <Route
                   path="/redefinir-senha"
@@ -84,6 +87,7 @@ export function App() {
                     />
                     <Route path="/perfil" element={<PerfilPage />} />
                     <Route path="/auditoria" element={<AuditoriaPage />} />
+                    <Route path="/lgpd" element={<PrivacidadePainelPage />} />
                     {/* Rodada 109 , só ADMIN consegue entrar; GESTOR que digitar a URL direto cai no dashboard (ver ProtectedRoute/Layout). */}
                     <Route path="/usuarios" element={<UsuariosEmpresaPage />} />
                   </Route>

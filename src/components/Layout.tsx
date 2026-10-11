@@ -32,6 +32,8 @@ const ITENS_NAV: {
   // seção dentro do Painel, ver DashboardPage) passou a ter aba/rota
   // própria, com um detalhamento mais claro (ver AuditoriaPage.tsx).
   { to: "/auditoria", label: "Auditoria", abreviacao: "AU" },
+  // Rodada 206 (LGPD): pedidos de titulares, encarregado e ciências.
+  { to: "/lgpd", label: "Privacidade (LGPD)", abreviacao: "LG" },
   // Rodada 109 , gestão do time do próprio grupo, exclusiva do ADMIN
   // (ver UsuariosEmpresaPage.tsx e UsuariosEmpresaController).
   { to: "/usuarios", label: "Usuários", abreviacao: "US", somenteAdmin: true },
