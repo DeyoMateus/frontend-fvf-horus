@@ -57,6 +57,10 @@ function notificarAlertaNoDesktop(alerta: AlertaJornada) {
     notificacao.onclick = () => {
       window.focus();
       notificacao.close();
+      // Aba congelada/descartada pelo navegador volta cinza: se o painel
+      // não renderizou nada, recarrega (ver utils/recuperacaoDeAba.ts).
+      const raiz = document.getElementById("root");
+      if (!raiz || raiz.childElementCount === 0) window.location.reload();
     };
   } catch {
     // Alguns navegadores/contextos (ex.: sem foco de página) podem rejeitar , não é crítico, o sininho já mostra o alerta.
@@ -74,6 +78,10 @@ function notificarSolicitacaoNoDesktop(solicitacao: SolicitacaoAjustePonto) {
     notificacao.onclick = () => {
       window.focus();
       notificacao.close();
+      // Aba congelada/descartada pelo navegador volta cinza: se o painel
+      // não renderizou nada, recarrega (ver utils/recuperacaoDeAba.ts).
+      const raiz = document.getElementById("root");
+      if (!raiz || raiz.childElementCount === 0) window.location.reload();
     };
   } catch {
     // Idem notificarAlertaNoDesktop , não é crítico.
