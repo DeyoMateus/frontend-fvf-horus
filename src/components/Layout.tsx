@@ -25,6 +25,8 @@ const ITENS_NAV: {
   // Rodada 216: percurso do motorista no mapa (coordenadas + sentido), com PDF.
   { to: "/indicadores", label: "Fechamento", abreviacao: "FE" },
   { to: "/motoristas", label: "Motoristas", abreviacao: "MO" },
+  // Rodada 221: pedidos de folga dos motoristas (aprovar/negar com justificativa).
+  { to: "/pedidos-folga", label: "Pedidos de folga", abreviacao: "PF" },
   { to: "/ajudantes", label: "Ajudantes", abreviacao: "AJ" },
   { to: "/documentos-carga", label: "Documentos de carga", abreviacao: "DC" },
   { to: "/regras-sindicais", label: "Regras sindicais", abreviacao: "RS" },

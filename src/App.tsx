@@ -14,6 +14,7 @@ import { AjudantesPage } from "./pages/AjudantesPage";
 import { DocumentosCargaPage } from "./pages/DocumentosCargaPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { IndicadoresPage } from "./pages/IndicadoresPage";
+import { PedidosFolgaPage } from "./pages/PedidosFolgaPage";
 import { EmpresasPage } from "./pages/EmpresasPage";
 import { RegrasSindicaisPage } from "./pages/RegrasSindicaisPage";
 import { PerfilPage } from "./pages/PerfilPage";
@@ -63,6 +64,7 @@ export function App() {
                     />
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/indicadores" element={<IndicadoresPage />} />
+                    <Route path="/pedidos-folga" element={<PedidosFolgaPage />} />
                     <Route
                       path="/motoristas"
                       element={<MotoristasListPage />}

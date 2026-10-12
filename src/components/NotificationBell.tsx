@@ -3,6 +3,8 @@ import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link, useNavigate } from "react-router-dom";
 import { listAlertasByEmpresa, marcarAlertaVisualizado } from "../api/alertas";
 import { listSolicitacoesPendentes } from "../api/solicitacoesAjuste";
+import { listarPedidosFolgaPendentes } from "../api/solicitacoesFolga";
+import type { SolicitacaoFolga } from "../api/solicitacoesFolga";
 import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
 import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
@@ -118,6 +120,8 @@ export function NotificationBell() {
   >([]);
   // Radar "dias sem interação" (Motoristas): também avisa no sininho até o
   // gestor tratar cada dia (botão "Tratar" na lista de Motoristas).
+  // Rodada 221: pedidos de folga dos motoristas esperando decisão.
+  const [pedidosFolga, setPedidosFolga] = useState<SolicitacaoFolga[]>([]);
   const [semInteracao, setSemInteracao] = useState<MotoristaSemInteracao[]>([]);
   const idsConhecidosRadarRef = useRef<Set<string> | null>(null);
   // Rodada 207 (LGPD): pedidos novos dos titulares (motoristas).
@@ -169,6 +173,11 @@ export function NotificationBell() {
       setSolicitacoesPendentes(pendentes);
     } catch {
       // Idem , sininho não trava o resto do shell por isso.
+    }
+    try {
+      setPedidosFolga(await listarPedidosFolgaPendentes());
+    } catch {
+      // Idem.
     }
   }
 
@@ -281,6 +290,7 @@ export function NotificationBell() {
   const quantidadeTotal =
     alertas.length +
     solicitacoesPendentes.length +
+    pedidosFolga.length +
     pedidosTitular.length +
     (diasRadar > 0 ? 1 : 0);
   const agora = Date.now();
@@ -354,6 +364,7 @@ export function NotificationBell() {
 
           {alertas.length === 0 &&
             solicitacoesPendentes.length === 0 &&
+            pedidosFolga.length === 0 &&
             pedidosTitular.length === 0 &&
             diasRadar === 0 && (
             <div className="notif-dropdown-vazio">Nenhum alerta pendente.</div>
@@ -373,6 +384,27 @@ export function NotificationBell() {
                 <div style={{ marginTop: 4 }}>
                   <Link
                     to="/indicadores?secao=solicitacoes-pendentes"
+                    onClick={() => setAberto(false)}
+                    style={{ fontSize: 12 }}
+                  >
+                    Ver e decidir →
+                  </Link>
+                </div>
+              </div>
+            )}
+            {pedidosFolga.length > 0 && (
+              <div className="notif-item">
+                <div className="notif-item-topo">
+                  <span className="badge neutro">Folga</span>
+                </div>
+                <div className="notif-item-mensagem">
+                  {pedidosFolga.length === 1
+                    ? "1 pedido de folga esperando decisão."
+                    : `${pedidosFolga.length} pedidos de folga esperando decisão.`}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <Link
+                    to="/pedidos-folga"
                     onClick={() => setAberto(false)}
                     style={{ fontSize: 12 }}
                   >
