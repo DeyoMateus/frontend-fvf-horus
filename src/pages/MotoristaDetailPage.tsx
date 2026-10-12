@@ -1,3 +1,4 @@
+import { useAuth } from "../context/AuthContext";
 import { dataCalendarioBr } from "../utils/mascaras";
 import {
   formatarRegistro,
@@ -109,6 +110,9 @@ function gerarUuid() {
 // escolhido dá um ponto de partida correto (o gestor ainda pode
 // ajustar minutos pra frente/trás, mas não parte mais de "agora").
 export function MotoristaDetailPage() {
+  const { usuario } = useAuth();
+  // Rodada 215: usuários do painel (ADMIN e GESTOR) veem localização; o backend audita cada consulta.
+  const veLocalizacao = usuario?.papel === "ADMIN" || usuario?.papel === "GESTOR";
   const { motoristaId = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -859,7 +863,16 @@ export function MotoristaDetailPage() {
               )}
             </>
           ) : (
-            <span style={{ color: "#000000" }}>-</span>
+            <span
+              style={{ color: "#000000" }}
+              title={
+                veLocalizacao
+                  ? undefined
+                  : "Sem permissão para ver a localização."
+              }
+            >
+              {veLocalizacao ? "-" : "Restrito"}
+            </span>
           )}
         </td>
       </tr>

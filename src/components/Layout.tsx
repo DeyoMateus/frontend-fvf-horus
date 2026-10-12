@@ -22,6 +22,7 @@ const ITENS_NAV: {
   somenteAdmin?: boolean;
 }[] = [
   { to: "/dashboard", label: "Painel", abreviacao: "PA" },
+  // Rodada 216: percurso do motorista no mapa (coordenadas + sentido), com PDF.
   { to: "/indicadores", label: "Fechamento", abreviacao: "FE" },
   { to: "/motoristas", label: "Motoristas", abreviacao: "MO" },
   { to: "/ajudantes", label: "Ajudantes", abreviacao: "AJ" },

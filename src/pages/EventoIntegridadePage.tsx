@@ -1,3 +1,4 @@
+import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -29,6 +30,7 @@ const caixaHash: React.CSSProperties = {
  * divergências do motorista). Somente leitura, exceto o aceite.
  */
 export function EventoIntegridadePage() {
+  const { usuario } = useAuth();
   const { motoristaId, sequencial } = useParams();
   const prompt = usePrompt();
   const [analise, setAnalise] = useState<AnaliseEventoIntegridade | null>(null);
@@ -160,7 +162,9 @@ export function EventoIntegridadePage() {
               "Localização (GPS)",
               evento.latitude !== null && evento.longitude !== null
                 ? `${evento.latitude}, ${evento.longitude}`
-                : "Sem GPS",
+                : usuario?.papel === "ADMIN" || usuario?.papel === "GESTOR"
+                  ? "Sem GPS"
+                  : "Restrito",
             )}
             {linha(
               "Precisão do GPS",
