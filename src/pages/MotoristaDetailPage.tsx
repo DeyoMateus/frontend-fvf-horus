@@ -109,6 +109,15 @@ function gerarUuid() {
 // conserta nada no meio dela. Pré-preencher com o horário do registro
 // escolhido dá um ponto de partida correto (o gestor ainda pode
 // ajustar minutos pra frente/trás, mas não parte mais de "agora").
+type JornadaDoCiclo = {
+  inicio: string;
+  fim: string;
+  emAndamento: boolean;
+  totalDirecaoMin: number;
+  totalEsperaMin: number;
+  totalJornadaMin: number;
+};
+
 export function MotoristaDetailPage() {
   const { usuario } = useAuth();
   // Rodada 215: usuários do painel (ADMIN e GESTOR) veem localização; o backend audita cada consulta.
@@ -141,6 +150,11 @@ export function MotoristaDetailPage() {
   const [paginaAlertas, setPaginaAlertas] = useState(1);
   const [popupPaginacaoAlertasAberto, setPopupPaginacaoAlertasAberto] =
     useState(false);
+  // Rodada 230: popup com as jornadas que compõem o acumulado do ciclo.
+  const [cicloAberto, setCicloAberto] = useState<{
+    membros: JornadaDoCiclo[];
+    destaqueInicio: string;
+  } | null>(null);
   const [integridade, setIntegridade] = useState<VerificacaoIntegridade | null>(
     null,
   );
@@ -352,7 +366,7 @@ export function MotoristaDetailPage() {
   // dispara os alertas de 8h/10h, então o gestor precisa vê-la.
   const cicloPorJornada = new Map<
     (typeof jornadasDiariasOrdenadas)[number],
-    { totalDirecaoMin: number; qtd: number }
+    { totalDirecaoMin: number; qtd: number; membros: JornadaDoCiclo[] }
   >();
   {
     const cronologicas = [...jornadasDiariasOrdenadas].reverse();
@@ -365,11 +379,21 @@ export function MotoristaDetailPage() {
           0,
         ),
         qtd: grupoAtual.length,
+        membros: grupoAtual,
       };
       for (const x of grupoAtual) cicloPorJornada.set(x, info);
       grupoAtual = [];
     };
     for (const j of cronologicas) {
+      // Rodada 229: jornada vazia (aberta e fechada sem direção/espera, até
+      // 5 min) não entra no ciclo nem conta como intervalo de descanso.
+      if (
+        !j.emAndamento &&
+        j.totalDirecaoMin === 0 &&
+        j.totalEsperaMin === 0 &&
+        j.totalJornadaMin <= 5
+      )
+        continue;
       const anterior = grupoAtual[grupoAtual.length - 1];
       const encadeada =
         anterior &&
@@ -1849,7 +1873,30 @@ export function MotoristaDetailPage() {
                             ? "#b45309"
                             : "#000000";
                       return (
-                        <span style={{ color: cor, fontWeight: 600 }}>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          title="Ver as jornadas que compõem este ciclo"
+                          onClick={() =>
+                            setCicloAberto({
+                              membros: ciclo.membros,
+                              destaqueInicio: j.inicio,
+                            })
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ")
+                              setCicloAberto({
+                                membros: ciclo.membros,
+                                destaqueInicio: j.inicio,
+                              });
+                          }}
+                          style={{
+                            color: cor,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            textDecoration: "underline dotted",
+                          }}
+                        >
                           {formatarMinutos(ciclo.totalDirecaoMin)}
                           {ciclo.qtd > 1 && (
                             <span style={{ fontSize: 11, fontWeight: 400 }}>
@@ -1902,6 +1949,104 @@ export function MotoristaDetailPage() {
             Carregar mais (
             {jornadasDiariasOrdenadas.length - qtdJornadasExibidas} restantes)
           </button>
+        )}
+        {cicloAberto && (
+          <div
+            onClick={() => setCicloAberto(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.45)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+              padding: 16,
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "#ffffff",
+                color: "#000000",
+                borderRadius: 10,
+                padding: 20,
+                width: "min(760px, 100%)",
+                maxHeight: "85vh",
+                overflow: "auto",
+              }}
+            >
+              <h3 style={{ marginTop: 0 }}>Jornadas que compõem o ciclo</h3>
+              <p style={{ fontSize: 13, marginTop: 0 }}>
+                Jornadas encadeadas: menos de 11h de descanso entre o fim de uma
+                e o início da seguinte. Jornadas vazias (abertas e fechadas sem
+                trabalho) não entram.
+              </p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Início</th>
+                    <th>Fim</th>
+                    <th>Descanso anterior</th>
+                    <th>Direção</th>
+                    <th>Acumulado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    let acumulado = 0;
+                    return cicloAberto.membros.map((m, i) => {
+                      acumulado += m.totalDirecaoMin;
+                      const anterior = cicloAberto.membros[i - 1];
+                      const descansoMin = anterior
+                        ? (new Date(m.inicio).getTime() -
+                            new Date(anterior.fim).getTime()) /
+                          60_000
+                        : null;
+                      return (
+                        <tr
+                          key={m.inicio}
+                          style={
+                            m.inicio === cicloAberto.destaqueInicio
+                              ? { background: "#fef3c7" }
+                              : undefined
+                          }
+                        >
+                          <td>{new Date(m.inicio).toLocaleString("pt-BR")}</td>
+                          <td>
+                            {m.emAndamento
+                              ? "(em andamento)"
+                              : new Date(m.fim).toLocaleString("pt-BR")}
+                          </td>
+                          <td>
+                            {descansoMin === null
+                              ? "-"
+                              : formatarMinutos(descansoMin)}
+                          </td>
+                          <td>{formatarMinutos(m.totalDirecaoMin)}</td>
+                          <td style={{ fontWeight: 600 }}>
+                            {formatarMinutos(acumulado)}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+              <p style={{ fontSize: 12, marginBottom: 0 }}>
+                A linha em destaque é a jornada em que você clicou.
+              </p>
+              <button
+                className="secondary"
+                style={{ marginTop: 12 }}
+                onClick={() => setCicloAberto(null)}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
