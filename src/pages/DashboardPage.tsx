@@ -68,6 +68,8 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   JORNADA_ABERTA_PROLONGADA: "Jornada aberta há muito tempo",
   JORNADA_DIRECAO_PROXIMA_LIMITE: "Jornada de direção perto do limite",
   JORNADA_DIRECAO_EXCEDIDA: "Jornada de direção excedida",
+  JORNADA_ATUAL_DIRECAO_PROXIMA_LIMITE: "Direção desta jornada perto de 8h",
+  JORNADA_ATUAL_DIRECAO_EXCEDIDA: "Direção desta jornada passou de 10h",
   ESPERA_PROXIMA_LIMITE: "Espera perto do limite",
   ESPERA_LIMITE_LEGAL_ATINGIDO: "Limite legal de espera atingido",
   OCIOSIDADE_DIRECAO_SUSPEITA: 'Ociosidade suspeita em "Em direção"',
