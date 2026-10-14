@@ -631,7 +631,7 @@ export function PainelIndicadores() {
             {atualizando ? "Atualizando…" : "Atualizar"}
           </button>
           <button onClick={exportar} disabled={exportando || atualizando}>
-            {exportando ? "Gerando…" : "Exportar CSV (RH)"}
+            {exportando ? "Gerando…" : "Exportar Excel (RH)"}
           </button>
         </div>
       </div>
@@ -799,7 +799,7 @@ export function PainelIndicadores() {
                     disabled={tendenciaDiaria.length === 0}
                     onClick={() =>
                       baixarCsvTabela(
-                        `evolucao-indicadores-${inicioEvolucao}-a-${fimEvolucao}.csv`,
+                        `evolucao-indicadores-${inicioEvolucao}-a-${fimEvolucao}.xlsx`,
                         [
                           "Dia",
                           "Direção (min)",
@@ -820,10 +820,14 @@ export function PainelIndicadores() {
                           String(d.alertas),
                           String(d.bancoHorasSaldoAcumuladoMin),
                         ]),
+                        {
+                          titulo: "Evolução dos indicadores",
+                          subtitulo: `Período: ${inicioEvolucao} a ${fimEvolucao}`,
+                        },
                       )
                     }
                   >
-                    Baixar CSV
+                    Baixar Excel
                   </button>
                   <button
                     type="button"

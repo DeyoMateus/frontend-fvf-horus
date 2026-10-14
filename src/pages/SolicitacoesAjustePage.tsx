@@ -195,7 +195,7 @@ export function SolicitacoesAjustePage() {
         pagina += 1;
       }
       baixarCsvTabela(
-        "historico-solicitacoes-decididas.csv",
+        "historico-solicitacoes-decididas.xlsx",
         [
           "Motorista",
           "Evento",
@@ -218,6 +218,7 @@ export function SolicitacoesAjustePage() {
           s.decididoPorUsuario?.nome ?? "-",
           s.motivoDecisao ?? "-",
         ]),
+        { titulo: "Histórico de solicitações de ajuste decididas" },
       );
     } catch {
       toast.erro("Não foi possível exportar o histórico agora.");
@@ -446,7 +447,7 @@ export function SolicitacoesAjustePage() {
               >
                 {exportandoHistorico
                   ? "Exportando..."
-                  : `Baixar CSV (${totalHistorico})`}
+                  : `Baixar Excel (${totalHistorico})`}
               </button>
             </div>
 

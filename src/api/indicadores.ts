@@ -102,7 +102,74 @@ export function getIndicadoresPainel(
     .then((r) => r.data);
 }
 
-/** Baixa o CSV com as horas completas e separadas por motorista/dia , pro RH decidir o pagamento fora da plataforma. */
+/** Parser mínimo de CSV (vírgula, aspas duplas, "" escapado, quebras dentro de aspas). */
+function lerCsv(texto: string): string[][] {
+  const linhas: string[][] = [];
+  let campo = "";
+  let linha: string[] = [];
+  let aspas = false;
+  const limpo = texto.replace(/^\uFEFF/, "");
+  for (let i = 0; i < limpo.length; i++) {
+    const c = limpo[i];
+    if (aspas) {
+      if (c === '"' && limpo[i + 1] === '"') {
+        campo += '"';
+        i++;
+      } else if (c === '"') {
+        aspas = false;
+      } else {
+        campo += c;
+      }
+    } else if (c === '"') {
+      aspas = true;
+    } else if (c === ",") {
+      linha.push(campo);
+      campo = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && limpo[i + 1] === "\n") i++;
+      linha.push(campo);
+      campo = "";
+      linhas.push(linha);
+      linha = [];
+    } else {
+      campo += c;
+    }
+  }
+  if (campo !== "" || linha.length > 0) {
+    linha.push(campo);
+    linhas.push(linha);
+  }
+  return linhas.filter((l) => l.some((c) => c !== ""));
+}
+
+const ROTULOS_CSV_INDICADORES: Record<string, string> = {
+  motorista: "Motorista",
+  dia: "Dia",
+  horas_direcao: "Horas de direção",
+  horas_espera: "Horas de espera",
+  horas_normais: "Horas normais",
+  horas_extras: "Horas extras",
+  horas_adicional_noturno: "Horas de adicional noturno",
+  horas_indefinido: "Horas indefinido",
+};
+
+function baixarBlob(blob: Blob, nome: string) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nome;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Baixa as horas completas e separadas por motorista/dia , pro RH decidir o
+ * pagamento fora da plataforma. Rodada 233: o endpoint continua devolvendo
+ * CSV; o painel converte e entrega uma planilha Excel (.xlsx) no modelo
+ * visual dos PDFs. Se a conversão falhar, baixa o CSV original.
+ */
 export async function baixarIndicadoresCsv(
   inicio: string,
   fim: string,
@@ -112,14 +179,36 @@ export async function baixarIndicadoresCsv(
     params: parametros(inicio, fim, motoristaId),
     responseType: "blob",
   });
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "text/csv;charset=utf-8" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `indicadores-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  const nomeBase = `indicadores-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}`;
+  const blobCsv = new Blob([resposta.data], { type: "text/csv;charset=utf-8" });
+  try {
+    const tabela = lerCsv(await blobCsv.text());
+    if (tabela.length < 1) throw new Error("csv vazio");
+    const [cab, ...corpo] = tabela;
+    const cabecalhos = cab.map((c) => ROTULOS_CSV_INDICADORES[c] ?? c);
+    const linhas = corpo.map((l) =>
+      l.map((c, i) => {
+        // Colunas de horas (a partir da 3ª) viram número; motorista e dia ficam texto.
+        if (i >= 2 && /^-?\d+(\.\d+)?$/.test(c)) return Number(c);
+        return c;
+      }),
+    );
+    const emNegrito = corpo
+      .map((l, i) => (l[0]?.endsWith("(TOTAL)") ? i : -1))
+      .filter((i) => i >= 0);
+    const fmt = (d: string) =>
+      new Date(d).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+    const { baixarPlanilhaXlsx } = await import("../utils/exportarPlanilhaXlsx");
+    await baixarPlanilhaXlsx({
+      nomeArquivo: `${nomeBase}.xlsx`,
+      titulo: "Indicadores de jornada",
+      subtitulo: `Período: ${fmt(inicio)} a ${fmt(fim)} , horas em formato decimal (sem valores em R$)`,
+      cabecalhos,
+      linhas,
+      linhasEmNegrito: emNegrito,
+      formatoNumero: "0.00",
+    });
+  } catch {
+    baixarBlob(blobCsv, `${nomeBase}.csv`);
+  }
 }

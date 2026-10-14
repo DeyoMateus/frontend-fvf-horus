@@ -286,7 +286,7 @@ export function AlertasJornadaPage() {
               disabled={paginacao.itensFiltrados.length === 0}
               onClick={() =>
                 baixarCsvTabela(
-                  `alertas-de-jornada${paginacao.dataInicio ? `-${paginacao.dataInicio}` : ""}${paginacao.dataFim ? `-a-${paginacao.dataFim}` : ""}.csv`,
+                  `alertas-de-jornada${paginacao.dataInicio ? `-${paginacao.dataInicio}` : ""}${paginacao.dataFim ? `-a-${paginacao.dataFim}` : ""}.xlsx`,
                   [
                     "Severidade",
                     "Motorista",
@@ -307,10 +307,17 @@ export function AlertasJornadaPage() {
                     new Date(a.createdAt).toLocaleString("pt-BR"),
                     a.tratadoEm ? "Tratado" : "Pendente",
                   ]),
+                  {
+                    titulo: "Alertas de jornada",
+                    subtitulo:
+                      paginacao.dataInicio || paginacao.dataFim
+                        ? `Período: ${paginacao.dataInicio || "início"} a ${paginacao.dataFim || "hoje"}`
+                        : "Todos os períodos",
+                  },
                 )
               }
             >
-              Baixar CSV ({paginacao.itensFiltrados.length})
+              Baixar Excel ({paginacao.itensFiltrados.length})
             </button>
           </div>
           <ControlesListaPaginada

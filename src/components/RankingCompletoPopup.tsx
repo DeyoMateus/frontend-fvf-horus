@@ -70,17 +70,18 @@ export function RankingCompletoPopup({
               disabled={itens.length === 0}
               onClick={() =>
                 baixarCsvTabela(
-                  `${titulo.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`,
+                  `${titulo.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.xlsx`,
                   ["Posição", "Motorista", "Valor"],
                   itens.map((item, i) => [
                     String(i + 1),
                     item.nome,
                     minParaHoras(item.valorMin),
                   ]),
+                  { titulo: `${titulo} , relatório completo` },
                 )
               }
             >
-              Baixar CSV
+              Baixar Excel
             </button>
             <button
               type="button"

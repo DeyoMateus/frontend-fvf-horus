@@ -656,13 +656,14 @@ export function ModalDetalheTendencia({
               disabled={!temDadosParaExportar}
               onClick={() =>
                 baixarCsvTabela(
-                  `${ponto.rotulo}-${ponto.dia}.csv`,
+                  `${ponto.rotulo}-${ponto.dia}.xlsx`,
                   cabecalhosExportacao,
                   linhasExportacao,
+                  { titulo: ponto.rotulo, subtitulo: dataFormatada },
                 )
               }
             >
-              Baixar CSV
+              Baixar Excel
             </button>
             <button
               className="secondary"

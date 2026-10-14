@@ -287,13 +287,14 @@ function PainelDetalheCard({
               disabled={!temDadosParaExportar}
               onClick={() =>
                 baixarCsvTabela(
-                  `${estado.titulo}.csv`,
+                  `${estado.titulo}.xlsx`,
                   cabecalhosExportacao,
                   linhasExportacao,
+                  { titulo: estado.titulo },
                 )
               }
             >
-              Baixar CSV
+              Baixar Excel
             </button>
             <button
               className="secondary"
@@ -863,7 +864,7 @@ export function DashboardPage() {
           disabled={tendencia.length === 0}
           onClick={() =>
             baixarCsvTabela(
-              `evolucao-painel-${periodoPersonalizado ? `${periodoPersonalizado.desde}-a-${periodoPersonalizado.ate}` : `${periodoDias}dias`}.csv`,
+              `evolucao-painel-${periodoPersonalizado ? `${periodoPersonalizado.desde}-a-${periodoPersonalizado.ate}` : `${periodoDias}dias`}.xlsx`,
               [
                 "Dia",
                 "Registros",
@@ -886,10 +887,16 @@ export function DashboardPage() {
                 String(d.horasEspera),
                 String(d.horasIndefinido),
               ]),
+              {
+                titulo: "Evolução do painel",
+                subtitulo: periodoPersonalizado
+                  ? `Período: ${periodoPersonalizado.desde} a ${periodoPersonalizado.ate}`
+                  : `Período: últimos ${periodoDias} dias`,
+              },
             )
           }
         >
-          Baixar CSV
+          Baixar Excel
         </button>
       </div>
 

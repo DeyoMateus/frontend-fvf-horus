@@ -739,12 +739,16 @@ export function MotoristaDetailPage() {
   }
   function onBaixarCsvDivergencias() {
     baixarCsvTabela(
-      `integridade-divergencias-${motorista?.nome ?? motoristaId}.csv`.replace(
+      `integridade-divergencias-${motorista?.nome ?? motoristaId}.xlsx`.replace(
         /\s+/g,
         "-",
       ),
       CABECALHOS_RELATORIO_DIVERGENCIAS,
       linhasRelatorioDivergencias(),
+      {
+        titulo: `Integridade da cadeia: divergências - ${motorista?.nome ?? ""}`,
+        subtitulo: `Filtro: ${rotuloPeriodoDivergencias()}`,
+      },
     );
   }
   function onImprimirDivergencias() {
@@ -783,12 +787,16 @@ export function MotoristaDetailPage() {
   }
   function onBaixarCsvTratamentos() {
     baixarCsvTabela(
-      `tratamentos-ponto-${motorista?.nome ?? motoristaId}.csv`.replace(
+      `tratamentos-ponto-${motorista?.nome ?? motoristaId}.xlsx`.replace(
         /\s+/g,
         "-",
       ),
       CABECALHOS_RELATORIO_TRATAMENTOS,
       linhasRelatorioTratamentos(),
+      {
+        titulo: `Tratamentos de ponto - ${motorista?.nome ?? ""}`,
+        subtitulo: `Período: ${rotuloPeriodoTratamentos()}`,
+      },
     );
   }
   function onImprimirTratamentos() {
