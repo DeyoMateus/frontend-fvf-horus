@@ -94,14 +94,14 @@ export function BuscaDocumentosCargaPopup({
         </div>
 
         <label>Número</label>
-        <input
+        <input maxLength={50}
           value={numero}
           onChange={(e) => setNumero(e.target.value)}
           placeholder="Número do CT-e/MDF-e"
         />
 
         <label>Chave de acesso</label>
-        <input
+        <input maxLength={44}
           value={chaveAcesso}
           onChange={(e) => setChaveAcesso(e.target.value)}
           placeholder="Parte ou toda a chave de acesso"

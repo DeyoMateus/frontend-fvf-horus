@@ -238,7 +238,7 @@ export function AjudantesPage() {
             flexWrap: "wrap",
           }}
         >
-          <input
+          <input maxLength={80}
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome ou CPF..."

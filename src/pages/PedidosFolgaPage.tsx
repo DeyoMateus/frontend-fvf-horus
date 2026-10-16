@@ -11,6 +11,8 @@ import type {
   SolicitacaoFolga,
 } from "../api/solicitacoesFolga";
 import { useToast } from "../components/ToastProvider";
+import { TextoLongo } from "../components/TextoLongo";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 function fmtDia(iso: string): string {
   return iso.slice(0, 10).split("-").reverse().join("/");
@@ -133,7 +135,9 @@ export function PedidosFolgaPage() {
                     {periodo(s)} ({totalDias(s)} dia
                     {totalDias(s) === 1 ? "" : "s"})
                   </td>
-                  <td style={{ maxWidth: 240 }}>{s.observacao ?? "—"}</td>
+                  <td style={{ maxWidth: 240 }}>
+                      <TextoLongo texto={s.observacao} titulo="Motivo do motorista" />
+                    </td>
                   <td>{new Date(s.createdAt).toLocaleString("pt-BR")}</td>
                   <td>
                     <div
@@ -144,8 +148,7 @@ export function PedidosFolgaPage() {
                         minWidth: 240,
                       }}
                     >
-                      <input
-                        type="text"
+                      <CampoTextoExpansivel
                         maxLength={400}
                         placeholder="Justificativa (obrigatória para negar)"
                         value={justificativas[s.id] ?? ""}
@@ -212,8 +215,13 @@ export function PedidosFolgaPage() {
                     >
                       {s.status === "APROVADA" ? "Aprovada" : "Negada"}
                     </td>
-                    <td style={{ maxWidth: 240 }}>{s.motivoDecisao ?? "—"}</td>
-                    <td>{s.decididoPorUsuario?.nome ?? "—"}</td>
+                    <td style={{ maxWidth: 240 }}>
+                      <TextoLongo texto={s.motivoDecisao} titulo="Justificativa" />
+                    </td>
+                    <td>
+                      {s.decididoPorUsuario?.nome ??
+                        (s.status === "NEGADA" ? "Sistema (automático)" : "—")}
+                    </td>
                     <td>
                       {s.decididoEm
                         ? new Date(s.decididoEm).toLocaleString("pt-BR")

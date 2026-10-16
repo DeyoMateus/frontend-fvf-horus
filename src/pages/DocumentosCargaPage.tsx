@@ -19,6 +19,7 @@ import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { BuscaDocumentosCargaPopup } from "../components/BuscaDocumentosCargaPopup";
 import { useConfirm } from "../components/ConfirmProvider";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 /**
  * Upload manual de CT-e/MDF-e , decisão do usuário: a empresa ainda não
@@ -221,20 +222,20 @@ export function DocumentosCargaPage() {
           </select>
 
           <label>Número (deixe em branco para tentar extrair do XML)</label>
-          <input value={numero} onChange={(e) => setNumero(e.target.value)} />
+          <input maxLength={50} value={numero} onChange={(e) => setNumero(e.target.value)} />
 
           <label>
             Chave de acesso, 44 dígitos (deixe em branco para tentar extrair do
             XML)
           </label>
-          <input
+          <input maxLength={44}
             value={chaveAcesso}
             onChange={(e) => setChaveAcesso(e.target.value)}
             pattern="\d{44}"
           />
 
           <label>Observação (opcional)</label>
-          <input
+          <CampoTextoExpansivel maxLength={400}
             value={observacao}
             onChange={(e) => setObservacao(e.target.value)}
           />

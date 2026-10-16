@@ -12,6 +12,8 @@ import { useConfirm } from "../components/ConfirmProvider";
 import type { Empresa, Feriado } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
+import { TextoLongo } from "../components/TextoLongo";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 const FERIADO_PADRAO: FeriadoInput = {
   data: "",
@@ -154,7 +156,7 @@ export function FeriadosPage() {
               </div>
               <div>
                 <label>Descrição</label>
-                <input
+                <CampoTextoExpansivel maxLength={200}
                   value={form.descricao}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, descricao: e.target.value }))
@@ -271,7 +273,9 @@ export function FeriadosPage() {
                         `${f.data.slice(0, 10)}T00:00:00`,
                       ).toLocaleDateString("pt-BR")}
                     </td>
-                    <td>{f.descricao}</td>
+                    <td style={{ maxWidth: 240 }}>
+                      <TextoLongo texto={f.descricao} titulo="Descrição do feriado" />
+                    </td>
                     <td>
                       {f.empresa
                         ? `${f.empresa.razaoSocial} (${f.empresa.cnpj})`

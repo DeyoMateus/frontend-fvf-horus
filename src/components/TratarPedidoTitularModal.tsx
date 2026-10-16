@@ -5,6 +5,7 @@ import type {
   SolicitacaoTitularPainel,
   StatusSolicitacaoTitular,
 } from "../api/privacidade";
+import { TextoLongo } from "./TextoLongo";
 
 export const ROTULO_TIPO_PEDIDO: Record<string, string> = {
   CONFIRMACAO_TRATAMENTO: "Confirmação de tratamento",
@@ -123,7 +124,7 @@ export function TratarPedidoTitularModal({
           </div>
           <div style={{ marginTop: 6 }}>
             <strong>O que o motorista escreveu:</strong>{" "}
-            {pedido.descricao ? `"${pedido.descricao}"` : "(sem detalhes)"}
+            <TextoLongo texto={pedido.descricao} titulo="O que o motorista escreveu" vazio="(sem detalhes)" />
           </div>
         </div>
 

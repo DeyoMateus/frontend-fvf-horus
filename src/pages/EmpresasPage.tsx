@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import type { Empresa } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 // Um grupo (o tenant real, desde que o modelo passou a suportar mais
 // de um CNPJ sob o mesmo login) pode ter várias Empresas/CNPJs , esta
@@ -72,7 +73,7 @@ export function EmpresasPage() {
           <h3 style={{ marginTop: 0 }}>Adicionar CNPJ</h3>
           <form onSubmit={onSubmit}>
             <label>Razão social</label>
-            <input
+            <CampoTextoExpansivel
               value={razaoSocial}
               onChange={(e) => setRazaoSocial(e.target.value)}
               maxLength={200}

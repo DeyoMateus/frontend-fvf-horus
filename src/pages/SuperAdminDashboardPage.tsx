@@ -5,6 +5,7 @@ import type { CreateEmpresaMaeInput, GrupoResumo } from "../api/types";
 import { SuperAdminAuditoriaPage } from "./SuperAdminAuditoriaPage";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 const FORM_PADRAO: CreateEmpresaMaeInput = {
   razaoSocialGrupo: "",
@@ -96,7 +97,7 @@ export function SuperAdminDashboardPage() {
           >
             <div>
               <label>Razão social da empresa mãe (Grupo)</label>
-              <input
+              <CampoTextoExpansivel maxLength={200}
                 value={form.razaoSocialGrupo}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, razaoSocialGrupo: e.target.value }))
@@ -106,7 +107,7 @@ export function SuperAdminDashboardPage() {
             </div>
             <div>
               <label>Razão social do primeiro CNPJ</label>
-              <input
+              <CampoTextoExpansivel maxLength={200}
                 value={form.razaoSocialEmpresa}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, razaoSocialEmpresa: e.target.value }))
@@ -130,7 +131,7 @@ export function SuperAdminDashboardPage() {
             </div>
             <div>
               <label>Registro INPI/AFD (opcional)</label>
-              <input
+              <input maxLength={100}
                 value={form.registroInpiAfd ?? ""}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, registroInpiAfd: e.target.value }))

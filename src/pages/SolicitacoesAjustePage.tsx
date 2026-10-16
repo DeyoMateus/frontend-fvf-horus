@@ -19,6 +19,7 @@ import { ListaEmPopup } from "../components/ListaEmPopup";
 import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
+import { TextoLongo } from "../components/TextoLongo";
 
 const ROTULO_STATUS: Record<string, string> = {
   APROVADA: "Aprovada",
@@ -297,7 +298,9 @@ export function SolicitacoesAjustePage() {
                     <td>
                       {new Date(s.timestampEvento).toLocaleString("pt-BR")}
                     </td>
-                    <td style={{ maxWidth: 240 }}>{s.justificativa}</td>
+                    <td style={{ maxWidth: 240 }}>
+                      <TextoLongo texto={s.justificativa} titulo="Justificativa do motorista" />
+                    </td>
                     <td>
                       <EvidenciasAnexo
                         evidencias={s.evidencias ?? []}
@@ -481,7 +484,9 @@ export function SolicitacoesAjustePage() {
                     <td>
                       {new Date(s.timestampEvento).toLocaleString("pt-BR")}
                     </td>
-                    <td style={{ maxWidth: 240 }}>{s.justificativa}</td>
+                    <td style={{ maxWidth: 240 }}>
+                      <TextoLongo texto={s.justificativa} titulo="Justificativa do motorista" />
+                    </td>
                     <td>
                       <EvidenciasAnexo
                         evidencias={s.evidencias ?? []}
@@ -515,7 +520,7 @@ export function SolicitacoesAjustePage() {
                       )}
                       {s.motivoDecisao && (
                         <div style={{ fontSize: 12, color: "#000000" }}>
-                          Motivo: {s.motivoDecisao}
+                          Motivo: <TextoLongo texto={s.motivoDecisao} titulo="Motivo da decisão" />
                         </div>
                       )}
                     </td>

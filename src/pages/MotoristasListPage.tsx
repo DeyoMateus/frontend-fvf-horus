@@ -277,7 +277,7 @@ export function MotoristasListPage() {
               required
             />
             <label>CNH</label>
-            <input
+            <input maxLength={20}
               value={cnh}
               onChange={(e) => setCnh(e.target.value)}
               required
@@ -294,7 +294,7 @@ export function MotoristasListPage() {
               maxLength={7}
             />
             <label>ID do rastreador (opcional)</label>
-            <input
+            <input maxLength={100}
               value={idRastreador}
               onChange={(e) => setIdRastreador(e.target.value)}
             />
@@ -532,7 +532,7 @@ export function MotoristasListPage() {
             flexWrap: "wrap",
           }}
         >
-          <input
+          <input maxLength={80}
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome ou CPF..."

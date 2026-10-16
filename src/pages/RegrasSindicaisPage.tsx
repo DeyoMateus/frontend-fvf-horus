@@ -17,6 +17,7 @@ import type {
   Empresa,
   RegraSindical,
 } from "../api/types";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 const REGRA_PADRAO: RegraSindicalInput = {
   nome: "",
@@ -172,7 +173,7 @@ export function RegrasSindicaisPage() {
           </h3>
           <form onSubmit={onSubmit}>
             <label>Nome da convenção</label>
-            <input
+            <CampoTextoExpansivel maxLength={200}
               value={form.nome}
               onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
               placeholder="ex.: Sindicato Rodoviário de SP - Base 2026/2027"

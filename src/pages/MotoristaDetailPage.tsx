@@ -94,6 +94,8 @@ import type {
   VerificacaoIntegridade,
 } from "../api/types";
 import { TIPOS_EVENTO } from "../api/types";
+import { TextoLongo } from "../components/TextoLongo";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 function gerarUuid() {
   return crypto.randomUUID();
@@ -1331,7 +1333,7 @@ export function MotoristaDetailPage() {
           <label>
             UUID do aparelho (deixe em branco para gerar um de teste)
           </label>
-          <input
+          <input maxLength={36}
             value={novaDeviceUuid}
             onChange={(e) => setNovaDeviceUuid(e.target.value)}
           />
@@ -1411,7 +1413,7 @@ export function MotoristaDetailPage() {
             required
           />
           <label>ID do rastreador (opcional)</label>
-          <input
+          <input maxLength={100}
             value={idRastreadorForm}
             onChange={(e) => setIdRastreadorForm(e.target.value)}
           />
@@ -2138,11 +2140,10 @@ export function MotoristaDetailPage() {
             required
           />
           <label>Motivo (opcional)</label>
-          <input
-            type="text"
+          <CampoTextoExpansivel
             value={motivoFolga}
             onChange={(e) => setMotivoFolga(e.target.value)}
-            maxLength={500}
+            maxLength={400}
           />
           {erroFolga && <p className="error-text">{erroFolga}</p>}
           <button type="submit" disabled={concedendoFolga}>
@@ -2514,7 +2515,9 @@ export function MotoristaDetailPage() {
               <tr key={t.id}>
                 <td>{t.tipoEvento}</td>
                 <td>{formatarRegistro(t.timestampEvento, t.fusoOffsetMin)}</td>
-                <td>{t.motivo}</td>
+                <td style={{ maxWidth: 240 }}>
+                  <TextoLongo texto={t.motivo} titulo="Motivo do tratamento" />
+                </td>
                 <td>{t.usuario?.nome ?? t.usuarioId}</td>
                 <td>{new Date(t.createdAt).toLocaleString("pt-BR")}</td>
                 <td>

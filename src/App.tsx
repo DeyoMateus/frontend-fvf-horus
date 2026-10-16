@@ -4,6 +4,9 @@ import { ToastProvider } from "./components/ToastProvider";
 import { ConfirmProvider } from "./components/ConfirmProvider";
 import { PromptProvider } from "./components/PromptProvider";
 import { Layout } from "./components/Layout";
+import { TravaScrollDePopups } from "./components/TravaScrollDePopups";
+import { ContadorDeCaracteres } from "./components/ContadorDeCaracteres";
+import { ExpandirCamposDeTexto } from "./components/ExpandirCamposDeTexto";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PrivacidadePublicaPage } from "./pages/PrivacidadePublicaPage";
 import { PrivacidadePainelPage } from "./pages/PrivacidadePainelPage";
@@ -43,6 +46,9 @@ import { SuperAdminRedefinirSenhaPage } from "./pages/SuperAdminRedefinirSenhaPa
 export function App() {
   return (
     <ToastProvider>
+      <TravaScrollDePopups />
+      <ContadorDeCaracteres />
+      <ExpandirCamposDeTexto />
       <ConfirmProvider>
         <PromptProvider>
           <AuthProvider>

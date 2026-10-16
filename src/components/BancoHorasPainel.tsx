@@ -11,6 +11,7 @@ import type {
 } from "../api/bancoHoras";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { dataLocalIso } from '../utils/mascaras';
+import { CampoTextoExpansivel } from "./CampoTextoExpansivel";
 
 const ROTULO_TIPO: Record<TipoAjusteBancoHoras, string> = {
   COMPENSACAO: "Compensação (folga tirada)",
@@ -276,8 +277,7 @@ export function BancoHorasPainel({ motoristaId }: { motoristaId: string }) {
             </div>
             <div style={{ flex: "1 1 200px" }}>
               <label>Observação (opcional)</label>
-              <input
-                type="text"
+              <CampoTextoExpansivel maxLength={400}
                 value={observacao}
                 onChange={(e) => setObservacao(e.target.value)}
                 style={{ width: "100%" }}

@@ -14,6 +14,7 @@ import type { GrupoDetalhe, PapelUsuario } from "../api/types";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { useConfirm } from "../components/ConfirmProvider";
 import { fusoIanaDoNavegador } from "../utils/fusoHorario";
+import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 type FormEmpresa = {
   razaoSocial: string;
@@ -273,7 +274,7 @@ export function SuperAdminGrupoDetailPage() {
         >
           <div style={{ flex: 1 }}>
             <label>Razão social da empresa mãe</label>
-            <input
+            <CampoTextoExpansivel maxLength={200}
               value={razaoSocialGrupo}
               onChange={(e) => setRazaoSocialGrupo(e.target.value)}
               required
@@ -337,7 +338,7 @@ export function SuperAdminGrupoDetailPage() {
                     >
                       <div>
                         <label>Razão social</label>
-                        <input
+                        <CampoTextoExpansivel maxLength={200}
                           value={formEmpresa.razaoSocial}
                           onChange={(ev) =>
                             setFormEmpresa((f) => ({
@@ -350,7 +351,7 @@ export function SuperAdminGrupoDetailPage() {
                       </div>
                       <div>
                         <label>CNPJ</label>
-                        <input
+                        <input maxLength={14}
                           value={formEmpresa.cnpj}
                           onChange={(ev) =>
                             setFormEmpresa((f) => ({
@@ -365,7 +366,7 @@ export function SuperAdminGrupoDetailPage() {
                       </div>
                       <div>
                         <label>Registro INPI/AFD</label>
-                        <input
+                        <input maxLength={100}
                           value={formEmpresa.registroInpiAfd}
                           onChange={(ev) =>
                             setFormEmpresa((f) => ({

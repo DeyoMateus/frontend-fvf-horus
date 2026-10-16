@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { CampoTextoExpansivel } from "./CampoTextoExpansivel";
 
 interface PromptOpcoes {
   titulo?: string;
@@ -114,8 +115,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
                 }}
               />
             ) : (
-              <input
-                type="text"
+              <CampoTextoExpansivel maxLength={400}
                 autoFocus
                 placeholder={pedido.placeholder}
                 value={valor}
