@@ -823,3 +823,8 @@ button.danger {
   font-size: 13px;
   color: #000;
 }
+
+/* Rodada 264 , botões do rodapé do menu lateral ficam separados entre si. */
+.sidebar-rodape button + button {
+  margin-top: 8px;
+}

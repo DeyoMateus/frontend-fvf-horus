@@ -7,6 +7,7 @@ import {
 } from "../api/usuariosEmpresa";
 import type { UsuarioEmpresaListado } from "../api/types";
 import { TelefoneInput } from "../components/TelefoneInput";
+import { useTour } from "../tour/TourProvider";
 
 /**
  * "Meu perfil" (Rodada 38) , o próprio ADMIN/GESTOR logado edita seu
@@ -29,6 +30,7 @@ function horasParaMin(h: string): number {
 }
 
 export function PerfilPage() {
+  const { iniciarTour } = useTour();
   const [perfil, setPerfil] = useState<UsuarioEmpresaListado | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -139,6 +141,17 @@ export function PerfilPage() {
         status (ativo/inativo) são gerenciados pelo super admin da plataforma.
         Fale com quem administra sua conta FVF Hórus caso precise alterar isso.
       </p>
+
+      <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
+        <h3 style={{ marginTop: 0 }}>Tour guiado</h3>
+        <p style={{ fontSize: 13, marginTop: 0 }}>
+          Quer rever o passeio pelas telas do sistema? Ele mostra, passo a
+          passo, para que serve cada tela e cada campo.
+        </p>
+        <button type="button" onClick={iniciarTour}>
+          Refazer tour
+        </button>
+      </div>
 
       <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
         <h3 style={{ marginTop: 0 }}>Dados do usuário</h3>

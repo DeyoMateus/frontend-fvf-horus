@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
+import { TourProvider, useTour } from "../tour/TourProvider";
 
 const CHAVE_SIDEBAR_COLAPSADA = "fvfhorus.sidebarColapsada";
 
@@ -50,8 +51,18 @@ const ITENS_NAV: {
 // valer normalmente.
 const LARGURA_MINIMA_MENU_EXPANDIDO = 860;
 
+// Rodada 264 , o tour guiado envolve todo o painel.
 export function Layout() {
+  return (
+    <TourProvider>
+      <LayoutInterno />
+    </TourProvider>
+  );
+}
+
+function LayoutInterno() {
   const { usuario, sair } = useAuth();
+  const { iniciarTour } = useTour();
   const [colapsada, setColapsada] = useState(() => {
     try {
       return localStorage.getItem(CHAVE_SIDEBAR_COLAPSADA) === "1";
@@ -121,7 +132,20 @@ export function Layout() {
           <NavLink to="/perfil" className="botao-perfil" title="Configuração">
             {efetivamenteColapsada ? "CF" : "Configuração"}
           </NavLink>
-          <button className="secondary" onClick={sair} title="Sair">
+          <button
+            className="secondary"
+            onClick={iniciarTour}
+            title="Refazer o tour guiado"
+            data-tour="refazer-tour"
+          >
+            {efetivamenteColapsada ? "?" : "Refazer tour"}
+          </button>
+          <button
+            className="secondary"
+            onClick={sair}
+            title="Sair"
+            data-tour="sair"
+          >
             {efetivamenteColapsada ? "⏻" : "Sair"}
           </button>
         </div>
