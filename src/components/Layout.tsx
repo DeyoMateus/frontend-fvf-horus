@@ -121,6 +121,15 @@ function LayoutInterno() {
               {efetivamenteColapsada ? item.abreviacao : item.label}
             </NavLink>
           ))}
+          <button
+            type="button"
+            className="nav-tour"
+            onClick={iniciarTour}
+            title="Tour guiado do sistema"
+            data-tour="refazer-tour"
+          >
+            {efetivamenteColapsada ? "?" : "? Tour guiado"}
+          </button>
         </nav>
         <div className="sidebar-rodape">
           {!efetivamenteColapsada && (
@@ -132,14 +141,6 @@ function LayoutInterno() {
           <NavLink to="/perfil" className="botao-perfil" title="Configuração">
             {efetivamenteColapsada ? "CF" : "Configuração"}
           </NavLink>
-          <button
-            className="secondary"
-            onClick={iniciarTour}
-            title="Refazer o tour guiado"
-            data-tour="refazer-tour"
-          >
-            {efetivamenteColapsada ? "?" : "Refazer tour"}
-          </button>
           <button
             className="secondary"
             onClick={sair}

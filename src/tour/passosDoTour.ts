@@ -159,6 +159,13 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "menu",
+    alvo: 'css:[data-tour="refazer-tour"]',
+    titulo: "Tour guiado",
+    texto:
+      "Este botão fica sempre no fim do menu. Clique nele quando quiser rever o passeio ou escolher um módulo que ainda não viu.",
+  },
+  {
+    modulo: "menu",
     alvo: "css:.botao-perfil",
     titulo: "Configuração",
     texto:
