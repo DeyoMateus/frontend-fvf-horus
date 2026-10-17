@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
-import { Link } from "react-router-dom";
 import { esqueciSenhaSuperAdmin } from "../api/superAdminAuth";
+import { BotaoLink } from "../components/BotaoLink";
 
 // Espelha EsqueciSenhaPage.tsx (painel do grupo) , ver comentário lá
 // sobre a resposta genérica.
@@ -47,9 +47,7 @@ export function SuperAdminEsqueciSenhaPage() {
             </button>
           </form>
         )}
-        <p style={{ marginTop: 12, fontSize: 13 }}>
-          <Link to="/super-admin/login">Voltar ao login</Link>
-        </p>
+        <BotaoLink to="/super-admin/login">Voltar ao login</BotaoLink>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { useSuperAdminAuth } from '../context/SuperAdminAuthContext';
+import { BotaoLink } from "../components/BotaoLink";
 
 export function SuperAdminLoginPage() {
   const { entrar } = useSuperAdminAuth();
@@ -45,14 +46,7 @@ export function SuperAdminLoginPage() {
             {enviando ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-        <button
-          type="button"
-          className="secondary"
-          style={{ marginTop: 12, width: '100%' }}
-          onClick={() => navigate('/super-admin/esqueci-senha')}
-        >
-          Esqueci minha senha
-        </button>
+        <BotaoLink to="/super-admin/esqueci-senha">Esqueci minha senha</BotaoLink>
       </div>
     </div>
   );

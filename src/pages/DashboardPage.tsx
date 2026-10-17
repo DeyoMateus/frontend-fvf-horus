@@ -64,6 +64,8 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   DIRECAO_CONTINUA_PROXIMA_LIMITE: "Direção contínua perto do limite",
   DIRECAO_CONTINUA_EXCEDIDA: "Direção contínua excedida",
   DIRECAO_RETOMADA_SEM_PAUSA: "Direção retomada sem pausa",
+  DIRECAO_CONTINUA_REPETIDA_10H: "10h de direção contínua sem pausa",
+  DIRECAO_CONTINUA_REPETIDA_11H: "11h de direção contínua sem pausa",
   SEQUENCIA_EVENTOS_INCONSISTENTE: "Sequência de eventos inconsistente",
   JORNADA_ABERTA_PROLONGADA: "Jornada aberta há muito tempo",
   JORNADA_DIRECAO_PROXIMA_LIMITE: "Jornada de direção perto do limite",

@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { useAuth } from "../context/AuthContext";
+import { BotaoLink } from "../components/BotaoLink";
 
 export function LoginPage() {
   const { entrar } = useAuth();
@@ -68,17 +69,8 @@ export function LoginPage() {
             {enviando ? "Entrando..." : "Entrar"}
           </button>
         </form>
-        <button
-          type="button"
-          className="secondary"
-          style={{ marginTop: 12, width: "100%" }}
-          onClick={() => navigate("/esqueci-senha")}
-        >
-          Esqueci minha senha
-        </button>
-        <p style={{ marginTop: 12, fontSize: 12, textAlign: "center" }}>
-          <a href="/privacidade">Política de Privacidade</a>
-        </p>
+        <BotaoLink to="/esqueci-senha">Esqueci minha senha</BotaoLink>
+        <BotaoLink to="/privacidade">Política de Privacidade</BotaoLink>
       </div>
     </div>
   );

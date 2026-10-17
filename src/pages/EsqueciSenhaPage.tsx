@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
-import { Link } from "react-router-dom";
 import { esqueciSenha } from "../api/auth";
+import { BotaoLink } from "../components/BotaoLink";
 
 // Resposta do backend é sempre genérica (204, exista ou não o e-mail ,
 // ver AuthService.esqueciSenha) , a tela reflete isso: mostra a MESMA
@@ -49,9 +49,7 @@ export function EsqueciSenhaPage() {
             </button>
           </form>
         )}
-        <p style={{ marginTop: 12, fontSize: 13 }}>
-          <Link to="/login">Voltar ao login</Link>
-        </p>
+        <BotaoLink to="/login">Voltar ao login</BotaoLink>
       </div>
     </div>
   );

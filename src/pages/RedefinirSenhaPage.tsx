@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { redefinirSenha } from '../api/auth';
+import { BotaoLink } from "../components/BotaoLink";
 
 export function RedefinirSenhaPage() {
   const [searchParams] = useSearchParams();
@@ -47,9 +48,7 @@ export function RedefinirSenhaPage() {
             </button>
           </form>
         )}
-        <p style={{ marginTop: 12, fontSize: 13 }}>
-          <Link to="/login">Voltar ao login</Link>
-        </p>
+        <BotaoLink to="/login">Voltar ao login</BotaoLink>
       </div>
     </div>
   );

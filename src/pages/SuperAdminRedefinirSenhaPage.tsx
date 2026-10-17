@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { redefinirSenhaSuperAdmin } from '../api/superAdminAuth';
+import { BotaoLink } from "../components/BotaoLink";
 
 // Espelha RedefinirSenhaPage.tsx (painel do grupo).
 export function SuperAdminRedefinirSenhaPage() {
@@ -48,9 +49,7 @@ export function SuperAdminRedefinirSenhaPage() {
             </button>
           </form>
         )}
-        <p style={{ marginTop: 12, fontSize: 13 }}>
-          <Link to="/super-admin/login">Voltar ao login</Link>
-        </p>
+        <BotaoLink to="/super-admin/login">Voltar ao login</BotaoLink>
       </div>
     </div>
   );
