@@ -1,7 +1,18 @@
 import { api } from "./client";
 
+export type StatusFolgaConcedida = "CONCEDIDA" | "NAO_REALIZADA" | "RETIRADA";
+
+export const ROTULO_STATUS_FOLGA: Record<StatusFolgaConcedida, string> = {
+  CONCEDIDA: "Concedida",
+  NAO_REALIZADA: "Folga não realizada: motorista trabalhou",
+  RETIRADA: "Folga retirada pelo RH",
+};
+
 export interface FolgaConcedida {
   id: string;
+  status: StatusFolgaConcedida;
+  statusAlteradoEm: string | null;
+  motivoRetirada: string | null;
   motoristaId: string;
   data: string;
   motivo: string | null;
@@ -29,5 +40,19 @@ export function concederFolga(
 ) {
   return api
     .post<FolgaConcedida>(`/motoristas/${motoristaId}/folgas-concedidas`, input)
+    .then((r) => r.data);
+}
+
+/** Retira a folga antes da data prevista (o registro fica como "retirada"). */
+export function retirarFolgaConcedida(
+  motoristaId: string,
+  folgaId: string,
+  motivo?: string,
+) {
+  return api
+    .post<FolgaConcedida>(
+      `/motoristas/${motoristaId}/folgas-concedidas/${folgaId}/retirar`,
+      { motivo },
+    )
     .then((r) => r.data);
 }

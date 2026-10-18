@@ -1,5 +1,5 @@
 import { useAuth } from "../context/AuthContext";
-import { dataCalendarioBr } from "../utils/mascaras";
+import { dataCalendarioBr, dataLocalIso } from "../utils/mascaras";
 import {
   formatarRegistro,
   offsetDoNavegador,
@@ -76,7 +76,16 @@ import {
 } from "../api/alertas";
 import { listarAutorrelatosFolga } from "../api/autorrelatoFolga";
 import type { AutorrelatoFolga } from "../api/autorrelatoFolga";
-import { concederFolga, listarFolgasConcedidas } from "../api/folgaConcedida";
+import {
+  concederFolga,
+  listarFolgasConcedidas,
+  retirarFolgaConcedida,
+  ROTULO_STATUS_FOLGA,
+} from "../api/folgaConcedida";
+import { useConfirm } from "../components/ConfirmProvider";
+import { FolgasLista } from "../components/FolgasLista";
+import { listEmpresas } from "../api/empresas";
+import type { Empresa } from "../api/types";
 import type { FolgaConcedida } from "../api/folgaConcedida";
 import {
   listarDocumentosCargaPorMotorista,
@@ -170,6 +179,7 @@ export function MotoristaDetailPage() {
   const [folgasConcedidas, setFolgasConcedidas] = useState<FolgaConcedida[]>(
     [],
   );
+  const confirmarAcao = useConfirm();
   const [statusCarga, setStatusCarga] = useState<StatusAtualCarga | null>(null);
   const [documentosCarga, setDocumentosCarga] = useState<DocumentoCarga[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -251,6 +261,14 @@ export function MotoristaDetailPage() {
   const [editandoCadastro, setEditandoCadastro] = useState(false);
   const [nomeEdit, setNomeEdit] = useState("");
   const [telefoneEdit, setTelefoneEdit] = useState("");
+  // Rodada 278: CNPJ ao qual o motorista esta vinculado (editavel).
+  const [empresasGrupo, setEmpresasGrupo] = useState<Empresa[]>([]);
+  const [empresaEdit, setEmpresaEdit] = useState("");
+  useEffect(() => {
+    listEmpresas()
+      .then(setEmpresasGrupo)
+      .catch(() => undefined);
+  }, []);
   const [salvandoCadastro, setSalvandoCadastro] = useState(false);
   const [erroCadastro, setErroCadastro] = useState<string | null>(null);
 
@@ -992,6 +1010,21 @@ export function MotoristaDetailPage() {
     }
   }
 
+  async function onRetirarFolga(f: FolgaConcedida) {
+    const ok = await confirmarAcao(
+      `Retirar a folga de ${dataCalendarioBr(f.data)}? O registro continua no histórico como "folga retirada pelo RH".`,
+      { titulo: "Retirar folga", perigo: true },
+    );
+    if (!ok) return;
+    setErroFolga(null);
+    try {
+      await retirarFolgaConcedida(motoristaId, f.id);
+      await carregarTudo();
+    } catch {
+      setErroFolga("Não foi possível retirar a folga.");
+    }
+  }
+
   if (carregando || !motorista) return <p>Carregando...</p>;
 
   async function copiarTexto(texto: string, qual: "id" | "key") {
@@ -1029,6 +1062,7 @@ export function MotoristaDetailPage() {
   function onIniciarEdicaoCadastro() {
     setNomeEdit(motorista!.nome);
     setTelefoneEdit(motorista!.telefone ?? "");
+    setEmpresaEdit(motorista!.empresaId ?? "");
     setErroCadastro(null);
     setEditandoCadastro(true);
   }
@@ -1052,10 +1086,18 @@ export function MotoristaDetailPage() {
       const atualizado = await atualizarCadastroMotorista(motoristaId, {
         nome: nomeEdit.trim(),
         telefone: telefoneEdit.trim(),
+        ...(empresaEdit && empresaEdit !== motorista?.empresaId
+          ? { empresaId: empresaEdit }
+          : {}),
       });
       setMotorista((prev) =>
         prev
-          ? { ...prev, nome: atualizado.nome, telefone: atualizado.telefone }
+          ? {
+              ...prev,
+              nome: atualizado.nome,
+              telefone: atualizado.telefone,
+              empresaId: atualizado.empresaId ?? prev.empresaId,
+            }
           : prev,
       );
       setEditandoCadastro(false);
@@ -1173,6 +1215,28 @@ export function MotoristaDetailPage() {
               required
             />
 
+            {empresasGrupo.length > 0 && (
+              <>
+                <label style={{ marginTop: 8, display: "block" }}>
+                  Empresa (CNPJ) vinculada
+                </label>
+                <select
+                  value={empresaEdit}
+                  onChange={(e) => setEmpresaEdit(e.target.value)}
+                >
+                  {empresasGrupo.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.razaoSocial} ({emp.cnpj})
+                    </option>
+                  ))}
+                </select>
+                <p style={{ fontSize: 12, marginTop: 2 }}>
+                  A regra de folga vinculada a este CNPJ passa a valer para o
+                  motorista.
+                </p>
+              </>
+            )}
+
             {erroCadastro && <p className="error-text">{erroCadastro}</p>}
 
             <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
@@ -1195,7 +1259,17 @@ export function MotoristaDetailPage() {
           <h2>{motorista.nome}</h2>
           <p style={{ color: "#000000", marginTop: -8 }}>
             CPF {motorista.cpf}
-            {motorista.telefone && <> · {motorista.telefone}</>} ·{" "}
+            {motorista.telefone && <> · {motorista.telefone}</>}
+            {(() => {
+              const emp = empresasGrupo.find((x) => x.id === motorista.empresaId);
+              return emp ? (
+                <>
+                  {" "}
+                  · {emp.razaoSocial} ({emp.cnpj})
+                </>
+              ) : null;
+            })()}{" "}
+            ·{" "}
             <span
               style={{
                 color:
@@ -2107,19 +2181,17 @@ export function MotoristaDetailPage() {
           Avisadas pelo próprio motorista no app, não são ponto, só explicam pra
           você dias sem registro.
         </p>
-        <ul style={{ fontSize: 13 }}>
-          {folgas.map((f) => (
-            <li key={f.id}>
-              {dataCalendarioBr(f.data)}
-              {f.observacao && `: ${f.observacao}`}
-            </li>
-          ))}
-          {folgas.length === 0 && (
-            <li style={{ color: "#000000", listStyle: "none" }}>
-              Nenhuma folga autorrelatada.
-            </li>
-          )}
-        </ul>
+        <FolgasLista
+          titulo="Folgas autorrelatadas"
+          subtituloArquivo={motorista?.nome}
+          cabecalhos={["Data da folga", "Observação do motorista"]}
+          linhas={folgas.map((f) => ({
+            id: f.id,
+            data: f.data,
+            celulas: [dataCalendarioBr(f.data), f.observacao ?? ""],
+          }))}
+          vazio="Nenhuma folga autorrelatada."
+        />
       </div>
 
       <div className="card">
@@ -2151,21 +2223,38 @@ export function MotoristaDetailPage() {
           </button>
         </form>
 
-        <ul style={{ fontSize: 13, marginTop: 16 }}>
-          {folgasConcedidas.map((f) => (
-            <li key={f.id}>
-              {dataCalendarioBr(f.data)}
-              {f.motivo && `: ${f.motivo}`}
-              {f.concedidaPorUsuario &&
-                ` (concedida por ${f.concedidaPorUsuario.nome})`}
-            </li>
-          ))}
-          {folgasConcedidas.length === 0 && (
-            <li style={{ color: "#000000", listStyle: "none" }}>
-              Nenhuma folga concedida.
-            </li>
-          )}
-        </ul>
+        <div style={{ marginTop: 16 }}>
+          <FolgasLista
+            titulo="Folgas concedidas pelo RH"
+            subtituloArquivo={motorista?.nome}
+            cabecalhos={["Data da folga", "Situação", "Motivo", "Concedida por"]}
+            comAcoes
+            linhas={folgasConcedidas.map((f) => ({
+              id: f.id,
+              data: f.data,
+              cor: f.status === "NAO_REALIZADA" ? "#b91c1c" : undefined,
+              celulas: [
+                dataCalendarioBr(f.data),
+                ROTULO_STATUS_FOLGA[f.status],
+                f.motivo ?? "",
+                f.concedidaPorUsuario?.nome ?? "",
+              ],
+              acao:
+                f.status === "CONCEDIDA" &&
+                f.data.slice(0, 10) > dataLocalIso(new Date()) ? (
+                  <button
+                    type="button"
+                    className="secondary"
+                    style={{ padding: "2px 8px", fontSize: 12 }}
+                    onClick={() => void onRetirarFolga(f)}
+                  >
+                    Retirar
+                  </button>
+                ) : null,
+            }))}
+            vazio="Nenhuma folga concedida."
+          />
+        </div>
       </div>
 
       <div className="card" ref={secaoAlertasJornadaRef}>

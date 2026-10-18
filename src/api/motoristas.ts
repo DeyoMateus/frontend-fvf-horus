@@ -90,6 +90,8 @@ export interface AtualizarCadastroMotoristaInput {
   nome?: string;
   /** Formato E.164 (ver TelefoneInput). */
   telefone?: string;
+  /** Rodada 278: CNPJ (empresa do grupo) ao qual o motorista fica vinculado. */
+  empresaId?: string;
 }
 
 /**

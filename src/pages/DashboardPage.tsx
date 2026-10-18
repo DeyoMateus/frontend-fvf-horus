@@ -66,6 +66,8 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   DIRECAO_RETOMADA_SEM_PAUSA: "Direção retomada sem pausa",
   DIRECAO_CONTINUA_REPETIDA_10H: "10h de direção contínua sem pausa",
   DIRECAO_CONTINUA_REPETIDA_11H: "11h de direção contínua sem pausa",
+  FOLGA_VENCIDA: "Folga vencida",
+  FOLGA_URGENTE: "Folga urgente: sem folga na janela",
   SEQUENCIA_EVENTOS_INCONSISTENTE: "Sequência de eventos inconsistente",
   JORNADA_ABERTA_PROLONGADA: "Jornada aberta há muito tempo",
   JORNADA_DIRECAO_PROXIMA_LIMITE: "Jornada de direção perto do limite",
@@ -396,7 +398,7 @@ function PainelDetalheCard({
                   <tr key={a.alertaId}>
                     <td>
                       <Link
-                        to={`/motoristas/${a.motoristaId}?secao=alertas-jornada`}
+                        to={a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${a.motoristaId}?secao=alertas-jornada`}
                         onClick={onFechar}
                       >
                         {a.nome}

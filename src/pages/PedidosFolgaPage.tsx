@@ -13,6 +13,7 @@ import type {
 import { useToast } from "../components/ToastProvider";
 import { TextoLongo } from "../components/TextoLongo";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
+import { PainelFolgas } from "../components/PainelFolgas";
 
 function fmtDia(iso: string): string {
   return iso.slice(0, 10).split("-").reverse().join("/");
@@ -41,6 +42,8 @@ export function PedidosFolgaPage() {
   const [historico, setHistorico] = useState<PaginaHistoricoFolga | null>(null);
   const [pagina, setPagina] = useState(1);
   const [carregando, setCarregando] = useState(true);
+  // Muda a cada decisão para o dashboard do topo recarregar os indicadores.
+  const [versaoDashboard, setVersaoDashboard] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
   const [processandoId, setProcessandoId] = useState<string | null>(null);
   const [justificativas, setJustificativas] = useState<Record<string, string>>(
@@ -80,6 +83,7 @@ export function PedidosFolgaPage() {
       if (aprovar) await aprovarPedidoFolga(s.id, texto);
       else await negarPedidoFolga(s.id, texto);
       toast.sucesso(aprovar ? "Folga aprovada e lançada." : "Pedido negado.");
+      setVersaoDashboard((v) => v + 1);
       setJustificativas((j) => ({ ...j, [s.id]: "" }));
       await carregar();
     } catch (e) {
@@ -99,6 +103,7 @@ export function PedidosFolgaPage() {
   return (
     <div>
       <h1>Pedidos de folga</h1>
+      <PainelFolgas versao={versaoDashboard} />
       <p style={{ fontSize: 13 }}>
         Os motoristas pedem a folga pelo aplicativo (um ou vários dias
         seguidos, de hoje em diante). Aceite ou negue com justificativa. Para

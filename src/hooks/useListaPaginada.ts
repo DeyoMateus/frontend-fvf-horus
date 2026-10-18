@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-export type QtdPorPagina = 10 | 20 | 50 | 100;
+export type QtdPorPagina = 5 | 10 | 20 | 50 | 100;
 export type OrdemData = "recente" | "antigo";
 
 export interface ListaPaginadaResultado<T> {

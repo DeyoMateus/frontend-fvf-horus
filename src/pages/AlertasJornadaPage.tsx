@@ -380,7 +380,7 @@ export function AlertasJornadaPage() {
                       <td>
                         {a.motorista ? (
                           <Link
-                            to={`/motoristas/${a.motorista.id}?secao=alertas-jornada`}
+                            to={a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${a.motorista.id}?secao=alertas-jornada`}
                           >
                             {a.motorista.nome}
                           </Link>
@@ -435,7 +435,7 @@ export function AlertasJornadaPage() {
                                 <>
                                   {" "}
                                   <Link
-                                    to={`/motoristas/${a.motorista.id}?secao=alertas-jornada`}
+                                    to={a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${a.motorista.id}?secao=alertas-jornada`}
                                   >
                                     ver no histórico do motorista
                                   </Link>

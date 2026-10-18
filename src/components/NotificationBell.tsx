@@ -280,9 +280,8 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", aoClicarFora);
   }, [aberto]);
 
-  const quantidadeCritico = alertas.filter(
-    (a) => a.severidade === "CRITICO",
-  ).length;
+  const quantidadeCritico =
+    alertas.filter((a) => a.severidade === "CRITICO").length;
   const diasRadar = semInteracao.reduce(
     (soma, m) => soma + m.diasSemInteracao.length,
     0,
@@ -473,7 +472,7 @@ export function NotificationBell() {
                 {alerta.motorista && (
                   <div style={{ marginTop: 4 }}>
                     <Link
-                      to={`/motoristas/${alerta.motorista.id}?secao=alertas-jornada`}
+                      to={alerta.tipo === "FOLGA_VENCIDA" || alerta.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${alerta.motorista.id}?secao=alertas-jornada`}
                       onClick={() => setAberto(false)}
                       style={{ fontSize: 12 }}
                     >

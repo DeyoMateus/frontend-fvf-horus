@@ -39,6 +39,10 @@ interface ControlesListaPaginadaProps {
   children?: ReactNode;
   /** Título da janela de 100 por vez. */
   tituloPopup?: string;
+  /** Opções de "mostrar N por vez" (padrão: 10, 20, 50, 100). */
+  opcoesQtd?: QtdPorPagina[];
+  /** Esconde o botão de ordem (listas com ordem fixa). */
+  semOrdem?: boolean;
 }
 
 export function ControlesListaPaginada({
@@ -55,6 +59,8 @@ export function ControlesListaPaginada({
   filtroData,
   children,
   tituloPopup,
+  opcoesQtd = [10, 20, 50, 100],
+  semOrdem,
 }: ControlesListaPaginadaProps) {
   const barra = (
     <div
@@ -122,10 +128,11 @@ export function ControlesListaPaginada({
             onMudarQtdPorPagina(Number(e.target.value) as QtdPorPagina)
           }
         >
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-          <option value={100}>100</option>
+          {opcoesQtd.map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
         </select>{" "}
         por vez
       </label>
@@ -139,16 +146,18 @@ export function ControlesListaPaginada({
       )}
       {/* Pedido do usuário: "o mais recente primeiro fica por último na
           lista" , movido pro final da barra de controles. */}
-      <button
-        type="button"
-        className="secondary"
-        style={{ fontSize: 13, whiteSpace: "nowrap" }}
-        onClick={onAlternarOrdem}
-      >
-        {ordem === "recente"
-          ? "Mais recentes primeiro ↓"
-          : "Mais antigos primeiro ↑"}
-      </button>
+      {!semOrdem && (
+        <button
+          type="button"
+          className="secondary"
+          style={{ fontSize: 13, whiteSpace: "nowrap" }}
+          onClick={onAlternarOrdem}
+        >
+          {ordem === "recente"
+            ? "Mais recentes primeiro ↓"
+            : "Mais antigos primeiro ↑"}
+        </button>
+      )}
 
       {popupAberto && (
         <PaginacaoPopup
