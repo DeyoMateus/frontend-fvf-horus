@@ -7,7 +7,9 @@ import {
 } from "../api/usuariosEmpresa";
 import type { UsuarioEmpresaListado } from "../api/types";
 import { TelefoneInput } from "../components/TelefoneInput";
-import { useTour } from "../tour/TourProvider";
+import { obterMinhaPolitica } from "../api/privacidade";
+import type { MinhaPolitica } from "../api/privacidade";
+import { PoliticaPrivacidadeModal } from "../components/PoliticaPrivacidadeModal";
 
 /**
  * "Meu perfil" (Rodada 38) , o próprio ADMIN/GESTOR logado edita seu
@@ -30,7 +32,11 @@ function horasParaMin(h: string): number {
 }
 
 export function PerfilPage() {
-  const { iniciarTour } = useTour();
+  const [politica, setPolitica] = useState<MinhaPolitica | null>(null);
+  const [politicaAberta, setPoliticaAberta] = useState(false);
+  useEffect(() => {
+    obterMinhaPolitica().then(setPolitica).catch(() => setPolitica(null));
+  }, []);
   const [perfil, setPerfil] = useState<UsuarioEmpresaListado | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -143,14 +149,26 @@ export function PerfilPage() {
       </p>
 
       <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
-        <h3 style={{ marginTop: 0 }}>Tour guiado</h3>
+        <h3 style={{ marginTop: 0 }}>Política de Privacidade</h3>
         <p style={{ fontSize: 13, marginTop: 0 }}>
-          Quer rever o passeio pelas telas do sistema? Ele mostra, passo a
-          passo, para que serve cada tela e cada campo.
+          Veja o texto da política que você aceitou ao entrar no painel.
+          {politica?.aceitaEm &&
+            ` Aceita em ${new Date(politica.aceitaEm).toLocaleDateString("pt-BR")}.`}
         </p>
-        <button type="button" onClick={iniciarTour}>
-          Refazer tour
+        <button
+          type="button"
+          disabled={!politica}
+          onClick={() => setPoliticaAberta(true)}
+        >
+          Ler política
         </button>
+        {politicaAberta && politica && (
+          <PoliticaPrivacidadeModal
+            politica={politica}
+            modo="leitura"
+            onFechar={() => setPoliticaAberta(false)}
+          />
+        )}
       </div>
 
       <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>

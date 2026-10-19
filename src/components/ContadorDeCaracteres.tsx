@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-// Rodada 268 , mostra "n/limite" embaixo de TODO campo de texto que tem
+// Rodada 268 (inputs removidos na 280: só campos de texto longo) , mostra "n/limite" embaixo de TODO campo de texto que tem
 // limite de caracteres (`maxLength`), em qualquer tela, atual ou futura.
 // Os contadores ficam numa camada própria (fora da árvore do React), então
 // não interferem nos formulários. O contador some quando o campo está
@@ -41,7 +41,7 @@ export function ContadorDeCaracteres() {
 
     function varrer() {
       document
-        .querySelectorAll<Campo>("input[maxlength], textarea[maxlength]")
+        .querySelectorAll<Campo>("textarea[maxlength]")
         .forEach((el) => {
           if (!campoComLimite(el) || contadores.has(el)) return;
           const span = document.createElement("span");

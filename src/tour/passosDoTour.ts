@@ -30,7 +30,7 @@ export const MODULOS_DO_TOUR: ModuloDoTour[] = [
   { id: "auditoria", titulo: "Auditoria", descricao: "Histórico de tudo o que foi feito no sistema." },
   { id: "lgpd", titulo: "Privacidade (LGPD)", descricao: "Pedidos dos titulares, encarregado e termos aceitos." },
   { id: "usuarios", titulo: "Usuários", descricao: "Quem tem acesso ao painel do grupo.", somenteAdmin: true },
-  { id: "configuracao", titulo: "Configuração", descricao: "Seus dados, gerenciamento de risco e limites de espera." },
+  { id: "configuracao", titulo: "Configuração", descricao: "Seus dados, política de privacidade, gerenciamento de risco e limites de espera." },
 ];
 
 export interface PassoDoTour {
@@ -900,6 +900,6 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: 'css:[data-tour="refazer-tour"]',
     titulo: "Refazer este passeio",
     texto:
-      "Pronto, terminamos! Sempre que quiser rever este passeio, clique neste botão do menu ou no botão Refazer tour da tela de Configuração. Bom trabalho!",
+      "Pronto, terminamos! Sempre que quiser rever este passeio, clique neste botão do menu. Bom trabalho!",
   },
 ];

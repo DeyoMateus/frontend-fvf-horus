@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
+import { PoliticaGate } from "./PoliticaGate";
 import { TourProvider, useTour } from "../tour/TourProvider";
 
 const CHAVE_SIDEBAR_COLAPSADA = "fvfhorus.sidebarColapsada";
@@ -54,9 +55,11 @@ const LARGURA_MINIMA_MENU_EXPANDIDO = 860;
 // Rodada 264 , o tour guiado envolve todo o painel.
 export function Layout() {
   return (
-    <TourProvider>
-      <LayoutInterno />
-    </TourProvider>
+    <PoliticaGate>
+      <TourProvider>
+        <LayoutInterno />
+      </TourProvider>
+    </PoliticaGate>
   );
 }
 

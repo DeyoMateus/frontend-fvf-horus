@@ -147,3 +147,23 @@ export const salvarEncarregado = (input: {
   api
     .put<EmpresaEncarregado[]>("/privacidade/painel/encarregado", input)
     .then((r) => r.data);
+
+// Rodada 281: Política de Privacidade para o usuário do painel (primeiro acesso).
+export type MinhaPolitica = {
+  versao: string;
+  aceita: boolean;
+  aceitaEm: string | null;
+  titulo: string;
+  texto: string;
+};
+
+export const obterMinhaPolitica = () =>
+  api.get<MinhaPolitica>("/privacidade/painel/minha-politica").then((r) => r.data);
+
+export const aceitarMinhaPolitica = (versao: string) =>
+  api
+    .post<{ aceita: boolean; versao: string; aceitaEm: string }>(
+      "/privacidade/painel/minha-politica/aceitar",
+      { versao },
+    )
+    .then((r) => r.data);

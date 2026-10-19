@@ -878,13 +878,14 @@ textarea {
 }
 
 /* Rodada 271 , telas de acesso: todos os botões do card com a mesma largura
-   (a do card), mesma altura e texto centralizado. */
+   (mais estreita que o card, centralizada), mesma altura e texto centralizado. */
 .login-box button {
   display: block;
-  width: 100%;
+  width: 56%;
+  min-width: 170px;
   box-sizing: border-box;
   height: 40px;
-  padding: 0 16px;
-  margin: 12px 0 0;
+  padding: 0 12px;
+  margin: 12px auto 0;
   text-align: center;
 }

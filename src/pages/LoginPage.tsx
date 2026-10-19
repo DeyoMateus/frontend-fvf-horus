@@ -70,7 +70,6 @@ export function LoginPage() {
           </button>
         </form>
         <BotaoLink to="/esqueci-senha">Esqueci minha senha</BotaoLink>
-        <BotaoLink to="/privacidade">Política de Privacidade</BotaoLink>
       </div>
     </div>
   );
