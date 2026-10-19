@@ -81,6 +81,7 @@ export interface RegraSindical {
   toleranciaMarcacaoMin: number;
   limiteJornadaNormalMin: number;
   limiteHoraExtraFaixa1Min: number;
+  limiteHoraExtraDiariaMaxMin: number;
   percentualHoraExtra1: string;
   percentualHoraExtra2: string;
   percentualHoraExtraDomingoFeriado?: string | null;

@@ -19,6 +19,27 @@ export function createEmpresa(input: CreateEmpresaInput) {
   return api.post<Empresa>("/empresas", input).then((r) => r.data);
 }
 
+export interface DadosGrupo {
+  razaoSocial: string;
+  cnpj: string | null;
+}
+
+// Empresa mae do grupo (nome + CNPJ da matriz), usada no cabecalho do painel.
+export function obterDadosGrupo() {
+  return api.get<DadosGrupo>("/empresas/grupo").then((r) => r.data);
+}
+
+export function atualizarEmpresa(
+  id: string,
+  input: Partial<CreateEmpresaInput>,
+) {
+  return api.patch<Empresa>(`/empresas/${id}`, input).then((r) => r.data);
+}
+
+export function excluirEmpresa(id: string) {
+  return api.delete(`/empresas/${id}`).then((r) => r.data);
+}
+
 // Vincula (ou desvincula, passando null) a CCT/ACT deste CNPJ.
 export function vincularRegraSindical(
   empresaId: string,

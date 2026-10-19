@@ -1,3 +1,4 @@
+import { obterDadosGrupo, type DadosGrupo } from "../api/empresas";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -97,6 +98,18 @@ function LayoutInterno() {
 
   const efetivamenteColapsada = colapsada || telaEstreita;
 
+  // Empresa mae do grupo (nome + CNPJ) em destaque sob o nome da ferramenta.
+  const [grupo, setGrupo] = useState<DadosGrupo | null>(null);
+  useEffect(() => {
+    let ativo = true;
+    obterDadosGrupo()
+      .then((g) => ativo && setGrupo(g))
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, [usuario?.grupoId]);
+
   return (
     <div
       className={`app-shell ${efetivamenteColapsada ? "sidebar-colapsada" : ""}`}
@@ -116,6 +129,12 @@ function LayoutInterno() {
             {efetivamenteColapsada ? "»" : "«"}
           </button>
         </div>
+        {!efetivamenteColapsada && grupo && (
+          <div className="sidebar-empresa-mae" title="Empresa do grupo">
+            <strong>{grupo.razaoSocial}</strong>
+            {grupo.cnpj && <span>CNPJ {grupo.cnpj}</span>}
+          </div>
+        )}
         <nav>
           {ITENS_NAV.filter(
             (item) => !item.somenteAdmin || usuario?.papel === "ADMIN",

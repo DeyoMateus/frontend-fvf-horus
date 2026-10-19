@@ -1,5 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
-import { createEmpresa, listEmpresas } from "../api/empresas";
+import {
+  atualizarEmpresa,
+  createEmpresa,
+  excluirEmpresa,
+  listEmpresas,
+} from "../api/empresas";
+import { useConfirm } from "../components/ConfirmProvider";
 import { useAuth } from "../context/AuthContext";
 import type { Empresa } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
@@ -12,6 +18,12 @@ import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 // nunca de outro (o backend deriva o grupo sempre do token JWT).
 export function EmpresasPage() {
   const { usuario } = useAuth();
+  const confirm = useConfirm();
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [razaoEdit, setRazaoEdit] = useState("");
+  const [cnpjEdit, setCnpjEdit] = useState("");
+  const [erroLinha, setErroLinha] = useState<string | null>(null);
+  const [salvandoEdit, setSalvandoEdit] = useState(false);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -53,6 +65,50 @@ export function EmpresasPage() {
       );
     } finally {
       setCriando(false);
+    }
+  }
+
+  function iniciarEdicao(emp: Empresa) {
+    setEditandoId(emp.id);
+    setRazaoEdit(emp.razaoSocial);
+    setCnpjEdit(emp.cnpj);
+    setErroLinha(null);
+  }
+
+  function mensagemDeErro(err: unknown, padrao: string) {
+    const m = (err as { response?: { data?: { message?: string | string[] } } })
+      ?.response?.data?.message;
+    return Array.isArray(m) ? m.join(" ") : (m ?? padrao);
+  }
+
+  async function salvarEdicao(id: string) {
+    setErroLinha(null);
+    setSalvandoEdit(true);
+    try {
+      await atualizarEmpresa(id, { razaoSocial: razaoEdit, cnpj: cnpjEdit });
+      setEditandoId(null);
+      await carregar();
+    } catch (err) {
+      setErroLinha(
+        mensagemDeErro(err, "Não foi possível salvar (verifique os dados)."),
+      );
+    } finally {
+      setSalvandoEdit(false);
+    }
+  }
+
+  async function onExcluir(emp: Empresa) {
+    setErroLinha(null);
+    const ok = await confirm(
+      `Excluir a empresa ${emp.razaoSocial} (${emp.cnpj})? Só é possível se não houver motoristas, ajudantes ou documentos vinculados.`,
+      { perigo: true, textoConfirmar: "Excluir" },
+    );
+    if (!ok) return;
+    try {
+      await excluirEmpresa(emp.id);
+      await carregar();
+    } catch (err) {
+      setErroLinha(mensagemDeErro(err, "Não foi possível excluir a empresa."));
     }
   }
 
@@ -121,23 +177,81 @@ export function EmpresasPage() {
               }}
  tituloPopup="Empresas"
 >
+            {erroLinha && <p className="error-text">{erroLinha}</p>}
             <table>
               <thead>
                 <tr>
                   <th>Razão social</th>
                   <th>CNPJ</th>
+                  {usuario?.papel === "ADMIN" && <th>Ações</th>}
                 </tr>
               </thead>
               <tbody>
                 {paginacao.itensExibidos.map((emp) => (
                   <tr key={emp.id}>
-                    <td>{emp.razaoSocial}</td>
-                    <td>{emp.cnpj}</td>
+                    {editandoId === emp.id ? (
+                      <>
+                        <td>
+                          <input
+                            value={razaoEdit}
+                            onChange={(e) => setRazaoEdit(e.target.value)}
+                            maxLength={200}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            value={cnpjEdit}
+                            onChange={(e) => setCnpjEdit(e.target.value)}
+                            maxLength={14}
+                            inputMode="numeric"
+                          />
+                        </td>
+                        <td style={{ whiteSpace: "nowrap" }}>
+                          <button
+                            type="button"
+                            disabled={salvandoEdit}
+                            onClick={() => salvarEdicao(emp.id)}
+                          >
+                            Salvar
+                          </button>{" "}
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => setEditandoId(null)}
+                          >
+                            Cancelar
+                          </button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{emp.razaoSocial}</td>
+                        <td>{emp.cnpj}</td>
+                        {usuario?.papel === "ADMIN" && (
+                          <td style={{ whiteSpace: "nowrap" }}>
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => iniciarEdicao(emp)}
+                            >
+                              Editar
+                            </button>{" "}
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => onExcluir(emp)}
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        )}
+                      </>
+                    )}
                   </tr>
                 ))}
                 {paginacao.itensExibidos.length === 0 && (
                   <tr>
-                    <td colSpan={2} style={{ color: "#000000" }}>
+                    <td colSpan={3} style={{ color: "#000000" }}>
                       Nenhuma empresa cadastrada ainda.
                     </td>
                   </tr>

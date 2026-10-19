@@ -25,6 +25,7 @@ const REGRA_PADRAO: RegraSindicalInput = {
   toleranciaMarcacaoMin: 0,
   limiteJornadaNormalMin: 480,
   limiteHoraExtraFaixa1Min: 120,
+  limiteHoraExtraDiariaMaxMin: 120,
   percentualHoraExtra1: "50",
   percentualHoraExtra2: "70",
   percentualAdicionalNoturno: "20",
@@ -90,6 +91,7 @@ export function RegrasSindicaisPage() {
       toleranciaMarcacaoMin: regra.toleranciaMarcacaoMin,
       limiteJornadaNormalMin: regra.limiteJornadaNormalMin,
       limiteHoraExtraFaixa1Min: regra.limiteHoraExtraFaixa1Min,
+      limiteHoraExtraDiariaMaxMin: regra.limiteHoraExtraDiariaMaxMin ?? 120,
       percentualHoraExtra1: regra.percentualHoraExtra1,
       percentualHoraExtra2: regra.percentualHoraExtra2,
       percentualHoraExtraDomingoFeriado:
@@ -236,6 +238,22 @@ export function RegrasSindicaisPage() {
                     }))
                   }
                 />
+              </div>
+              <div>
+                <label>Máximo de horas extras por dia</label>
+                <DuracaoInput
+                  valorMin={form.limiteHoraExtraDiariaMaxMin ?? 120}
+                  onChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      limiteHoraExtraDiariaMaxMin: Math.min(v ?? 120, 240),
+                    }))
+                  }
+                />
+                <p style={{ fontSize: 12, marginTop: 2 }}>
+                  Padrão 2h; a convenção pode permitir até 4h. O alerta crítico
+                  de direção dispara em jornada normal + este máximo.
+                </p>
               </div>
               <div>
                 <label>% hora extra (1ª faixa)</label>
