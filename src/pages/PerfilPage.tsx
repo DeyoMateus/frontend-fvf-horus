@@ -34,8 +34,14 @@ function horasParaMin(h: string): number {
 export function PerfilPage() {
   const [politica, setPolitica] = useState<MinhaPolitica | null>(null);
   const [politicaAberta, setPoliticaAberta] = useState(false);
+  const [politicaFalhou, setPoliticaFalhou] = useState(false);
   useEffect(() => {
-    obterMinhaPolitica().then(setPolitica).catch(() => setPolitica(null));
+    obterMinhaPolitica()
+      .then(setPolitica)
+      .catch(() => {
+        setPolitica(null);
+        setPoliticaFalhou(true);
+      });
   }, []);
   const [perfil, setPerfil] = useState<UsuarioEmpresaListado | null>(null);
   const [nome, setNome] = useState("");
@@ -160,8 +166,14 @@ export function PerfilPage() {
           disabled={!politica}
           onClick={() => setPoliticaAberta(true)}
         >
-          Ler política
+          {politica || politicaFalhou ? "Ler política" : "Carregando…"}
         </button>
+        {politicaFalhou && (
+          <p style={{ fontSize: 12, color: "#b91c1c" }}>
+            Não foi possível carregar a política. Reinicie o servidor (backend)
+            para carregar as rotas novas e recarregue a página.
+          </p>
+        )}
         {politicaAberta && politica && (
           <PoliticaPrivacidadeModal
             politica={politica}

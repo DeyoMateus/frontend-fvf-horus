@@ -894,21 +894,83 @@ textarea {
 .sidebar-empresa-mae {
   width: 100%;
   box-sizing: border-box;
-  margin: -12px 0 16px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: #1c2536;
-  border: 1px solid #2f3b52;
+  margin: -14px 0 8px;
+  padding: 0;
+  background: none;
+  border: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   word-break: break-word;
 }
 .sidebar-empresa-mae strong {
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 600;
   color: #ffffff;
 }
 .sidebar-empresa-mae span {
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.25;
   color: #f5a742;
+}
+
+
+/* Menu lateral compacto: itens e botao de tour mais baixos para caber sem rolagem. */
+.sidebar {
+  padding: 14px 14px;
+}
+.sidebar-topo {
+  margin-bottom: 16px;
+}
+.sidebar nav a {
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.sidebar nav button.nav-tour {
+  margin-top: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.sidebar-rodape {
+  padding-top: 8px;
+}
+.sidebar-usuario-info {
+  margin-bottom: 6px;
+}
+.botao-perfil {
+  padding: 5px 0;
+  margin-bottom: 6px;
+}
+
+/* Engrenagem de Configuracao na mesma linha das informacoes do usuario. */
+.sidebar-usuario-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.sidebar-usuario-linha .sidebar-usuario-info {
+  margin-bottom: 0;
+  min-width: 0;
+}
+.sidebar-colapsada .sidebar-usuario-linha {
+  justify-content: center;
+}
+.botao-perfil.botao-perfil-icone {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin-bottom: 0;
+}
+.botao-perfil.botao-perfil-icone.active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #4da3ff;
 }
