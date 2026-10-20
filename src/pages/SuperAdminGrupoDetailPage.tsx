@@ -482,12 +482,32 @@ export function SuperAdminGrupoDetailPage() {
             onSubmit={salvarNovoUsuario}
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr 0.7fr 1fr auto auto",
+              gridTemplateColumns: "1fr 1fr 1fr 0.7fr 1.8fr",
               gap: 8,
               alignItems: "flex-end",
               marginBottom: 16,
             }}
           >
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <button type="submit" disabled={salvando}>
+                Cadastrar
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setCriandoUsuario(false)}
+              >
+                Cancelar
+              </button>
+            </div>
             <div>
               <label>Nome</label>
               <input
@@ -551,16 +571,6 @@ export function SuperAdminGrupoDetailPage() {
                 }
               />
             </div>
-            <button type="submit" disabled={salvando}>
-              Cadastrar
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setCriandoUsuario(false)}
-            >
-              Cancelar
-            </button>
           </form>
         )}
 
