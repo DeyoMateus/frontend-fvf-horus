@@ -110,3 +110,11 @@ export async function atualizarStatusUsuarioGrupo(
   );
   return data;
 }
+
+/** Rodada 297: exclusão lógica (o histórico do usuário continua gravado). */
+export async function excluirUsuarioGrupo(grupoId: string, usuarioId: string) {
+  const { data } = await superAdminApi.delete(
+    `/super-admin/grupos/${grupoId}/usuarios/${usuarioId}`,
+  );
+  return data;
+}

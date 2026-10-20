@@ -508,6 +508,8 @@ export interface UsuarioEmpresaListado {
   ativo: boolean;
   telefoneWhatsapp?: string | null;
   telefoneGerenciamentoRisco?: string | null;
+  /** Rodada 298: só o ADMIN principal do grupo edita o número da GR. */
+  adminPrincipal?: boolean;
   recebeWhatsappAlertas?: boolean;
   recebeWhatsappEquipeGr?: boolean;
   createdAt: string;
@@ -534,6 +536,7 @@ export interface GrupoDetalhe {
   id: string;
   razaoSocial: string;
   createdAt: string;
+  limiteMotoristas?: number | null;
   empresas: {
     id: string;
     razaoSocial: string;
@@ -549,6 +552,8 @@ export interface GrupoDetalhe {
 // Edição, pelo super admin, de um cadastro já existente (Rodada 32).
 export interface UpdateGrupoInput {
   razaoSocial: string;
+  /** null = sem limite; omitido = não altera. */
+  limiteMotoristas?: number | null;
 }
 
 export interface UpdateEmpresaInput {

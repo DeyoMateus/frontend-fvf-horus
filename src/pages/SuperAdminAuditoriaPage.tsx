@@ -163,9 +163,9 @@ export function SuperAdminAuditoriaPage() {
         }}
       >
         <label>
-          Grupo:{" "}
+          Empresa mãe:{" "}
           <select value={grupoId} onChange={(e) => setGrupoId(e.target.value)}>
-            <option value="">Todos</option>
+            <option value="">Todas</option>
             {grupos.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.razaoSocial}
@@ -195,7 +195,7 @@ export function SuperAdminAuditoriaPage() {
             value={actorType}
             onChange={(e) => setActorType(e.target.value as ActorType | "")}
           >
-            <option value="">Todos</option>
+            <option value="">Todas</option>
             {(Object.keys(ROTULO_ACTOR_TYPE) as ActorType[]).map((t) => (
               <option key={t} value={t}>
                 {ROTULO_ACTOR_TYPE[t]}

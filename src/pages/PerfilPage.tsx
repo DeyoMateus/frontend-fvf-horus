@@ -119,7 +119,7 @@ export function PerfilPage() {
     setSucessoGr(null);
     setSalvandoGr(true);
     try {
-      if (perfil?.papel === "ADMIN") {
+      if (perfil?.adminPrincipal) {
         const atualizado = await atualizarMeuPerfil({
           telefoneGerenciamentoRisco: telefoneGr.trim() || null,
         });
@@ -236,7 +236,19 @@ export function PerfilPage() {
       <div className="card" style={{ maxWidth: 480, margin: "0 auto" }}>
         <h3 style={{ marginTop: 0 }}>Gerenciamento de Risco (GR)</h3>
         <form onSubmit={salvarGr}>
-          {perfil?.papel === "ADMIN" && (
+          {perfil?.papel === "ADMIN" && !perfil.adminPrincipal && (
+            <>
+              <label>WhatsApp da equipe de Gerenciamento de Risco</label>
+              <p style={{ fontSize: 14, margin: "4px 0" }}>
+                {telefoneGr || "Não cadastrado"}
+              </p>
+              <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
+                Somente o administrador principal da conta da transportadora
+                mãe pode cadastrar ou alterar este número.
+              </p>
+            </>
+          )}
+          {perfil?.adminPrincipal && (
             <>
               <label>WhatsApp da equipe de Gerenciamento de Risco</label>
               <TelefoneInput value={telefoneGr} onChange={setTelefoneGr} />

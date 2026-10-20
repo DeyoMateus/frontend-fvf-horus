@@ -1,3 +1,4 @@
+import { primeiroESegundoNome } from "../utils/nomeMotorista";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
@@ -382,7 +383,9 @@ export function AlertasJornadaPage() {
                           <Link
                             to={a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${a.motorista.id}?secao=alertas-jornada`}
                           >
-                            {a.motorista.nome}
+                            <span title={a.motorista.nome}>
+                              {primeiroESegundoNome(a.motorista.nome)}
+                            </span>
                           </Link>
                         ) : (
                           a.motoristaId

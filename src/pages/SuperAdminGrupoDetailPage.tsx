@@ -6,6 +6,7 @@ import {
   atualizarStatusEmpresaSuperAdmin,
   atualizarDestinatariosWhatsapp,
   atualizarStatusUsuarioGrupo,
+  excluirUsuarioGrupo,
   atualizarUsuarioSuperAdmin,
   criarUsuarioGrupo,
   obterGrupo,
@@ -56,6 +57,7 @@ export function SuperAdminGrupoDetailPage() {
 
   const [editandoGrupo, setEditandoGrupo] = useState(false);
   const [razaoSocialGrupo, setRazaoSocialGrupo] = useState("");
+  const [limiteMotoristasGrupo, setLimiteMotoristasGrupo] = useState("");
   const [empresaEditandoId, setEmpresaEditandoId] = useState<string | null>(
     null,
   );
@@ -110,6 +112,9 @@ export function SuperAdminGrupoDetailPage() {
   function iniciarEdicaoGrupo() {
     if (!grupo) return;
     setRazaoSocialGrupo(grupo.razaoSocial);
+    setLimiteMotoristasGrupo(
+      grupo.limiteMotoristas != null ? String(grupo.limiteMotoristas) : "",
+    );
     setErroEdicao(null);
     setEditandoGrupo(true);
   }
@@ -120,7 +125,17 @@ export function SuperAdminGrupoDetailPage() {
     setErroEdicao(null);
     setSalvando(true);
     try {
-      await atualizarGrupo(grupoId, { razaoSocial: razaoSocialGrupo });
+      const limiteTxt = limiteMotoristasGrupo.trim();
+      const limite = limiteTxt === "" ? null : Number(limiteTxt);
+      if (limite !== null && (!Number.isInteger(limite) || limite < 1)) {
+        setErroEdicao("O limite de motoristas deve ser um número inteiro maior que zero, ou vazio para sem limite.");
+        setSalvando(false);
+        return;
+      }
+      await atualizarGrupo(grupoId, {
+        razaoSocial: razaoSocialGrupo,
+        limiteMotoristas: limite,
+      });
       setEditandoGrupo(false);
       await carregar();
     } catch {
@@ -252,6 +267,22 @@ export function SuperAdminGrupoDetailPage() {
     await carregar();
   }
 
+  async function excluirUsuario(usuarioId: string) {
+    if (!grupoId) return;
+    if (
+      !(await confirm(
+        "Excluir este usuário? Ele perde o acesso e some das listas, o e-mail fica livre para novo cadastro. Tudo que ele fez continua gravado no histórico. Não dá para desfazer.",
+      ))
+    )
+      return;
+    try {
+      await excluirUsuarioGrupo(grupoId, usuarioId);
+      await carregar();
+    } catch {
+      setErro("Não foi possível excluir o usuário.");
+    }
+  }
+
   if (carregando) return <p>Carregando...</p>;
   if (erro) return <p className="error-text">{erro}</p>;
   if (!grupo) return <p>Empresa não encontrada.</p>;
@@ -279,6 +310,16 @@ export function SuperAdminGrupoDetailPage() {
               onChange={(e) => setRazaoSocialGrupo(e.target.value)}
               required
             />
+            <label style={{ marginTop: 8, display: "block" }}>
+              Limite de motoristas (vazio = sem limite)
+            </label>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={limiteMotoristasGrupo}
+              onChange={(e) => setLimiteMotoristasGrupo(e.target.value)}
+            />
           </div>
           <button type="submit" disabled={salvando}>
             Salvar
@@ -305,7 +346,9 @@ export function SuperAdminGrupoDetailPage() {
       )}
       <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
         Empresa mãe desde{" "}
-        {new Date(grupo.createdAt).toLocaleDateString("pt-BR")}
+        {new Date(grupo.createdAt).toLocaleDateString("pt-BR")} · Limite de
+        motoristas:{" "}
+        {grupo.limiteMotoristas != null ? grupo.limiteMotoristas : "sem limite"}
       </p>
       {erroEdicao && <p className="error-text">{erroEdicao}</p>}
 
@@ -698,6 +741,12 @@ export function SuperAdminGrupoDetailPage() {
                       onClick={() => alternarStatusUsuario(u.id, u.ativo)}
                     >
                       {u.ativo ? "Desativar" : "Reativar"}
+                    </button>
+                    <button
+                      className="secondary"
+                      onClick={() => excluirUsuario(u.id)}
+                    >
+                      Excluir
                     </button>
                   </td>
                 </tr>

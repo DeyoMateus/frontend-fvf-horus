@@ -861,10 +861,14 @@ html.fvf-scroll-travado body {
   overflow: hidden;
 }
 
-/* Rodada 268 , texto grande nunca escapa da célula da tabela. */
+/* Rodada 268 , texto grande nunca escapa da célula da tabela.
+   Rodada 296: uma palavra nunca é partida no meio (só quebra de linha entre
+   palavras diferentes); uma "palavra" maior que a coluna alarga a coluna e a
+   tabela rola na horizontal dentro do cartão. */
 td,
 th {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 /* Rodada 270 , campos de texto longo quebram linha e crescem, sem barra interna. */
