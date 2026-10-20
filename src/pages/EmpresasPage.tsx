@@ -36,7 +36,10 @@ export function EmpresasPage() {
   async function carregar() {
     setCarregando(true);
     try {
-      setEmpresas(await listEmpresas());
+      const lista = await listEmpresas();
+      setEmpresas(
+        [...lista].sort((a, b) => Number(!!b.ehMatriz) - Number(!!a.ehMatriz)),
+      );
       setErro(null);
     } catch {
       setErro("Não foi possível carregar as empresas do grupo.");
@@ -114,7 +117,9 @@ export function EmpresasPage() {
 
   // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
-  const paginacao = useListaPaginada(empresas, (e) => e.createdAt);
+  const paginacao = useListaPaginada(empresas, (e) => e.createdAt, {
+    fixarNoTopo: (e) => !!e.ehMatriz,
+  });
 
   return (
     <div>
@@ -225,7 +230,14 @@ export function EmpresasPage() {
                       </>
                     ) : (
                       <>
-                        <td>{emp.razaoSocial}</td>
+                        <td>
+                          {emp.razaoSocial}
+                          {emp.ehMatriz && (
+                            <strong style={{ marginLeft: 6, color: "#b45309" }}>
+                              (Empresa Mãe)
+                            </strong>
+                          )}
+                        </td>
                         <td>{emp.cnpj}</td>
                         {usuario?.papel === "ADMIN" && (
                           <td style={{ whiteSpace: "nowrap" }}>

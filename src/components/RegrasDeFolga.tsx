@@ -11,6 +11,15 @@ import type { FolgaDashboard } from "../api/folgaDashboard";
 import { useConfirm } from "./ConfirmProvider";
 import { useToast } from "./ToastProvider";
 
+const LIMITE_REGRAS = 10;
+
+function mensagemDoErro(err: unknown, padrao: string): string {
+  const msg = (err as { response?: { data?: { message?: unknown } } })?.response
+    ?.data?.message;
+  if (Array.isArray(msg)) return msg.join(" ");
+  return typeof msg === "string" && msg ? msg : padrao;
+}
+
 interface Formulario {
   id: string | null;
   nome: string;
@@ -93,8 +102,8 @@ export function RegrasDeFolga({
       setForm(null);
       await carregar();
       aoAlterar();
-    } catch {
-      toast.erro("Não foi possível salvar a regra de folga.");
+    } catch (err) {
+      toast.erro(mensagemDoErro(err, "Não foi possível salvar a regra de folga."));
     } finally {
       setSalvando(false);
     }
@@ -168,11 +177,23 @@ export function RegrasDeFolga({
         <button
           type="button"
           style={{ padding: "4px 10px", fontSize: 12 }}
+          disabled={regras.length >= LIMITE_REGRAS}
+          title={
+            regras.length >= LIMITE_REGRAS
+              ? `Limite de ${LIMITE_REGRAS} regras atingido`
+              : undefined
+          }
           onClick={() => setForm({ ...FORM_VAZIO })}
         >
           Nova regra
         </button>
       </div>
+      {regras.length >= LIMITE_REGRAS && (
+        <p style={{ fontSize: 12, color: "#b45309", fontWeight: 600 }}>
+          Limite de {LIMITE_REGRAS} regras de folga atingido. Exclua uma regra
+          para criar outra.
+        </p>
+      )}
       <p style={{ fontSize: 12, marginTop: 4 }}>
         Cada CNPJ usa uma única regra por vez, e cada motorista é tratado pela
         regra do CNPJ em que está cadastrado. Com direito a folga a cada 6 dias,
@@ -315,13 +336,16 @@ export function RegrasDeFolga({
           </tr>
         </thead>
         <tbody>
-          {empresas.map((e) => (
+          {empresas.map((e) => {
+            const regraAtual =
+              regras.find((r) => r.empresas.some((x) => x.id === e.id)) ?? null;
+            return (
             <tr key={e.id}>
               <td>{e.razaoSocial}</td>
               <td>{e.cnpj}</td>
               <td>
                 <select
-                  value={e.regra?.id ?? ""}
+                  value={regraAtual?.id ?? ""}
                   onChange={(ev) => void vincular(e.id, ev.target.value)}
                   disabled={regras.length === 0}
                 >
@@ -334,7 +358,7 @@ export function RegrasDeFolga({
                 </select>
               </td>
               <td>
-                {e.regra && (
+                {regraAtual && (
                   <button
                     type="button"
                     className="secondary"
@@ -346,7 +370,8 @@ export function RegrasDeFolga({
                 )}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

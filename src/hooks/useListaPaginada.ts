@@ -48,6 +48,8 @@ export function useListaPaginada<T>(
     ordemInicial?: OrdemData;
     /** Desempate crescente quando duas datas são iguais (ex.: `sequencial` do ledger). */
     desempate?: (a: T, b: T) => number;
+    /** Itens que ficam sempre no topo da lista, independente da ordem por data. */
+    fixarNoTopo?: (item: T) => boolean;
   },
 ): ListaPaginadaResultado<T> {
   const [ordem, setOrdem] = useState<OrdemData>(
@@ -78,6 +80,11 @@ export function useListaPaginada<T>(
       });
     }
     return [...resultado].sort((a, b) => {
+      if (opts?.fixarNoTopo) {
+        const fa = opts.fixarNoTopo(a) ? 1 : 0;
+        const fb = opts.fixarNoTopo(b) ? 1 : 0;
+        if (fa !== fb) return fb - fa;
+      }
       const da = obterData(a);
       const db = obterData(b);
       const ta = da != null ? new Date(da).getTime() : 0;

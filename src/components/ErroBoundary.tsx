@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
@@ -18,6 +19,7 @@ export class ErroBoundary extends Component<
   componentDidCatch(erro: Error, info: ErrorInfo) {
     // eslint-disable-next-line no-console
     console.error("Erro de renderização", erro, info.componentStack);
+    Sentry.captureException(erro);
   }
 
   render() {

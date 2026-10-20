@@ -56,6 +56,7 @@ export interface Empresa {
   createdAt: string;
   regraSindicalId?: string | null;
   regraSindical?: { id: string; nome: string } | null;
+  ehMatriz?: boolean;
 }
 
 export type CategoriaTransporteSindical = "RODOVIARIO" | "URBANO";
