@@ -2,7 +2,12 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { login as apiLogin, logout as apiLogout } from "../api/auth";
 import { decodeJwt } from "../api/jwt";
-import { setAccessToken, tentarRefresh } from "../api/client";
+import {
+  marcarSessao,
+  setAccessToken,
+  temSessaoMarcada,
+  tentarRefresh,
+} from "../api/client";
 import type { UsuarioAutenticado } from "../api/types";
 
 interface AuthContextValue {
@@ -23,6 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ele existe (é invisível de propósito), então sempre tenta, e uma
   // falha (401, sem cookie) só significa "não havia sessão".
   useEffect(() => {
+    // Sem marcador de sessão neste navegador, nem tenta (evita o 401 da tela de login).
+    if (!temSessaoMarcada()) {
+      setCarregando(false);
+      return;
+    }
     tentarRefresh()
       .then((accessToken) =>
         setUsuario(accessToken ? decodeJwt(accessToken) : null),
@@ -34,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCarregando(true);
     try {
       const tokens = await apiLogin(email, senha);
+      marcarSessao(true);
       setUsuario(decodeJwt(tokens.accessToken));
     } finally {
       setCarregando(false);
@@ -47,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // mesmo se a chamada falhar, limpa localmente
     }
     setAccessToken(null);
+    marcarSessao(false);
     setUsuario(null);
   }
 

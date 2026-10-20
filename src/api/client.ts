@@ -43,6 +43,28 @@ api.interceptors.request.use((config) => {
 
 let refrescando: Promise<string | null> | null = null;
 
+// Marcador (sem nenhum dado sensível) de que este navegador já teve uma sessão.
+// Serve só para NÃO chamar /auth/refresh na tela de login quando nunca houve
+// login (evita um 401 inútil no console). O cookie de refresh continua httpOnly.
+const CHAVE_SESSAO = "horus_sessao";
+
+export function marcarSessao(ativa: boolean): void {
+  try {
+    if (ativa) localStorage.setItem(CHAVE_SESSAO, "1");
+    else localStorage.removeItem(CHAVE_SESSAO);
+  } catch {
+    // armazenamento indisponível: segue sem o marcador
+  }
+}
+
+export function temSessaoMarcada(): boolean {
+  try {
+    return localStorage.getItem(CHAVE_SESSAO) === "1";
+  } catch {
+    return true; // sem como saber: tenta restaurar como antes
+  }
+}
+
 /**
  * Exportado para o AuthProvider tentar restaurar a sessão ao abrir o
  * app (F5). Não há mais como checar "existe um refresh token?" antes
@@ -60,10 +82,15 @@ export async function tentarRefresh(): Promise<string | null> {
       )
       .then((resp) => {
         setAccessToken(resp.data.accessToken);
+        marcarSessao(true);
         return resp.data.accessToken as string;
       })
-      .catch(() => {
+      .catch((erro: AxiosError) => {
         setAccessToken(null);
+        // Só some o marcador se o servidor disse que não há sessão válida;
+        // falha de rede não derruba quem ainda está logado.
+        const status = erro.response?.status;
+        if (status === 401 || status === 403) marcarSessao(false);
         return null;
       })
       .finally(() => {
