@@ -50,6 +50,8 @@ export function useListaPaginada<T>(
     desempate?: (a: T, b: T) => number;
     /** Itens que ficam sempre no topo da lista, independente da ordem por data. */
     fixarNoTopo?: (item: T) => boolean;
+    /** Rodada 309: ordem FIXA própria (substitui a ordenação por data). */
+    comparador?: (a: T, b: T) => number;
   },
 ): ListaPaginadaResultado<T> {
   const [ordem, setOrdem] = useState<OrdemData>(
@@ -79,6 +81,7 @@ export function useListaPaginada<T>(
         return d != null && new Date(d).getTime() <= fimMs;
       });
     }
+    if (opts?.comparador) return [...resultado].sort(opts.comparador);
     return [...resultado].sort((a, b) => {
       if (opts?.fixarNoTopo) {
         const fa = opts.fixarNoTopo(a) ? 1 : 0;

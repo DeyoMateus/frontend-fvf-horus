@@ -363,7 +363,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:Solicitações de ajuste de ponto",
     titulo: "Solicitações de ajuste de ponto",
     texto:
-      "Quando um motorista esquece de registrar ou registra errado, ele pede o ajuste pelo aplicativo e o pedido aparece aqui. Leia o motivo e as provas anexadas, depois aprove ou recuse. Tudo fica guardado na auditoria.",
+      "Quando um motorista esquece de registrar ou registra errado, ele pede o ajuste pelo aplicativo e o pedido aparece aqui. Leia o motivo e as provas anexadas, depois aprove ou recuse. Quando o motorista pede vários ajustes de uma mesma jornada, eles se completam, então decida o conjunto todo de uma vez. Se rejeitar algum depois de aprovar os outros, a jornada fica com um furo, que você fecha lançando o ajuste direto na ficha do motorista ou esperando um novo pedido dele. A lista já vem na ordem dos horários, de cima para baixo. Tudo fica guardado na auditoria.",
   },
   {
     modulo: "fechamento",

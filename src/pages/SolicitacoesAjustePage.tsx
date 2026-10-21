@@ -124,7 +124,24 @@ export function SolicitacoesAjustePage() {
 
   // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
-  const paginacao = useListaPaginada(solicitacoes, (s) => s.createdAt);
+  // Rodada 309: a aprovação só encaixa na ordem do HORÁRIO DO EVENTO
+  // (cada aprovação depende da anterior já estar no histórico), então a
+  // caixa de pendentes tem ordem fixa: por motorista e, dentro dele, do
+  // evento mais antigo pro mais novo. O filtro de data continua sendo
+  // pela data do pedido.
+  const paginacao = useListaPaginada(solicitacoes, (s) => s.createdAt, {
+    comparador: (a, b) => {
+      const porNome = (a.motorista?.nome ?? "").localeCompare(
+        b.motorista?.nome ?? "",
+        "pt-BR",
+      );
+      if (porNome !== 0) return porNome;
+      return (
+        new Date(a.timestampEvento).getTime() -
+        new Date(b.timestampEvento).getTime()
+      );
+    },
+  });
 
   // Pedido do usuário: "só mostra as solicitações em aberto mas não
   // mostra as que já foram fechadas, deve trazer o histórico do que já
@@ -257,6 +274,7 @@ export function SolicitacoesAjustePage() {
             <ControlesListaPaginada
               ordem={paginacao.ordem}
               onAlternarOrdem={paginacao.alternarOrdem}
+              semOrdem
               qtdPorPagina={paginacao.qtdPorPagina}
               onMudarQtdPorPagina={paginacao.mudarQtdPorPagina}
               pagina={paginacao.pagina}
