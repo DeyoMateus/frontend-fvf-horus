@@ -1290,7 +1290,7 @@ export function MotoristaDetailPage() {
             <button
               type="button"
               onClick={onIniciarEdicaoCadastro}
-              style={{ fontSize: 12, marginLeft: 8 }}
+              style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
             >
               Editar
             </button>
@@ -1299,7 +1299,7 @@ export function MotoristaDetailPage() {
                 type="button"
                 disabled={alterandoStatus}
                 onClick={() => onAlterarStatus("ATIVO")}
-                style={{ fontSize: 12, marginLeft: 8 }}
+                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
               >
                 Reativar
               </button>
@@ -1309,7 +1309,7 @@ export function MotoristaDetailPage() {
                 type="button"
                 disabled={alterandoStatus}
                 onClick={() => onAlterarStatus("SUSPENSO")}
-                style={{ fontSize: 12, marginLeft: 8 }}
+                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
               >
                 Suspender
               </button>
@@ -1319,7 +1319,7 @@ export function MotoristaDetailPage() {
                 type="button"
                 disabled={alterandoStatus}
                 onClick={() => onAlterarStatus("INATIVO")}
-                style={{ fontSize: 12, marginLeft: 8 }}
+                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
               >
                 Inativar (arquivo morto)
               </button>
@@ -1330,13 +1330,13 @@ export function MotoristaDetailPage() {
                 className="danger"
                 disabled={alterandoStatus}
                 onClick={onExcluirCadastro}
-                style={{ fontSize: 12, marginLeft: 8 }}
+                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
               >
                 Excluir cadastro
               </button>
             )}
             {erroStatus && (
-              <span style={{ color: "#b91c1c", fontSize: 12, marginLeft: 8 }}>
+              <span style={{ color: "#b91c1c", fontSize: 12, marginLeft: 8, marginTop: 8, display: "inline-block" }}>
                 {erroStatus}
               </span>
             )}

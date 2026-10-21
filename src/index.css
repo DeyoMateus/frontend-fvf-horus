@@ -750,6 +750,15 @@ button.danger {
   gap: 10px;
 }
 
+/* Rodada 307: o ContadorDeCaracteres.tsx desenha um "n/limite" flutuante
+   logo abaixo de TODO textarea com maxLength, em qualquer tela do painel
+   (modais inclusive). Sem esse respiro, ele fica colado no que vem a
+   seguir (botões, próximo campo, etc.) , pedido do usuário depois de
+   ver isso acontecer no modal de "Excluir cadastro". */
+textarea[maxlength] {
+  margin-bottom: 20px;
+}
+
 /* ===== Botão de link externo (Rodada 95) , ex.: abrir no mapa ===== */
 .botao-link-externo {
   background: #e5e7eb;
