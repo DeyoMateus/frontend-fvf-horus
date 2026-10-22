@@ -157,8 +157,10 @@ export function FormularioTratamentoAlerta({
               O último ponto do motorista foi gravado com a hora adulterada.
               Para liberar o aparelho, informe a hora CORRETA desse ponto: ela
               substitui a hora fraudulenta nos cálculos (o ponto original
-              continua guardado). A anotação acima (mínimo de 10 caracteres) é
-              obrigatória.
+              continua guardado). A hora correta só pode ser menor do que a hora
+              que consta no registro e não pode passar do momento em que o
+              registro chegou ao servidor. A anotação acima (mínimo de 10
+              caracteres) é obrigatória.
             </p>
             <label style={{ fontSize: 13 }}>
               Hora correta do ponto:{" "}
