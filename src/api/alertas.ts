@@ -29,6 +29,20 @@ export function marcarAlertaVisualizado(alertaId: string) {
     .then((r) => r.data);
 }
 
+export function liberarRelogioAlerta(
+  motoristaId: string,
+  alertaId: string,
+  horarioCorreto: string,
+  observacao: string,
+) {
+  return api
+    .patch(
+      `/motoristas/${motoristaId}/tratamentos-ponto/liberar-relogio/${alertaId}`,
+      { horarioCorreto, observacao },
+    )
+    .then((r) => r.data);
+}
+
 export function tratarAlerta(alertaId: string, observacao: string) {
   return api
     .patch<AlertaJornada>(`/alertas-jornada/${alertaId}/tratar`, { observacao })

@@ -6,6 +6,7 @@ import {
   listAlertasByEmpresa,
   marcarAlertaVisualizado,
   tratarAlerta,
+  liberarRelogioAlerta,
 } from "../api/alertas";
 import type { AlertaJornada, SeveridadeAlerta } from "../api/types";
 import { minParaHoras } from "../utils/formatarDuracao";
@@ -87,6 +88,9 @@ export function AlertasJornadaPage() {
   const [observacaoPorAlerta, setObservacaoPorAlerta] = useState<
     Record<string, string>
   >({});
+  const [horarioCorretoPorAlerta, setHorarioCorretoPorAlerta] = useState<
+    Record<string, string>
+  >({});
   const [tratandoId, setTratandoId] = useState<string | null>(null);
 
   // Rodada 99 , pedido do usuário: trocar o filtro "Visualização" não
@@ -124,6 +128,33 @@ export function AlertasJornadaPage() {
           : a,
       ),
     );
+  }
+
+  async function onLiberarRelogio(alertaId: string, motoristaId: string) {
+    const observacao = (observacaoPorAlerta[alertaId] ?? "").trim();
+    const horario = horarioCorretoPorAlerta[alertaId] ?? "";
+    if (observacao.length < 10 || !horario) return;
+    const instante = new Date(horario);
+    if (Number.isNaN(instante.getTime())) return;
+    setTratandoId(alertaId);
+    try {
+      await liberarRelogioAlerta(
+        motoristaId,
+        alertaId,
+        instante.toISOString(),
+        observacao,
+      );
+      // Recarrega: o alerta foi tratado e o ponto corrigido no servidor.
+      await carregar();
+      setObservacaoPorAlerta((prev) => {
+        const { [alertaId]: _descartado, ...resto } = prev;
+        return resto;
+      });
+    } catch {
+      setErro("Não foi possível liberar o aparelho deste motorista.");
+    } finally {
+      setTratandoId(null);
+    }
   }
 
   async function onTratarAlerta(alertaId: string) {
@@ -521,6 +552,11 @@ export function AlertasJornadaPage() {
                                   />
                                   <div style={{ marginTop: 6 }}>
                                     <button
+                                      style={
+                                        a.tipo === "RELOGIO_PONTO_RECUSADO"
+                                          ? { display: "none" }
+                                          : undefined
+                                      }
                                       disabled={
                                         tratandoId === a.id ||
                                         (observacaoPorAlerta[a.id] ?? "").trim()
@@ -532,6 +568,56 @@ export function AlertasJornadaPage() {
                                         ? "Salvando…"
                                         : "Salvar tratamento"}
                                     </button>
+                                    {a.tipo === "RELOGIO_PONTO_RECUSADO" && (
+                                      <div
+                                        style={{
+                                          marginTop: 10,
+                                          paddingTop: 8,
+                                          borderTop: "1px solid #e5e7eb",
+                                        }}
+                                      >
+                                        <p style={{ fontSize: 13, margin: "0 0 6px" }}>
+                                          O último ponto do motorista foi gravado
+                                          com a hora adulterada. Para liberar o
+                                          aparelho, informe a hora CORRETA desse
+                                          ponto: ela substitui a hora fraudulenta
+                                          nos cálculos (o ponto original continua
+                                          guardado). A anotação acima (mínimo de
+                                          10 caracteres) é obrigatória.
+                                        </p>
+                                        <label style={{ fontSize: 13 }}>
+                                          Hora correta do ponto:{" "}
+                                          <input
+                                            type="datetime-local"
+                                            value={
+                                              horarioCorretoPorAlerta[a.id] ?? ""
+                                            }
+                                            onChange={(e) =>
+                                              setHorarioCorretoPorAlerta(
+                                                (prev) => ({
+                                                  ...prev,
+                                                  [a.id]: e.target.value,
+                                                }),
+                                              )
+                                            }
+                                          />
+                                        </label>{" "}
+                                        <button
+                                          disabled={
+                                            tratandoId === a.id ||
+                                            !horarioCorretoPorAlerta[a.id] ||
+                                            (
+                                              observacaoPorAlerta[a.id] ?? ""
+                                            ).trim().length < 10
+                                          }
+                                          onClick={() =>
+                                            onLiberarRelogio(a.id, a.motoristaId)
+                                          }
+                                        >
+                                          Corrigir ponto e liberar aparelho
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               )}

@@ -35,6 +35,7 @@ const LIMIAR_PULSAR_MS = 10 * 60 * 1000;
 const TIPOS_FRAUDE: TipoAlertaJornada[] = [
   "VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS",
   "RELOGIO_DISPOSITIVO_SUSPEITO",
+  "RELOGIO_PONTO_RECUSADO",
   "SEQUENCIA_JORNADA_MUITO_RAPIDA",
   "ODOMETRO_REGRESSIVO",
   "INTEGRIDADE_DISPOSITIVO_SUSPEITA",
@@ -80,6 +81,7 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS:
     "Velocidade impossível entre registros",
   RELOGIO_DISPOSITIVO_SUSPEITO: "Relógio do aparelho suspeito",
+  RELOGIO_PONTO_RECUSADO: "Ponto recusado por relógio suspeito",
   SEQUENCIA_JORNADA_MUITO_RAPIDA: "Sequência de batidas muito rápida",
   ODOMETRO_REGRESSIVO: "Odômetro regressivo",
   INTEGRIDADE_DISPOSITIVO_SUSPEITA: "Integridade do aparelho suspeita",

@@ -29,6 +29,8 @@ export interface ResultadoHolerite {
     extraMin: number;
     noturnoMin: number;
   };
+  /** Pontos do período fora do cálculo por alerta de relógio adulterado ainda não corrigido. */
+  pontosSuspeitosPendentes?: number;
 }
 
 function paramsHolerite(inicio: string, fim: string, opcoes: OpcoesHolerite) {

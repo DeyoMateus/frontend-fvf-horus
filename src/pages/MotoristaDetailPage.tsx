@@ -227,6 +227,34 @@ export function MotoristaDetailPage() {
   const [trocasVeiculo, setTrocasVeiculo] = useState<TrocaVeiculoAuditoria[]>(
     [],
   );
+  // Trocas de veículo já conferidas por este gestor neste navegador (ids
+  // do log de auditoria, que é imutável). Troca nova volta a aparecer.
+  const chaveTrocasConferidas = `horus:trocasVeiculoConferidas:${motoristaId}`;
+  const [trocasConferidas, setTrocasConferidas] = useState<string[]>(() => {
+    try {
+      const bruto = localStorage.getItem(
+        `horus:trocasVeiculoConferidas:${motoristaId}`,
+      );
+      const lista = bruto ? JSON.parse(bruto) : [];
+      return Array.isArray(lista) ? lista : [];
+    } catch {
+      return [];
+    }
+  });
+  const onMarcarTrocasConferidas = () => {
+    const ids = Array.from(
+      new Set([...trocasConferidas, ...trocasVeiculo.map((t) => t.id)]),
+    );
+    setTrocasConferidas(ids);
+    try {
+      localStorage.setItem(chaveTrocasConferidas, JSON.stringify(ids));
+    } catch {
+      // sem armazenamento: some só até recarregar a página
+    }
+  };
+  const trocasPendentes = trocasVeiculo.filter(
+    (t) => !trocasConferidas.includes(t.id),
+  );
   const [placaForm, setPlacaForm] = useState("");
   const [idRastreadorForm, setIdRastreadorForm] = useState("");
   const [tecnologiaForm, setTecnologiaForm] = useState("");
@@ -889,7 +917,20 @@ export function MotoristaDetailPage() {
       <tr key={r.id}>
         <td>{r.sequencial}</td>
         <td>{r.tipoEvento}</td>
-        <td>{formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}</td>
+        <td>
+          {formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}
+          {r.situacaoCalculo === "CORRIGIDO" && r.horaCorrigida && (
+            <div style={{ fontSize: 11, color: "#92400e" }}>
+              Hora adulterada. Corrigida pelo gestor para{" "}
+              {formatarRegistro(r.horaCorrigida, r.fusoOffsetMin)}
+            </div>
+          )}
+          {r.situacaoCalculo === "FORA_DO_CALCULO" && (
+            <div style={{ fontSize: 11, color: "#b91c1c" }}>
+              Hora adulterada. Fora dos cálculos até o gestor corrigir
+            </div>
+          )}
+        </td>
         <td style={{ fontSize: 11 }}>{r.deviceUuidUsado}</td>
         <td>
           {r.latitude != null && r.longitude != null ? (
@@ -1719,7 +1760,7 @@ export function MotoristaDetailPage() {
         </div>
       )}
 
-      {trocasVeiculo.length > 0 && (
+      {trocasPendentes.length > 0 && (
         <div
           className="card"
           style={{ background: "#fffbeb", borderColor: "#fde68a" }}
@@ -1733,7 +1774,7 @@ export function MotoristaDetailPage() {
             cavalo, por exemplo) ou se merece uma checagem.
           </p>
           <ul style={{ fontSize: 13 }}>
-            {trocasVeiculo.map((t) => (
+            {trocasPendentes.map((t) => (
               <li key={t.id}>
                 {new Date(t.createdAt).toLocaleString("pt-BR")}:{" "}
                 {t.detalhes?.placaAnterior ?? ","} →{" "}
@@ -1742,6 +1783,9 @@ export function MotoristaDetailPage() {
               </li>
             ))}
           </ul>
+          <button type="button" onClick={onMarcarTrocasConferidas}>
+            Marcar como conferido
+          </button>
         </div>
       )}
 
@@ -2719,6 +2763,14 @@ export function MotoristaDetailPage() {
           </div>
         </form>
 
+        {holeritePrevia && (holeritePrevia.pontosSuspeitosPendentes ?? 0) > 0 && (
+          <p className="error-text" style={{ marginTop: 12 }}>
+            {holeritePrevia.pontosSuspeitosPendentes} ponto(s) com relógio
+            adulterado ficaram FORA do cálculo até o gestor corrigir a hora
+            (tela de Alertas, "Corrigir ponto e liberar aparelho"). Este
+            holerite está incompleto.
+          </p>
+        )}
         {holeritePrevia && (
           <table style={{ marginTop: 16 }}>
             <thead>

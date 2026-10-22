@@ -193,6 +193,9 @@ export interface RegistroJornada {
   /** Fuso do motorista no toque (min a leste do UTC; Brasília = -180). Rodada 146. */
   fusoOffsetMin?: number | null;
   createdAt: string;
+  /** Rodada 320: ponto adulterado. CORRIGIDO = o gestor informou a hora certa (`horaCorrigida`); FORA_DO_CALCULO = alerta de relógio ainda não tratado. */
+  situacaoCalculo?: "CORRIGIDO" | "FORA_DO_CALCULO";
+  horaCorrigida?: string;
 }
 
 export interface DivergenciaIntegridade {
@@ -281,6 +284,7 @@ export type TipoAlertaJornada =
   // backend/src/common/antifraude/antifraude.service.ts.
   | "VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS"
   | "RELOGIO_DISPOSITIVO_SUSPEITO"
+  | "RELOGIO_PONTO_RECUSADO"
   | "SEQUENCIA_JORNADA_MUITO_RAPIDA"
   | "ODOMETRO_REGRESSIVO"
   | "INTEGRIDADE_DISPOSITIVO_SUSPEITA"
