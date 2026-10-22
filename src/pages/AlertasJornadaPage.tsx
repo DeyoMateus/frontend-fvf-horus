@@ -2,12 +2,15 @@ import { primeiroESegundoNome } from "../utils/nomeMotorista";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
+import { listAlertasByEmpresa } from "../api/alertas";
 import {
-  listAlertasByEmpresa,
-  marcarAlertaVisualizado,
-  tratarAlerta,
-  liberarRelogioAlerta,
-} from "../api/alertas";
+  BarraTratamentoEmLote,
+  FiltrosTratamento,
+  FormularioTratamentoAlerta,
+  alertaPodeTratarEmLote,
+  aplicarFiltroTratamento,
+} from "../components/TratamentoAlertas";
+import type { FiltroTratamento } from "../components/TratamentoAlertas";
 import type { AlertaJornada, SeveridadeAlerta } from "../api/types";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { useListaPaginada } from "../hooks/useListaPaginada";
@@ -31,8 +34,6 @@ const OPCOES_PERIODO_RAPIDO = [
 ];
 
 type FiltroSeveridade = "TODAS" | SeveridadeAlerta;
-type FiltroVisualizacao = "TODOS" | "NAO_VISUALIZADOS";
-type FiltroTratamento = "TODOS" | "NAO_TRATADOS";
 
 // Rótulos dos campos mais comuns dentro de `detalhes` (Json livre , cada
 // tipo de alerta guarda um conjunto diferente, ver AntifraudeService e
@@ -66,8 +67,9 @@ function formatarValorDetalhe(valor: unknown): string {
  * existia por motorista (MotoristaDetailPage). Usa o mesmo endpoint
  * que já tinha tenant isolation corrigido (GET /alertas-jornada/empresa/minha).
  *
- * Rodada 25: além de "marcar visto" (só esconde da lista de
- * não-visualizados, sem registrar nada), cada alerta agora pode ser
+ * Rodada 322: sem "marcar visto" (um alerta podia passar batido). O único
+ * caminho é tratar, um a um (críticos) ou coletivo (atenção/info), e os
+ * não tratados vêm sempre primeiro. Rodada 25: cada alerta pode ser
  * "tratado" , anexa uma observação obrigatória de quem apurou (o que foi
  * encontrado: falso positivo do motor? precisou de correção via
  * Tratamento de Ponto? etc.) e traz o(s) registro(s) exato(s) que
@@ -80,18 +82,11 @@ export function AlertasJornadaPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [filtroSeveridade, setFiltroSeveridade] =
     useState<FiltroSeveridade>("TODAS");
-  const [filtroVisualizacao, setFiltroVisualizacao] =
-    useState<FiltroVisualizacao>("NAO_VISUALIZADOS");
   const [filtroTratamento, setFiltroTratamento] =
     useState<FiltroTratamento>("TODOS");
   const [expandidoId, setExpandidoId] = useState<string | null>(null);
-  const [observacaoPorAlerta, setObservacaoPorAlerta] = useState<
-    Record<string, string>
-  >({});
-  const [horarioCorretoPorAlerta, setHorarioCorretoPorAlerta] = useState<
-    Record<string, string>
-  >({});
-  const [tratandoId, setTratandoId] = useState<string | null>(null);
+  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   // Rodada 99 , pedido do usuário: trocar o filtro "Visualização" não
   // pode "piscar" a tela inteira trocando a lista por "Carregando…" ,
@@ -101,10 +96,13 @@ export function AlertasJornadaPage() {
     if (comCarregamentoTelaCheia) setCarregando(true);
     setErro(null);
     try {
-      const dados = await listAlertasByEmpresa(
-        filtroVisualizacao === "NAO_VISUALIZADOS",
-      );
+      const dados = await listAlertasByEmpresa(false);
       setAlertas(dados);
+      setSelecionados((atual) =>
+        atual.filter((id) =>
+          dados.some((a) => a.id === id && alertaPodeTratarEmLote(a)),
+        ),
+      );
     } catch {
       setErro("Não foi possível carregar os alertas.");
     } finally {
@@ -117,75 +115,31 @@ export function AlertasJornadaPage() {
     carregar(!primeiraCargaFeita.current);
     primeiraCargaFeita.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroVisualizacao]);
+  }, []);
 
-  async function onVisualizarAlerta(alertaId: string) {
-    await marcarAlertaVisualizado(alertaId);
-    setAlertas((prev) =>
-      prev.map((a) =>
-        a.id === alertaId
-          ? { ...a, visualizadoEm: new Date().toISOString() }
-          : a,
-      ),
+  async function aposTratar(mensagem?: string) {
+    setExpandidoId(null);
+    setAviso(mensagem ?? null);
+    await carregar();
+  }
+
+  function alternarSelecao(id: string) {
+    setSelecionados((atual) =>
+      atual.includes(id) ? atual.filter((x) => x !== id) : [...atual, id],
     );
-  }
-
-  async function onLiberarRelogio(alertaId: string, motoristaId: string) {
-    const observacao = (observacaoPorAlerta[alertaId] ?? "").trim();
-    const horario = horarioCorretoPorAlerta[alertaId] ?? "";
-    if (observacao.length < 10 || !horario) return;
-    const instante = new Date(horario);
-    if (Number.isNaN(instante.getTime())) return;
-    setTratandoId(alertaId);
-    try {
-      await liberarRelogioAlerta(
-        motoristaId,
-        alertaId,
-        instante.toISOString(),
-        observacao,
-      );
-      // Recarrega: o alerta foi tratado e o ponto corrigido no servidor.
-      await carregar();
-      setObservacaoPorAlerta((prev) => {
-        const { [alertaId]: _descartado, ...resto } = prev;
-        return resto;
-      });
-    } catch {
-      setErro("Não foi possível liberar o aparelho deste motorista.");
-    } finally {
-      setTratandoId(null);
-    }
-  }
-
-  async function onTratarAlerta(alertaId: string) {
-    const observacao = (observacaoPorAlerta[alertaId] ?? "").trim();
-    if (observacao.length < 3) return;
-    setTratandoId(alertaId);
-    try {
-      const atualizado = await tratarAlerta(alertaId, observacao);
-      setAlertas((prev) =>
-        prev.map((a) => (a.id === alertaId ? { ...a, ...atualizado } : a)),
-      );
-      setObservacaoPorAlerta((prev) => {
-        const { [alertaId]: _descartado, ...resto } = prev;
-        return resto;
-      });
-    } catch {
-      setErro("Não foi possível registrar o tratamento deste alerta.");
-    } finally {
-      setTratandoId(null);
-    }
   }
 
   const alertasFiltrados = useMemo(
     () =>
-      alertas
-        .filter(
-          (a) =>
-            filtroSeveridade === "TODAS" || a.severidade === filtroSeveridade,
-        )
-        .filter((a) => filtroTratamento === "TODOS" || !a.tratadoEm),
-    [alertas, filtroSeveridade, filtroTratamento],
+      alertas.filter(
+        (a) =>
+          filtroSeveridade === "TODAS" || a.severidade === filtroSeveridade,
+      ),
+    [alertas, filtroSeveridade],
+  );
+  const alertasFiltradosPorTratamento = useMemo(
+    () => aplicarFiltroTratamento(alertasFiltrados, filtroTratamento),
+    [alertasFiltrados, filtroTratamento],
   );
 
   // Rodada 108 , pedido do usuário: ordenar (mais recente/mais antigo),
@@ -193,7 +147,18 @@ export function AlertasJornadaPage() {
   // listagem do painel (ver `useListaPaginada`). Esta lista agrega
   // alertas da empresa inteira , é justamente a que mais crescia sem
   // limite na tela antes desta rodada.
-  const paginacao = useListaPaginada(alertasFiltrados, (a) => a.createdAt);
+  const paginacao = useListaPaginada(
+    alertasFiltradosPorTratamento,
+    (a) => a.createdAt,
+    // Rodada 322: não tratados sempre no topo, depois a ordem por data.
+    { fixarNoTopo: (a) => !a.tratadoEm },
+  );
+  const idsSelecionaveisNaPagina = paginacao.itensExibidos
+    .filter(alertaPodeTratarEmLote)
+    .map((a) => a.id);
+  const todosDaPaginaMarcados =
+    idsSelecionaveisNaPagina.length > 0 &&
+    idsSelecionaveisNaPagina.every((id) => selecionados.includes(id));
 
   const contagens = useMemo(() => {
     const base = { CRITICO: 0, ATENCAO: 0, INFO: 0 };
@@ -251,31 +216,23 @@ export function AlertasJornadaPage() {
             <option value="INFO">Info</option>
           </select>
         </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={filtroVisualizacao === "NAO_VISUALIZADOS"}
-            onChange={(e) =>
-              setFiltroVisualizacao(
-                e.target.checked ? "NAO_VISUALIZADOS" : "TODOS",
-              )
-            }
-          />{" "}
-          Só não visualizados
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={filtroTratamento === "NAO_TRATADOS"}
-            onChange={(e) =>
-              setFiltroTratamento(e.target.checked ? "NAO_TRATADOS" : "TODOS")
-            }
-          />{" "}
-          Só não tratados
-        </label>
+        <FiltrosTratamento
+          valor={filtroTratamento}
+          onMudar={setFiltroTratamento}
+        />
       </div>
 
       {erro && <p style={{ color: "#b91c1c" }}>{erro}</p>}
+      {aviso && <p style={{ color: "#166534" }}>{aviso}</p>}
+      <BarraTratamentoEmLote
+        idsSelecionados={selecionados}
+        onLimpar={() => setSelecionados([])}
+        onConcluido={(msg) => {
+          setSelecionados([]);
+          return aposTratar(msg);
+        }}
+        onErro={setErro}
+      />
       {carregando ? (
         <p>Carregando…</p>
       ) : (
@@ -375,6 +332,28 @@ export function AlertasJornadaPage() {
             <table>
               <thead>
                 <tr>
+                  <th title="Selecionar os alertas de atenção e info desta página para tratar juntos">
+                    <input
+                      type="checkbox"
+                      aria-label="Selecionar todos os não críticos desta página"
+                      disabled={idsSelecionaveisNaPagina.length === 0}
+                      checked={todosDaPaginaMarcados}
+                      onChange={(e) =>
+                        setSelecionados((atual) =>
+                          e.target.checked
+                            ? [
+                                ...new Set([
+                                  ...atual,
+                                  ...idsSelecionaveisNaPagina,
+                                ]),
+                              ]
+                            : atual.filter(
+                                (id) => !idsSelecionaveisNaPagina.includes(id),
+                              ),
+                        )
+                      }
+                    />
+                  </th>
                   <th>Severidade</th>
                   <th>Motorista</th>
                   <th>Alerta</th>
@@ -393,7 +372,17 @@ export function AlertasJornadaPage() {
                   const expandido = expandidoId === a.id;
                   return (
                     <Fragment key={a.id}>
-                      <tr style={{ opacity: a.visualizadoEm ? 0.55 : 1 }}>
+                      <tr style={{ opacity: a.tratadoEm ? 0.6 : 1 }}>
+                        <td>
+                          {alertaPodeTratarEmLote(a) && (
+                            <input
+                              type="checkbox"
+                              aria-label="Selecionar para tratar junto"
+                              checked={selecionados.includes(a.id)}
+                              onChange={() => alternarSelecao(a.id)}
+                            />
+                          )}
+                        </td>
                         <td>
                           <span
                             style={{
@@ -451,23 +440,22 @@ export function AlertasJornadaPage() {
                         <td
                           style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
                         >
-                          {!a.visualizadoEm && (
-                            <button onClick={() => onVisualizarAlerta(a.id)}>
-                              Marcar visto
-                            </button>
-                          )}
                           <button
                             onClick={() =>
                               setExpandidoId(expandido ? null : a.id)
                             }
                           >
-                            {expandido ? "Fechar" : "Tratar"}
+                            {expandido
+                              ? "Fechar"
+                              : a.tratadoEm
+                                ? "Ver"
+                                : "Tratar"}
                           </button>
                         </td>
                       </tr>
                       {expandido && (
                         <tr>
-                          <td colSpan={8} style={{ background: "#f9fafb" }}>
+                          <td colSpan={9} style={{ background: "#f9fafb" }}>
                             <div style={{ padding: "12px 16px" }}>
                               <p style={{ margin: "0 0 8px", fontSize: 13 }}>
                                 <strong>
@@ -524,102 +512,11 @@ export function AlertasJornadaPage() {
                                   </div>
                                 </div>
                               ) : (
-                                <div>
-                                  <label
-                                    style={{
-                                      display: "block",
-                                      fontSize: 13,
-                                      marginBottom: 4,
-                                    }}
-                                  >
-                                    Anote o que foi apurado (obrigatório para
-                                    tratar), por exemplo: "conferido, odômetro
-                                    correto, foi falso positivo de ordem de
-                                    chegada" ou "corrigido via Tratamento de
-                                    Ponto de dd/mm":
-                                  </label>
-                                  <textarea
-                                    maxLength={400}
-                                    value={observacaoPorAlerta[a.id] ?? ""}
-                                    onChange={(e) =>
-                                      setObservacaoPorAlerta((prev) => ({
-                                        ...prev,
-                                        [a.id]: e.target.value,
-                                      }))
-                                    }
-                                    rows={2}
-                                    style={{ width: "100%", maxWidth: 640 }}
-                                  />
-                                  <div style={{ marginTop: 6 }}>
-                                    <button
-                                      style={
-                                        a.tipo === "RELOGIO_PONTO_RECUSADO"
-                                          ? { display: "none" }
-                                          : undefined
-                                      }
-                                      disabled={
-                                        tratandoId === a.id ||
-                                        (observacaoPorAlerta[a.id] ?? "").trim()
-                                          .length < 3
-                                      }
-                                      onClick={() => onTratarAlerta(a.id)}
-                                    >
-                                      {tratandoId === a.id
-                                        ? "Salvando…"
-                                        : "Salvar tratamento"}
-                                    </button>
-                                    {a.tipo === "RELOGIO_PONTO_RECUSADO" && (
-                                      <div
-                                        style={{
-                                          marginTop: 10,
-                                          paddingTop: 8,
-                                          borderTop: "1px solid #e5e7eb",
-                                        }}
-                                      >
-                                        <p style={{ fontSize: 13, margin: "0 0 6px" }}>
-                                          O último ponto do motorista foi gravado
-                                          com a hora adulterada. Para liberar o
-                                          aparelho, informe a hora CORRETA desse
-                                          ponto: ela substitui a hora fraudulenta
-                                          nos cálculos (o ponto original continua
-                                          guardado). A anotação acima (mínimo de
-                                          10 caracteres) é obrigatória.
-                                        </p>
-                                        <label style={{ fontSize: 13 }}>
-                                          Hora correta do ponto:{" "}
-                                          <input
-                                            type="datetime-local"
-                                            value={
-                                              horarioCorretoPorAlerta[a.id] ?? ""
-                                            }
-                                            onChange={(e) =>
-                                              setHorarioCorretoPorAlerta(
-                                                (prev) => ({
-                                                  ...prev,
-                                                  [a.id]: e.target.value,
-                                                }),
-                                              )
-                                            }
-                                          />
-                                        </label>{" "}
-                                        <button
-                                          disabled={
-                                            tratandoId === a.id ||
-                                            !horarioCorretoPorAlerta[a.id] ||
-                                            (
-                                              observacaoPorAlerta[a.id] ?? ""
-                                            ).trim().length < 10
-                                          }
-                                          onClick={() =>
-                                            onLiberarRelogio(a.id, a.motoristaId)
-                                          }
-                                        >
-                                          Corrigir ponto e liberar aparelho
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                                <FormularioTratamentoAlerta
+                                  alerta={a}
+                                  onConcluido={() => aposTratar()}
+                                  onErro={setErro}
+                                />
                               )}
                             </div>
                           </td>
@@ -630,7 +527,7 @@ export function AlertasJornadaPage() {
                 })}
                 {paginacao.itensExibidos.length === 0 && (
                   <tr>
-                    <td colSpan={8} style={{ color: "#000000" }}>
+                    <td colSpan={9} style={{ color: "#000000" }}>
                       Nenhum alerta encontrado com este filtro.
                     </td>
                   </tr>

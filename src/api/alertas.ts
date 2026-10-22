@@ -48,3 +48,19 @@ export function tratarAlerta(alertaId: string, observacao: string) {
     .patch<AlertaJornada>(`/alertas-jornada/${alertaId}/tratar`, { observacao })
     .then((r) => r.data);
 }
+
+// Rodada 322: tratamento coletivo (só alertas não críticos).
+export interface ResultadoTratamentoLote {
+  tratados: string[];
+  ignorados: string[];
+  recusados: { id: string; motivo: string }[];
+}
+
+export function tratarAlertasEmLote(alertaIds: string[], observacao: string) {
+  return api
+    .patch<ResultadoTratamentoLote>(`/alertas-jornada/tratar-lote`, {
+      alertaIds,
+      observacao,
+    })
+    .then((r) => r.data);
+}

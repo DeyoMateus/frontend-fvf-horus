@@ -9,7 +9,7 @@ import {
   rotuloUtc,
   seloFusoMapa,
 } from "../utils/fusoHorario";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -70,10 +70,15 @@ import { TelefoneInput } from "../components/TelefoneInput";
 import { baixarHoleritePdf, calcularHolerite } from "../api/holerite";
 import { BancoHorasPainel } from "../components/BancoHorasPainel";
 import type { OpcoesHolerite, ResultadoHolerite } from "../api/holerite";
+import { listAlertasByMotorista } from "../api/alertas";
 import {
-  listAlertasByMotorista,
-  marcarAlertaVisualizado,
-} from "../api/alertas";
+  BarraTratamentoEmLote,
+  FiltrosTratamento,
+  FormularioTratamentoAlerta,
+  alertaPodeTratarEmLote,
+  aplicarFiltroTratamento,
+} from "../components/TratamentoAlertas";
+import type { FiltroTratamento } from "../components/TratamentoAlertas";
 import { listarAutorrelatosFolga } from "../api/autorrelatoFolga";
 import type { AutorrelatoFolga } from "../api/autorrelatoFolga";
 import {
@@ -132,7 +137,8 @@ type JornadaDoCiclo = {
 export function MotoristaDetailPage() {
   const { usuario } = useAuth();
   // Rodada 215: usuários do painel (ADMIN e GESTOR) veem localização; o backend audita cada consulta.
-  const veLocalizacao = usuario?.papel === "ADMIN" || usuario?.papel === "GESTOR";
+  const veLocalizacao =
+    usuario?.papel === "ADMIN" || usuario?.papel === "GESTOR";
   const { motoristaId = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -151,6 +157,16 @@ export function MotoristaDetailPage() {
   );
   const [tratamentos, setTratamentos] = useState<TratamentoPonto[]>([]);
   const [alertas, setAlertas] = useState<AlertaJornada[]>([]);
+  // Rodada 322: tratamento de alertas pela ficha do motorista (mesmos
+  // alertas do painel geral, então tratar aqui dá baixa lá).
+  const [filtroTratamentoAlertas, setFiltroTratamentoAlertas] =
+    useState<FiltroTratamento>("TODOS");
+  const [alertaExpandidoId, setAlertaExpandidoId] = useState<string | null>(
+    null,
+  );
+  const [alertasSelecionados, setAlertasSelecionados] = useState<string[]>([]);
+  const [avisoAlertas, setAvisoAlertas] = useState<string | null>(null);
+  const [erroAlertas, setErroAlertas] = useState<string | null>(null);
   // Rodada 107 , pedido do usuário: mesmo padrão da Rodada 77
   // (tratamentos de ponto) aplicado aqui , essa lista também não pode
   // crescer sem limite na tela. "Mostrar N por vez" (10/20/50/100) +
@@ -196,7 +212,8 @@ export function MotoristaDetailPage() {
     ? (searchParams.get("data") ?? undefined)
     : undefined;
   useEffect(() => {
-    if (carregando || !(veioParaEncerrarJornada || veioParaLancarJornada)) return;
+    if (carregando || !(veioParaEncerrarJornada || veioParaLancarJornada))
+      return;
     cardTratamentoRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -525,15 +542,21 @@ export function MotoristaDetailPage() {
     setCarregando(false);
   }
 
-  async function onVisualizarAlerta(alertaId: string) {
-    await marcarAlertaVisualizado(alertaId);
-    setAlertas((prev) =>
-      prev.map((a) =>
-        a.id === alertaId
-          ? { ...a, visualizadoEm: new Date().toISOString() }
-          : a,
-      ),
-    );
+  async function recarregarAlertas(aviso?: string) {
+    setAlertaExpandidoId(null);
+    setAvisoAlertas(aviso ?? null);
+    setErroAlertas(null);
+    try {
+      const dados = await listAlertasByMotorista(motoristaId);
+      setAlertas(dados);
+      setAlertasSelecionados((atual) =>
+        atual.filter((id) =>
+          dados.some((a) => a.id === id && alertaPodeTratarEmLote(a)),
+        ),
+      );
+    } catch {
+      setErroAlertas("Não foi possível recarregar os alertas.");
+    }
   }
 
   useEffect(() => {
@@ -858,9 +881,15 @@ export function MotoristaDetailPage() {
 
   // Rodada 107 , mais recentes primeiro (mesmo critério da Rodada 77),
   // fatiado pelo "mostrar N por vez".
-  const alertasOrdenados = [...alertas].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  // Rodada 322: não tratados sempre primeiro, depois os mais recentes.
+  const alertasOrdenados = [
+    ...aplicarFiltroTratamento(alertas, filtroTratamentoAlertas),
+  ].sort((a, b) => {
+    const pa = a.tratadoEm ? 1 : 0;
+    const pb = b.tratadoEm ? 1 : 0;
+    if (pa !== pb) return pa - pb;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
   const totalPaginasAlertas = Math.max(
     1,
     Math.ceil(alertasOrdenados.length / qtdAlertasPorPagina),
@@ -870,6 +899,9 @@ export function MotoristaDetailPage() {
     (paginaAlertasEfetiva - 1) * qtdAlertasPorPagina,
     paginaAlertasEfetiva * qtdAlertasPorPagina,
   );
+  const idsSelecionaveisAlertas = alertasExibidos
+    .filter(alertaPodeTratarEmLote)
+    .map((a) => a.id);
 
   function onMudarQtdAlertasPorPagina(qtd: 10 | 20 | 50 | 100) {
     setQtdAlertasPorPagina(qtd);
@@ -1081,7 +1113,10 @@ export function MotoristaDetailPage() {
       document.body.removeChild(campo);
     }
     setCopiado(qual);
-    window.setTimeout(() => setCopiado((atual) => (atual === qual ? null : atual)), 2000);
+    window.setTimeout(
+      () => setCopiado((atual) => (atual === qual ? null : atual)),
+      2000,
+    );
   }
 
   async function onCopiarIdMotorista() {
@@ -1302,7 +1337,9 @@ export function MotoristaDetailPage() {
             CPF {motorista.cpf}
             {motorista.telefone && <> · {motorista.telefone}</>}
             {(() => {
-              const emp = empresasGrupo.find((x) => x.id === motorista.empresaId);
+              const emp = empresasGrupo.find(
+                (x) => x.id === motorista.empresaId,
+              );
               return emp ? (
                 <>
                   {" "}
@@ -1377,7 +1414,15 @@ export function MotoristaDetailPage() {
               </button>
             )}
             {erroStatus && (
-              <span style={{ color: "#b91c1c", fontSize: 12, marginLeft: 8, marginTop: 8, display: "inline-block" }}>
+              <span
+                style={{
+                  color: "#b91c1c",
+                  fontSize: 12,
+                  marginLeft: 8,
+                  marginTop: 8,
+                  display: "inline-block",
+                }}
+              >
                 {erroStatus}
               </span>
             )}
@@ -1448,7 +1493,8 @@ export function MotoristaDetailPage() {
           <label>
             UUID do aparelho (deixe em branco para gerar um de teste)
           </label>
-          <input maxLength={36}
+          <input
+            maxLength={36}
             value={novaDeviceUuid}
             onChange={(e) => setNovaDeviceUuid(e.target.value)}
           />
@@ -1528,7 +1574,8 @@ export function MotoristaDetailPage() {
             required
           />
           <label>ID do rastreador (opcional)</label>
-          <input maxLength={100}
+          <input
+            maxLength={100}
             value={idRastreadorForm}
             onChange={(e) => setIdRastreadorForm(e.target.value)}
           />
@@ -1589,7 +1636,9 @@ export function MotoristaDetailPage() {
             </ul>
             {integridade.divergencias.length > 0 && (
               <div style={{ marginTop: -4 }}>
-                <p style={{ fontSize: 13, color: "#000000", margin: "0 0 8px" }}>
+                <p
+                  style={{ fontSize: 13, color: "#000000", margin: "0 0 8px" }}
+                >
                   {integridade.divergencias.filter((d) => !d.aceita).length}{" "}
                   pendente(s) e{" "}
                   {integridade.divergencias.filter((d) => d.aceita).length}{" "}
@@ -1611,9 +1660,7 @@ export function MotoristaDetailPage() {
                       onChange={(e) => {
                         setFiltroStatusDivergencia(
                           e.target.value as
-                            | "PENDENTES"
-                            | "REGULARIZADAS"
-                            | "TODAS",
+                            "PENDENTES" | "REGULARIZADAS" | "TODAS",
                         );
                         listaDivergencias.irParaPagina(1);
                       }}
@@ -1664,62 +1711,64 @@ export function MotoristaDetailPage() {
                 >
                   <div>
                     {listaDivergencias.itensExibidos.map((d) => (
-                  <div
-                    key={d.sequencial}
-                    style={{
-                      background: d.aceita ? "#f0fdf4" : "#fffbeb",
-                      border: `1px solid ${d.aceita ? "#bbf7d0" : "#fde68a"}`,
-                      borderRadius: 6,
-                      padding: 10,
-                      fontSize: 13,
-                      color: "#000000",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <p style={{ margin: "0 0 4px", fontWeight: 600 }}>
-                      Evento nº {d.sequencial}
-                      {d.tipoEvento ? ` (${d.tipoEvento})` : ""}
-                      {d.timestampEvento
-                        ? ` em ${new Date(d.timestampEvento).toLocaleString("pt-BR")}`
-                        : ""}
-                      {d.criadoEm
-                        ? `, lançado em ${new Date(d.criadoEm).toLocaleString("pt-BR")}`
-                        : ""}
-                      .{" "}
-                      <Link
-                        to={`/motoristas/${motoristaId}/integridade/${d.sequencial}`}
-                        style={{ fontSize: 12, fontWeight: 600 }}
-                      >
-                        Analisar evento →
-                      </Link>
-                    </p>
-                    <p style={{ margin: "0 0 8px" }}>{d.explicacao}</p>
-                    {d.aceita && d.aceite ? (
-                      <p
+                      <div
+                        key={d.sequencial}
                         style={{
-                          margin: 0,
-                          fontWeight: 600,
-                          color: "#15803d",
+                          background: d.aceita ? "#f0fdf4" : "#fffbeb",
+                          border: `1px solid ${d.aceita ? "#bbf7d0" : "#fde68a"}`,
+                          borderRadius: 6,
+                          padding: 10,
+                          fontSize: 13,
+                          color: "#000000",
+                          marginBottom: 8,
                         }}
                       >
-                        Regularizado por {d.aceite.aceitoPorNome} em{" "}
-                        {new Date(d.aceite.aceitoEm).toLocaleString("pt-BR")}.
-                        Motivo: {d.aceite.motivo}
-                      </p>
-                    ) : (
-                      <button
-                        type="button"
-                        className="secondary"
-                        style={{ fontSize: 12, padding: "4px 10px" }}
-                        disabled={aceitandoDivergencia === d.sequencial}
-                        onClick={() => onAceitarDivergencia(d.sequencial)}
-                      >
-                        {aceitandoDivergencia === d.sequencial
-                          ? "Regularizando..."
-                          : "Aceitar/regularizar esta divergência"}
-                      </button>
-                    )}
-                  </div>
+                        <p style={{ margin: "0 0 4px", fontWeight: 600 }}>
+                          Evento nº {d.sequencial}
+                          {d.tipoEvento ? ` (${d.tipoEvento})` : ""}
+                          {d.timestampEvento
+                            ? ` em ${new Date(d.timestampEvento).toLocaleString("pt-BR")}`
+                            : ""}
+                          {d.criadoEm
+                            ? `, lançado em ${new Date(d.criadoEm).toLocaleString("pt-BR")}`
+                            : ""}
+                          .{" "}
+                          <Link
+                            to={`/motoristas/${motoristaId}/integridade/${d.sequencial}`}
+                            style={{ fontSize: 12, fontWeight: 600 }}
+                          >
+                            Analisar evento →
+                          </Link>
+                        </p>
+                        <p style={{ margin: "0 0 8px" }}>{d.explicacao}</p>
+                        {d.aceita && d.aceite ? (
+                          <p
+                            style={{
+                              margin: 0,
+                              fontWeight: 600,
+                              color: "#15803d",
+                            }}
+                          >
+                            Regularizado por {d.aceite.aceitoPorNome} em{" "}
+                            {new Date(d.aceite.aceitoEm).toLocaleString(
+                              "pt-BR",
+                            )}
+                            . Motivo: {d.aceite.motivo}
+                          </p>
+                        ) : (
+                          <button
+                            type="button"
+                            className="secondary"
+                            style={{ fontSize: 12, padding: "4px 10px" }}
+                            disabled={aceitandoDivergencia === d.sequencial}
+                            onClick={() => onAceitarDivergencia(d.sequencial)}
+                          >
+                            {aceitandoDivergencia === d.sequencial
+                              ? "Regularizando..."
+                              : "Aceitar/regularizar esta divergência"}
+                          </button>
+                        )}
+                      </div>
                     ))}
                     {listaDivergencias.itensFiltrados.length === 0 && (
                       <p style={{ fontSize: 13, color: "#000000" }}>
@@ -1926,10 +1975,10 @@ export function MotoristaDetailPage() {
           </p>
           <p style={{ margin: "0 0 6px" }}>
             <strong>Direção do ciclo:</strong> soma da direção das jornadas
-            encadeadas, ou seja, aquelas com menos de 11h de descanso entre
-            uma e outra. É essa soma que dispara os alertas de 8h (atenção) e
-            10h (crítico). Fica em laranja a partir de 8h e em vermelho a
-            partir de 10h.
+            encadeadas, ou seja, aquelas com menos de 11h de descanso entre uma
+            e outra. É essa soma que dispara os alertas de 8h (atenção) e 10h
+            (crítico). Fica em laranja a partir de 8h e em vermelho a partir de
+            10h.
           </p>
           <p style={{ margin: 0 }}>
             <strong>CT-e:</strong> mostra quais CT-e formam a viagem. Se a
@@ -2271,7 +2320,12 @@ export function MotoristaDetailPage() {
           <FolgasLista
             titulo="Folgas concedidas pelo RH"
             subtituloArquivo={motorista?.nome}
-            cabecalhos={["Data da folga", "Situação", "Motivo", "Concedida por"]}
+            cabecalhos={[
+              "Data da folga",
+              "Situação",
+              "Motivo",
+              "Concedida por",
+            ]}
             comAcoes
             linhas={folgasConcedidas.map((f) => ({
               id: f.id,
@@ -2347,6 +2401,35 @@ export function MotoristaDetailPage() {
             />
           )}
         </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 16,
+            alignItems: "center",
+            flexWrap: "wrap",
+            marginBottom: 8,
+            fontSize: 13,
+          }}
+        >
+          <FiltrosTratamento
+            valor={filtroTratamentoAlertas}
+            onMudar={(v) => {
+              setFiltroTratamentoAlertas(v);
+              setPaginaAlertas(1);
+            }}
+          />
+        </div>
+        {erroAlertas && <p style={{ color: "#b91c1c" }}>{erroAlertas}</p>}
+        {avisoAlertas && <p style={{ color: "#166534" }}>{avisoAlertas}</p>}
+        <BarraTratamentoEmLote
+          idsSelecionados={alertasSelecionados}
+          onLimpar={() => setAlertasSelecionados([])}
+          onConcluido={(msg) => {
+            setAlertasSelecionados([]);
+            return recarregarAlertas(msg);
+          }}
+          onErro={setErroAlertas}
+        />
         <ListaEmPopup
           ativo={qtdAlertasPorPagina === 100}
           titulo="Alertas do motorista"
@@ -2357,52 +2440,135 @@ export function MotoristaDetailPage() {
           <table>
             <thead>
               <tr>
+                <th title="Selecionar os alertas de atenção e info desta página para tratar juntos">
+                  <input
+                    type="checkbox"
+                    aria-label="Selecionar todos os não críticos desta página"
+                    disabled={idsSelecionaveisAlertas.length === 0}
+                    checked={
+                      idsSelecionaveisAlertas.length > 0 &&
+                      idsSelecionaveisAlertas.every((id) =>
+                        alertasSelecionados.includes(id),
+                      )
+                    }
+                    onChange={(e) =>
+                      setAlertasSelecionados((atual) =>
+                        e.target.checked
+                          ? [...new Set([...atual, ...idsSelecionaveisAlertas])]
+                          : atual.filter(
+                              (id) => !idsSelecionaveisAlertas.includes(id),
+                            ),
+                      )
+                    }
+                  />
+                </th>
                 <th>Severidade</th>
                 <th>Alerta</th>
                 <th>Janela</th>
                 <th>Duração</th>
                 <th>Quando</th>
+                <th>Tratamento</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {alertasExibidos.map((a) => (
-                <tr key={a.id} style={{ opacity: a.visualizadoEm ? 0.55 : 1 }}>
-                  <td>
-                    <span
-                      style={{
-                        color:
-                          a.severidade === "CRITICO"
-                            ? "#b91c1c"
-                            : a.severidade === "ATENCAO"
-                              ? "#b45309"
-                              : "#374151",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {a.severidade}
-                    </span>
-                  </td>
-                  <td>{renderizarHorarios(a.mensagem)}</td>
-                  <td>
-                    {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
-                    {new Date(a.janelaFim).toLocaleString("pt-BR")}
-                  </td>
-                  <td>{formatarMinutos(a.minutosAcumulados)}</td>
-                  <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
-                  <td>
-                    {!a.visualizadoEm && (
-                      <button onClick={() => onVisualizarAlerta(a.id)}>
-                        Marcar visto
+                <Fragment key={a.id}>
+                  <tr style={{ opacity: a.tratadoEm ? 0.6 : 1 }}>
+                    <td>
+                      {alertaPodeTratarEmLote(a) && (
+                        <input
+                          type="checkbox"
+                          aria-label="Selecionar para tratar junto"
+                          checked={alertasSelecionados.includes(a.id)}
+                          onChange={() =>
+                            setAlertasSelecionados((atual) =>
+                              atual.includes(a.id)
+                                ? atual.filter((x) => x !== a.id)
+                                : [...atual, a.id],
+                            )
+                          }
+                        />
+                      )}
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          color:
+                            a.severidade === "CRITICO"
+                              ? "#b91c1c"
+                              : a.severidade === "ATENCAO"
+                                ? "#b45309"
+                                : "#374151",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {a.severidade}
+                      </span>
+                    </td>
+                    <td>{renderizarHorarios(a.mensagem)}</td>
+                    <td>
+                      {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
+                      {new Date(a.janelaFim).toLocaleString("pt-BR")}
+                    </td>
+                    <td>{formatarMinutos(a.minutosAcumulados)}</td>
+                    <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
+                    <td>
+                      {a.tratadoEm ? (
+                        <span style={{ color: "#166534", fontSize: 12 }}>
+                          ✓ tratado em{" "}
+                          {new Date(a.tratadoEm).toLocaleDateString("pt-BR")}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 12 }}>pendente</span>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        onClick={() =>
+                          setAlertaExpandidoId(
+                            alertaExpandidoId === a.id ? null : a.id,
+                          )
+                        }
+                      >
+                        {alertaExpandidoId === a.id
+                          ? "Fechar"
+                          : a.tratadoEm
+                            ? "Ver"
+                            : "Tratar"}
                       </button>
-                    )}
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                  {alertaExpandidoId === a.id && (
+                    <tr>
+                      <td colSpan={8} style={{ background: "#f9fafb" }}>
+                        <div style={{ padding: "12px 16px" }}>
+                          {a.tratadoEm ? (
+                            <div style={{ fontSize: 13 }}>
+                              <strong>Observação de quem tratou:</strong>{" "}
+                              {a.tratamentoObservacao}
+                              <div style={{ marginTop: 4 }}>
+                                Tratado em{" "}
+                                {new Date(a.tratadoEm).toLocaleString("pt-BR")}
+                              </div>
+                            </div>
+                          ) : (
+                            <FormularioTratamentoAlerta
+                              alerta={a}
+                              onConcluido={() => recarregarAlertas()}
+                              onErro={setErroAlertas}
+                            />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
               {alertas.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ color: "#000000" }}>
-                    Nenhum alerta gerado até agora.
+                  <td colSpan={8} style={{ color: "#000000" }}>
+                    Nenhum alerta encontrado.
                   </td>
                 </tr>
               )}
@@ -2433,8 +2599,8 @@ export function MotoristaDetailPage() {
             }}
           >
             Esta jornada está aberta há mais de 14h. Para encerrá-la, deixe o
-            evento "FIM_JORNADA", informe o horário em que o motorista
-            realmente terminou, escreva a justificativa e anexe a evidência.
+            evento "FIM_JORNADA", informe o horário em que o motorista realmente
+            terminou, escreva a justificativa e anexe a evidência.
           </p>
         )}
         <p style={{ fontSize: 13, color: "#000000" }}>
@@ -2520,7 +2686,8 @@ export function MotoristaDetailPage() {
             </p>
           )}
           <label>Motivo (mínimo 10 caracteres)</label>
-          <textarea maxLength={400}
+          <textarea
+            maxLength={400}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             rows={3}
@@ -2570,9 +2737,9 @@ export function MotoristaDetailPage() {
           <p style={{ fontSize: 12, color: "#000000", margin: "4px 0" }}>
             Evidências: somente <strong>imagens</strong> (JPG, PNG, WEBP ou
             HEIC/HEIF, o formato das fotos do iPhone), até 25MB cada. PDF e
-            outros arquivos não são aceitos, tire um print ou uma foto e anexe
-            a imagem. HEIC não aparece na miniatura em alguns navegadores, mas
-            é salvo normalmente e pode ser baixado.
+            outros arquivos não são aceitos, tire um print ou uma foto e anexe a
+            imagem. HEIC não aparece na miniatura em alguns navegadores, mas é
+            salvo normalmente e pode ser baixado.
           </p>
           {erroTratamento && <p className="error-text">{erroTratamento}</p>}
           <button type="submit" disabled={lancandoTratamento}>
@@ -2632,58 +2799,63 @@ export function MotoristaDetailPage() {
           }}
           tituloPopup="Tratamentos de ponto"
         >
-        <table style={{ marginTop: 8 }}>
-          <thead>
-            <tr>
-              <th>Evento</th>
-              <th>Horário</th>
-              <th>Motivo</th>
-              <th>Lançado por</th>
-              <th>Quando</th>
-              <th>Evidências (prova do fechamento)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listaTratamentos.itensExibidos.map((t) => (
-              <tr key={t.id}>
-                <td>{t.tipoEvento}</td>
-                <td>{formatarRegistro(t.timestampEvento, t.fusoOffsetMin)}</td>
-                <td style={{ maxWidth: 240 }}>
-                  <TextoLongo texto={t.motivo} titulo="Motivo do tratamento" />
-                </td>
-                <td>{t.usuario?.nome ?? t.usuarioId}</td>
-                <td>{new Date(t.createdAt).toLocaleString("pt-BR")}</td>
-                <td>
-                  {/* Rodada 79 , pedido do usuário: depois de lançado, evidência
+          <table style={{ marginTop: 8 }}>
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Horário</th>
+                <th>Motivo</th>
+                <th>Lançado por</th>
+                <th>Quando</th>
+                <th>Evidências (prova do fechamento)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {listaTratamentos.itensExibidos.map((t) => (
+                <tr key={t.id}>
+                  <td>{t.tipoEvento}</td>
+                  <td>
+                    {formatarRegistro(t.timestampEvento, t.fusoOffsetMin)}
+                  </td>
+                  <td style={{ maxWidth: 240 }}>
+                    <TextoLongo
+                      texto={t.motivo}
+                      titulo="Motivo do tratamento"
+                    />
+                  </td>
+                  <td>{t.usuario?.nome ?? t.usuarioId}</td>
+                  <td>{new Date(t.createdAt).toLocaleString("pt-BR")}</td>
+                  <td>
+                    {/* Rodada 79 , pedido do usuário: depois de lançado, evidência
                       é só pra abrir/ver (sem `remover`, sem input de anexar ,
                       isso agora só acontece no formulário, antes de lançar). */}
-                  <EvidenciasAnexo
-                    evidencias={t.evidencias ?? []}
-                    obterUrl={(evidenciaId) =>
-                      obterUrlEvidenciaTratamento(motoristaId, evidenciaId)
-                    }
-                    baixar={(evidenciaId, nomeArquivo) =>
-                      baixarEvidenciaTratamento(
-                        motoristaId,
-                        evidenciaId,
-                        nomeArquivo,
-                      )
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
-            {listaTratamentos.itensFiltrados.length === 0 && (
-              <tr>
-                <td colSpan={7} style={{ color: "#000000" }}>
-                  {tratamentos.length === 0
-                    ? "Nenhum tratamento lançado."
-                    : "Nenhum tratamento no período filtrado."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                    <EvidenciasAnexo
+                      evidencias={t.evidencias ?? []}
+                      obterUrl={(evidenciaId) =>
+                        obterUrlEvidenciaTratamento(motoristaId, evidenciaId)
+                      }
+                      baixar={(evidenciaId, nomeArquivo) =>
+                        baixarEvidenciaTratamento(
+                          motoristaId,
+                          evidenciaId,
+                          nomeArquivo,
+                        )
+                      }
+                    />
+                  </td>
+                </tr>
+              ))}
+              {listaTratamentos.itensFiltrados.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ color: "#000000" }}>
+                    {tratamentos.length === 0
+                      ? "Nenhum tratamento lançado."
+                      : "Nenhum tratamento no período filtrado."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </ControlesListaPaginada>
       </div>
 
@@ -2763,14 +2935,15 @@ export function MotoristaDetailPage() {
           </div>
         </form>
 
-        {holeritePrevia && (holeritePrevia.pontosSuspeitosPendentes ?? 0) > 0 && (
-          <p className="error-text" style={{ marginTop: 12 }}>
-            {holeritePrevia.pontosSuspeitosPendentes} ponto(s) com relógio
-            adulterado ficaram FORA do cálculo até o gestor corrigir a hora
-            (tela de Alertas, "Corrigir ponto e liberar aparelho"). Este
-            holerite está incompleto.
-          </p>
-        )}
+        {holeritePrevia &&
+          (holeritePrevia.pontosSuspeitosPendentes ?? 0) > 0 && (
+            <p className="error-text" style={{ marginTop: 12 }}>
+              {holeritePrevia.pontosSuspeitosPendentes} ponto(s) com relógio
+              adulterado ficaram FORA do cálculo até o gestor corrigir a hora
+              (tela de Alertas, "Corrigir ponto e liberar aparelho"). Este
+              holerite está incompleto.
+            </p>
+          )}
         {holeritePrevia && (
           <table style={{ marginTop: 16 }}>
             <thead>
