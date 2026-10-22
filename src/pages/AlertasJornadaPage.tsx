@@ -12,7 +12,7 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
-import { dataLocalIso } from '../utils/mascaras';
+import { dataLocalIso } from "../utils/mascaras";
 
 // Pedido do usuário: mesmos atalhos de 7/30/90 dias usados no gráfico de
 // evolução do Painel de operação, aqui aplicados ao filtro de período já
@@ -339,202 +339,219 @@ export function AlertasJornadaPage() {
               onDataFim: paginacao.setDataFim,
               rotulo: "data do alerta",
             }}
- tituloPopup="Alertas de jornada"
->
-          <table>
-            <thead>
-              <tr>
-                <th>Severidade</th>
-                <th>Motorista</th>
-                <th>Alerta</th>
-                <th>Janela</th>
-                <th>Duração</th>
-                <th>Quando</th>
-                <th>Tratamento</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginacao.itensExibidos.map((a) => {
-                const detalhesEntradas = a.detalhes
-                  ? Object.entries(a.detalhes)
-                  : [];
-                const expandido = expandidoId === a.id;
-                return (
-                  <Fragment key={a.id}>
-                    <tr style={{ opacity: a.visualizadoEm ? 0.55 : 1 }}>
-                      <td>
-                        <span
-                          style={{
-                            color:
-                              a.severidade === "CRITICO"
-                                ? "#b91c1c"
-                                : a.severidade === "ATENCAO"
-                                  ? "#b45309"
-                                  : "#374151",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {a.severidade}
-                        </span>
-                      </td>
-                      <td>
-                        {a.motorista ? (
-                          <Link
-                            to={a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${a.motorista.id}?secao=alertas-jornada`}
+            tituloPopup="Alertas de jornada"
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th>Severidade</th>
+                  <th>Motorista</th>
+                  <th>Alerta</th>
+                  <th>Janela</th>
+                  <th>Duração</th>
+                  <th>Quando</th>
+                  <th>Tratamento</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginacao.itensExibidos.map((a) => {
+                  const detalhesEntradas = a.detalhes
+                    ? Object.entries(a.detalhes)
+                    : [];
+                  const expandido = expandidoId === a.id;
+                  return (
+                    <Fragment key={a.id}>
+                      <tr style={{ opacity: a.visualizadoEm ? 0.55 : 1 }}>
+                        <td>
+                          <span
+                            style={{
+                              color:
+                                a.severidade === "CRITICO"
+                                  ? "#b91c1c"
+                                  : a.severidade === "ATENCAO"
+                                    ? "#b45309"
+                                    : "#374151",
+                              fontWeight: 600,
+                            }}
                           >
-                            <span title={a.motorista.nome}>
-                              {primeiroESegundoNome(a.motorista.nome)}
-                            </span>
-                          </Link>
-                        ) : (
-                          a.motoristaId
-                        )}
-                      </td>
-                      <td>{renderizarHorarios(a.mensagem)}</td>
-                      <td>
-                        {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
-                        {new Date(a.janelaFim).toLocaleString("pt-BR")}
-                      </td>
-                      <td>{minParaHoras(a.minutosAcumulados)}</td>
-                      <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
-                      <td>
-                        {a.tratadoEm ? (
-                          <span style={{ color: "#166534", fontSize: 12 }}>
-                            ✓ tratado em{" "}
-                            {new Date(a.tratadoEm).toLocaleDateString("pt-BR")}
+                            {a.severidade}
                           </span>
-                        ) : (
-                          <span style={{ color: "#000000", fontSize: 12 }}>
-                            pendente
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {!a.visualizadoEm && (
-                          <button onClick={() => onVisualizarAlerta(a.id)}>
-                            Marcar visto
-                          </button>
-                        )}
-                        <button
-                          onClick={() =>
-                            setExpandidoId(expandido ? null : a.id)
-                          }
-                        >
-                          {expandido ? "Fechar" : "Ver o ponto exato"}
-                        </button>
-                      </td>
-                    </tr>
-                    {expandido && (
-                      <tr>
-                        <td colSpan={8} style={{ background: "#f9fafb" }}>
-                          <div style={{ padding: "12px 16px" }}>
-                            <p style={{ margin: "0 0 8px", fontSize: 13 }}>
-                              <strong>
-                                Registro que disparou este alerta:
-                              </strong>{" "}
-                              {a.registroGeradorId}
-                              {a.motorista && (
-                                <>
-                                  {" "}
-                                  <Link
-                                    to={a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${a.motorista.id}?secao=alertas-jornada`}
-                                  >
-                                    ver no histórico do motorista
-                                  </Link>
-                                </>
+                        </td>
+                        <td>
+                          {a.motorista ? (
+                            <Link
+                              to={
+                                a.tipo === "FOLGA_VENCIDA" ||
+                                a.tipo === "FOLGA_URGENTE"
+                                  ? "/pedidos-folga?secao=ranking"
+                                  : `/motoristas/${a.motorista.id}?secao=alertas-jornada`
+                              }
+                            >
+                              <span title={a.motorista.nome}>
+                                {primeiroESegundoNome(a.motorista.nome)}
+                              </span>
+                            </Link>
+                          ) : (
+                            a.motoristaId
+                          )}
+                        </td>
+                        <td>{renderizarHorarios(a.mensagem)}</td>
+                        <td>
+                          {new Date(a.janelaInicio).toLocaleString("pt-BR")} →{" "}
+                          {new Date(a.janelaFim).toLocaleString("pt-BR")}
+                        </td>
+                        <td>{minParaHoras(a.minutosAcumulados)}</td>
+                        <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
+                        <td>
+                          {a.tratadoEm ? (
+                            <span style={{ color: "#166534", fontSize: 12 }}>
+                              ✓ tratado em{" "}
+                              {new Date(a.tratadoEm).toLocaleDateString(
+                                "pt-BR",
                               )}
-                            </p>
-                            {detalhesEntradas.length > 0 && (
-                              <table style={{ marginBottom: 12 }}>
-                                <tbody>
-                                  {detalhesEntradas.map(([chave, valor]) => (
-                                    <tr key={chave}>
-                                      <td
-                                        style={{
-                                          fontWeight: 600,
-                                          paddingRight: 12,
-                                        }}
-                                      >
-                                        {ROTULO_CAMPO_DETALHE[chave] ?? chave}
-                                      </td>
-                                      <td>{formatarValorDetalhe(valor)}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            )}
-
-                            {a.tratadoEm ? (
-                              <div style={{ fontSize: 13 }}>
-                                <strong>Observação de quem tratou:</strong>{" "}
-                                {a.tratamentoObservacao}
-                                <div style={{ color: "#000000", marginTop: 4 }}>
-                                  Tratado em{" "}
-                                  {new Date(a.tratadoEm).toLocaleString(
-                                    "pt-BR",
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div>
-                                <label
-                                  style={{
-                                    display: "block",
-                                    fontSize: 13,
-                                    marginBottom: 4,
-                                  }}
-                                >
-                                  Anote o que foi apurado (obrigatório para
-                                  tratar), por exemplo: "conferido, odômetro
-                                  correto, foi falso positivo de ordem de
-                                  chegada" ou "corrigido via Tratamento de Ponto
-                                  de dd/mm":
-                                </label>
-                                <textarea maxLength={400}
-                                  value={observacaoPorAlerta[a.id] ?? ""}
-                                  onChange={(e) =>
-                                    setObservacaoPorAlerta((prev) => ({
-                                      ...prev,
-                                      [a.id]: e.target.value,
-                                    }))
-                                  }
-                                  rows={2}
-                                  style={{ width: "100%", maxWidth: 640 }}
-                                />
-                                <div style={{ marginTop: 6 }}>
-                                  <button
-                                    disabled={
-                                      tratandoId === a.id ||
-                                      (observacaoPorAlerta[a.id] ?? "").trim()
-                                        .length < 3
-                                    }
-                                    onClick={() => onTratarAlerta(a.id)}
-                                  >
-                                    {tratandoId === a.id
-                                      ? "Salvando…"
-                                      : "Salvar tratamento"}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                            </span>
+                          ) : (
+                            <span style={{ color: "#000000", fontSize: 12 }}>
+                              pendente
+                            </span>
+                          )}
+                        </td>
+                        <td
+                          style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
+                        >
+                          {!a.visualizadoEm && (
+                            <button onClick={() => onVisualizarAlerta(a.id)}>
+                              Marcar visto
+                            </button>
+                          )}
+                          <button
+                            onClick={() =>
+                              setExpandidoId(expandido ? null : a.id)
+                            }
+                          >
+                            {expandido ? "Fechar" : "Tratar"}
+                          </button>
                         </td>
                       </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-              {paginacao.itensExibidos.length === 0 && (
-                <tr>
-                  <td colSpan={8} style={{ color: "#000000" }}>
-                    Nenhum alerta encontrado com este filtro.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-</ControlesListaPaginada>
+                      {expandido && (
+                        <tr>
+                          <td colSpan={8} style={{ background: "#f9fafb" }}>
+                            <div style={{ padding: "12px 16px" }}>
+                              <p style={{ margin: "0 0 8px", fontSize: 13 }}>
+                                <strong>
+                                  Registro que disparou este alerta:
+                                </strong>{" "}
+                                {a.registroGeradorId}
+                                {a.motorista && (
+                                  <>
+                                    {" "}
+                                    <Link
+                                      to={
+                                        a.tipo === "FOLGA_VENCIDA" ||
+                                        a.tipo === "FOLGA_URGENTE"
+                                          ? "/pedidos-folga?secao=ranking"
+                                          : `/motoristas/${a.motorista.id}?secao=alertas-jornada`
+                                      }
+                                    >
+                                      ver no histórico do motorista
+                                    </Link>
+                                  </>
+                                )}
+                              </p>
+                              {detalhesEntradas.length > 0 && (
+                                <table style={{ marginBottom: 12 }}>
+                                  <tbody>
+                                    {detalhesEntradas.map(([chave, valor]) => (
+                                      <tr key={chave}>
+                                        <td
+                                          style={{
+                                            fontWeight: 600,
+                                            paddingRight: 12,
+                                          }}
+                                        >
+                                          {ROTULO_CAMPO_DETALHE[chave] ?? chave}
+                                        </td>
+                                        <td>{formatarValorDetalhe(valor)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+
+                              {a.tratadoEm ? (
+                                <div style={{ fontSize: 13 }}>
+                                  <strong>Observação de quem tratou:</strong>{" "}
+                                  {a.tratamentoObservacao}
+                                  <div
+                                    style={{ color: "#000000", marginTop: 4 }}
+                                  >
+                                    Tratado em{" "}
+                                    {new Date(a.tratadoEm).toLocaleString(
+                                      "pt-BR",
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <label
+                                    style={{
+                                      display: "block",
+                                      fontSize: 13,
+                                      marginBottom: 4,
+                                    }}
+                                  >
+                                    Anote o que foi apurado (obrigatório para
+                                    tratar), por exemplo: "conferido, odômetro
+                                    correto, foi falso positivo de ordem de
+                                    chegada" ou "corrigido via Tratamento de
+                                    Ponto de dd/mm":
+                                  </label>
+                                  <textarea
+                                    maxLength={400}
+                                    value={observacaoPorAlerta[a.id] ?? ""}
+                                    onChange={(e) =>
+                                      setObservacaoPorAlerta((prev) => ({
+                                        ...prev,
+                                        [a.id]: e.target.value,
+                                      }))
+                                    }
+                                    rows={2}
+                                    style={{ width: "100%", maxWidth: 640 }}
+                                  />
+                                  <div style={{ marginTop: 6 }}>
+                                    <button
+                                      disabled={
+                                        tratandoId === a.id ||
+                                        (observacaoPorAlerta[a.id] ?? "").trim()
+                                          .length < 3
+                                      }
+                                      onClick={() => onTratarAlerta(a.id)}
+                                    >
+                                      {tratandoId === a.id
+                                        ? "Salvando…"
+                                        : "Salvar tratamento"}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+                {paginacao.itensExibidos.length === 0 && (
+                  <tr>
+                    <td colSpan={8} style={{ color: "#000000" }}>
+                      Nenhum alerta encontrado com este filtro.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </ControlesListaPaginada>
         </div>
       )}
     </div>
