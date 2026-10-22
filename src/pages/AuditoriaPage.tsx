@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
 import { listarAuditoria, listarOcorrenciasAuditoria } from "../api/auditoria";
 import type {
   ActorType,
@@ -277,115 +278,120 @@ export function AuditoriaPage() {
       ) : (
         <div className="card">
           <ListaEmPopup
- ativo={pageSize === 100}
- titulo="Auditoria"
- onFechar={() => { setPageSize(50); setPage(1); }}
->
-<table>
-            <thead>
-              <tr>
-                <th>Quando</th>
-                <th>Quem</th>
-                <th>Papel</th>
-                <th>Ação</th>
-                <th>Entidade</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {registros.map((r) => {
-                const detalhesEntradas = r.detalhes
-                  ? Object.entries(r.detalhes)
-                  : [];
-                const expandido = expandidoId === r.id;
-                return (
-                  <Fragment key={r.id}>
-                    <tr>
-                      <td>{new Date(r.createdAt).toLocaleString("pt-BR")}</td>
-                      <td>
-                        {r.actorNome ?? (
-                          <span style={{ color: "#000000" }}>,</span>
-                        )}
-                      </td>
-                      <td>{ROTULO_ACTOR_TYPE[r.actorType]}</td>
-                      <td>{r.acao}</td>
-                      <td>
-                        {r.entidade}
-                        {r.entidadeId ? ` (${r.entidadeId.slice(0, 8)}…)` : ""}
-                      </td>
-                      <td>
-                        {(detalhesEntradas.length > 0 || r.ip) && (
-                          <button
-                            onClick={() =>
-                              setExpandidoId(expandido ? null : r.id)
-                            }
-                          >
-                            {expandido ? "Fechar" : "Detalhes"}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                    {expandido && (
-                      <tr>
-                        <td colSpan={6} style={{ background: "#f9fafb" }}>
-                          <div style={{ padding: "10px 14px", fontSize: 13 }}>
-                            {r.ip && <div>IP: {r.ip}</div>}
-                            {r.userAgent && (
-                              <div>Aparelho/navegador: {r.userAgent}</div>
-                            )}
-                            {detalhesEntradas.length > 0 && (
-                              <table style={{ marginTop: 8 }}>
-                                <tbody>
-                                  {detalhesEntradas.map(([chave, valor]) => (
-                                    <tr key={chave}>
-                                      <td
-                                        style={{
-                                          fontWeight: 600,
-                                          paddingRight: 12,
-                                        }}
-                                      >
-                                        {chave}
-                                      </td>
-                                      <td>{formatarValorDetalhe(valor)}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-              {registros.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ color: "#000000" }}>
-                    Nenhuma ocorrência encontrada com este filtro.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              padding: "10px 0 0",
+            ativo={pageSize === 100}
+            titulo="Auditoria"
+            onFechar={() => {
+              setPageSize(50);
+              setPage(1);
             }}
           >
-            <Paginador
-              pagina={page}
-              totalPaginas={totalPaginas}
-              onMudarPagina={setPage}
-              onAbrirSeletor={() => setPopupPaginacaoAberto(true)}
-              sufixo={`(${total} ocorrências)`}
-            />
-          </div>
-</ListaEmPopup>
-{popupPaginacaoAberto && (
+            <table>
+              <thead>
+                <tr>
+                  <th>Quando</th>
+                  <th>Quem</th>
+                  <th>Papel</th>
+                  <th>Ação</th>
+                  <th>Entidade</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {registros.map((r) => {
+                  const detalhesEntradas = r.detalhes
+                    ? Object.entries(r.detalhes)
+                    : [];
+                  const expandido = expandidoId === r.id;
+                  return (
+                    <Fragment key={r.id}>
+                      <tr>
+                        <td>{new Date(r.createdAt).toLocaleString("pt-BR")}</td>
+                        <td>
+                          {r.actorNome ?? (
+                            <span style={{ color: "#000000" }}>,</span>
+                          )}
+                        </td>
+                        <td>{ROTULO_ACTOR_TYPE[r.actorType]}</td>
+                        <td>{r.acao}</td>
+                        <td>
+                          {r.entidade}
+                          {r.entidadeId
+                            ? ` (${r.entidadeId.slice(0, 8)}…)`
+                            : ""}
+                        </td>
+                        <td>
+                          {(detalhesEntradas.length > 0 || r.ip) && (
+                            <button
+                              onClick={() =>
+                                setExpandidoId(expandido ? null : r.id)
+                              }
+                            >
+                              {expandido ? "Fechar" : "Detalhes"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {expandido && (
+                        <tr>
+                          <td colSpan={6} style={{ background: "#f9fafb" }}>
+                            <div style={{ padding: "10px 14px", fontSize: 13 }}>
+                              {r.ip && <div>IP: {r.ip}</div>}
+                              {r.userAgent && (
+                                <div>Aparelho/navegador: {r.userAgent}</div>
+                              )}
+                              {detalhesEntradas.length > 0 && (
+                                <table style={{ marginTop: 8 }}>
+                                  <tbody>
+                                    {detalhesEntradas.map(([chave, valor]) => (
+                                      <tr key={chave}>
+                                        <td
+                                          style={{
+                                            fontWeight: 600,
+                                            paddingRight: 12,
+                                          }}
+                                        >
+                                          {rotuloCampoDetalhe(chave)}
+                                        </td>
+                                        <td>{formatarValorDetalhe(valor)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+                {registros.length === 0 && (
+                  <tr>
+                    <td colSpan={6} style={{ color: "#000000" }}>
+                      Nenhuma ocorrência encontrada com este filtro.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                padding: "10px 0 0",
+              }}
+            >
+              <Paginador
+                pagina={page}
+                totalPaginas={totalPaginas}
+                onMudarPagina={setPage}
+                onAbrirSeletor={() => setPopupPaginacaoAberto(true)}
+                sufixo={`(${total} ocorrências)`}
+              />
+            </div>
+          </ListaEmPopup>
+          {popupPaginacaoAberto && (
             <PaginacaoPopup
               paginaAtual={page}
               totalPaginas={totalPaginas}

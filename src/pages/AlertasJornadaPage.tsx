@@ -1,4 +1,5 @@
 import { primeiroESegundoNome } from "../utils/nomeMotorista";
+import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
@@ -160,11 +161,25 @@ export function AlertasJornadaPage() {
     idsSelecionaveisNaPagina.length > 0 &&
     idsSelecionaveisNaPagina.every((id) => selecionados.includes(id));
 
+  // Rodada 324: os cards seguem o que está sendo buscado (período De/Até e
+  // filtro de tratamento). A severidade não entra no filtro dos cards, porque
+  // cada card já é uma severidade.
   const contagens = useMemo(() => {
     const base = { CRITICO: 0, ATENCAO: 0, INFO: 0 };
-    for (const a of alertas) base[a.severidade]++;
+    const inicioMs = paginacao.dataInicio
+      ? new Date(`${paginacao.dataInicio}T00:00:00`).getTime()
+      : null;
+    const fimMs = paginacao.dataFim
+      ? new Date(`${paginacao.dataFim}T23:59:59`).getTime()
+      : null;
+    for (const a of aplicarFiltroTratamento(alertas, filtroTratamento)) {
+      const t = new Date(a.createdAt).getTime();
+      if (inicioMs !== null && t < inicioMs) continue;
+      if (fimMs !== null && t > fimMs) continue;
+      base[a.severidade]++;
+    }
     return base;
-  }, [alertas]);
+  }, [alertas, filtroTratamento, paginacao.dataInicio, paginacao.dataFim]);
 
   return (
     <div>
@@ -489,7 +504,8 @@ export function AlertasJornadaPage() {
                                             paddingRight: 12,
                                           }}
                                         >
-                                          {ROTULO_CAMPO_DETALHE[chave] ?? chave}
+                                          {ROTULO_CAMPO_DETALHE[chave] ??
+                                            rotuloCampoDetalhe(chave)}
                                         </td>
                                         <td>{formatarValorDetalhe(valor)}</td>
                                       </tr>
