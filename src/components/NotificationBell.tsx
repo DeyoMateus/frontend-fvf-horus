@@ -8,6 +8,7 @@ import type { SolicitacaoFolga } from "../api/solicitacoesFolga";
 import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
 import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
+import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./pendenciasMenu";
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
 
@@ -292,6 +293,53 @@ export function NotificationBell() {
     pedidosFolga.length +
     pedidosTitular.length +
     (diasRadar > 0 ? 1 : 0);
+  // Rodada 335: resumo por aba para as bolinhas do menu lateral.
+  useEffect(() => {
+    const mapa: Record<string, PendenciaDaAba> = {};
+    const nomeDe = (m?: { nome: string } | null) => m?.nome ?? "Motorista";
+    if (alertas.length > 0) {
+      mapa["/dashboard"] = {
+        total: alertas.length,
+        resumo: alertas.map(
+          (a) => `${nomeDe((a as { motorista?: { nome: string } }).motorista)}: alerta de jornada`,
+        ),
+      };
+    }
+    if (solicitacoesPendentes.length > 0) {
+      mapa["/indicadores"] = {
+        total: solicitacoesPendentes.length,
+        resumo: solicitacoesPendentes.map(
+          (s) => `${nomeDe(s.motorista)}: pedido de ajuste de ponto`,
+        ),
+      };
+    }
+    if (pedidosFolga.length > 0) {
+      mapa["/pedidos-folga"] = {
+        total: pedidosFolga.length,
+        resumo: pedidosFolga.map(
+          (p) =>
+            `${nomeDe(p.motorista)}: folga de ${new Date(p.dataInicio).toLocaleDateString("pt-BR", { timeZone: "UTC" })} a ${new Date(p.dataFim).toLocaleDateString("pt-BR", { timeZone: "UTC" })}`,
+        ),
+      };
+    }
+    if (pedidosTitular.length > 0) {
+      mapa["/lgpd"] = {
+        total: pedidosTitular.length,
+        resumo: pedidosTitular.map((p) => `${nomeDe(p.motorista)}: pedido de privacidade`),
+      };
+    }
+    if (semInteracao.length > 0) {
+      mapa["/motoristas"] = {
+        total: semInteracao.length,
+        resumo: semInteracao.map(
+          (m) =>
+            `${m.nome}: ${m.diasSemInteracao.length} ${m.diasSemInteracao.length === 1 ? "dia" : "dias"} sem interação`,
+        ),
+      };
+    }
+    publicarPendenciasDoMenu(mapa);
+  }, [alertas, solicitacoesPendentes, pedidosFolga, pedidosTitular, semInteracao]);
+
   const agora = Date.now();
   const pulsando =
     alertas.some(

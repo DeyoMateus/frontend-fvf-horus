@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
+import { BolinhaPendencia } from "./BolinhaPendencia";
+import { usePendenciasDoMenu } from "./pendenciasMenu";
 import { PoliticaGate } from "./PoliticaGate";
 import { TourProvider, useTour } from "../tour/TourProvider";
 
@@ -97,6 +99,7 @@ function LayoutInterno() {
   }, []);
 
   const efetivamenteColapsada = colapsada || telaEstreita;
+  const pendenciasDoMenu = usePendenciasDoMenu();
 
   // Empresa mae do grupo (nome + CNPJ) em destaque sob o nome da ferramenta.
   const [grupo, setGrupo] = useState<DadosGrupo | null>(null);
@@ -141,6 +144,12 @@ function LayoutInterno() {
           ).map((item) => (
             <NavLink key={item.to} to={item.to} title={item.label}>
               {efetivamenteColapsada ? item.abreviacao : item.label}
+              {pendenciasDoMenu[item.to] && (
+                <BolinhaPendencia
+                  nomeDaAba={item.label}
+                  pendencia={pendenciasDoMenu[item.to]}
+                />
+              )}
             </NavLink>
           ))}
           <button

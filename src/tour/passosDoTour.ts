@@ -232,6 +232,13 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "painel",
+    alvo: "texto:Aguardando documentação",
+    titulo: "Aguardando documentação",
+    texto:
+      "Motoristas parados esperando documentos da carga, como nota fiscal ou CT-e. Ao clicar, aparece há quanto tempo cada um está nesse estado. Esse tempo não entra em tempo indefinido.",
+  },
+  {
+    modulo: "painel",
     alvo: "texto:Sem jornada aberta",
     titulo: "Sem jornada aberta",
     texto:

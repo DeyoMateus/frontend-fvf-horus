@@ -404,6 +404,7 @@ export interface DashboardResumo {
     emDescanso: number;
     emEspera: number;
     jornadaAbertaSemSubEvento: number;
+    aguardandoDocumentacao: number;
     semJornadaAberta: number;
     jornadasAbertasHaMuitoTempo: {
       motoristaId: string;
@@ -442,6 +443,7 @@ export type CardPainel =
   | "em-descanso"
   | "em-espera"
   | "jornada-aberta-sem-sub-evento"
+  | "aguardando-documentacao"
   | "sem-jornada-aberta"
   | "sem-nenhum-registro"
   | "alertas-criticos"

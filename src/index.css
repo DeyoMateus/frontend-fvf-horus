@@ -1009,3 +1009,52 @@ textarea {
   justify-content: center;
   font-size: 14px;
 }
+
+/* Rodada 335: bolinha de pendência no fim do botão da aba do menu lateral. */
+.sidebar nav a {
+  position: relative;
+}
+.nav-bolinha {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+  cursor: help;
+}
+.sidebar-colapsada .sidebar nav a .nav-bolinha {
+  right: 6px;
+  top: 8px;
+  margin-top: 0;
+}
+.nav-bolinha-resumo {
+  position: fixed;
+  z-index: 10050;
+  max-width: 320px;
+  min-width: 200px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a1d23;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+  font-size: 12.5px;
+  line-height: 1.35;
+  pointer-events: none;
+}
+.nav-bolinha-resumo ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+}
+.nav-bolinha-resumo li {
+  margin: 2px 0;
+}
+.nav-bolinha-mais {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+}

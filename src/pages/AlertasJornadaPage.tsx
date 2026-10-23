@@ -3,6 +3,7 @@ import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
+import { DicaAoPassar } from "../components/DicaAoPassar";
 import { listAlertasByEmpresa } from "../api/alertas";
 import {
   BarraTratamentoEmLote,
@@ -183,16 +184,18 @@ export function AlertasJornadaPage() {
 
   return (
     <div>
-      <h2>Alertas de jornada da empresa</h2>
-      <p style={{ fontSize: 13, color: "#000000" }}>
-        Todos os alertas gerados automaticamente pelo motor de conformidade
-        legal (direção contínua, jornada de direção, tempo de espera) e pelo
-        motor de antifraude, agregados de todos os motoristas da sua empresa. Um
-        alerta nunca some sozinho, ele fica na lista até alguém apurar e{" "}
-        <strong>tratar</strong> (anotar o que foi encontrado); o motor continua
-        detectando cada nova ocorrência de forma independente, tratar um alerta
-        antigo não afeta a próxima detecção.
-      </p>
+      <h2>
+        Alertas de jornada da empresa
+        <DicaAoPassar label="Sobre os alertas de jornada da empresa">
+          Todos os alertas gerados automaticamente pelo motor de conformidade
+          legal (direção contínua, jornada de direção, tempo de espera) e pelo
+          motor de antifraude, agregados de todos os motoristas da sua empresa.
+          Um alerta nunca some sozinho, ele fica na lista até alguém apurar e{" "}
+          <strong>tratar</strong> (anotar o que foi encontrado); o motor
+          continua detectando cada nova ocorrência de forma independente,
+          tratar um alerta antigo não afeta a próxima detecção.
+        </DicaAoPassar>
+      </h2>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <div className="card" style={{ padding: "8px 16px" }}>

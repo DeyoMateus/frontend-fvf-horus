@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { DicaAoPassar } from "./DicaAoPassar";
 import { getDashboardTendenciaDetalhe } from "../api/dashboard";
 import type {
   ChaveIndicadorTendencia,
@@ -875,21 +876,13 @@ export function GraficoTendencia({
       >
         <div>
           <strong style={{ fontSize: 16 }}>Evolução ao longo do tempo</strong>
-          <p
-            style={{
-              fontSize: 12,
-              color: "#000000",
-              marginTop: 4,
-              marginBottom: 0,
-              maxWidth: 560,
-            }}
-          >
+          <DicaAoPassar label="Como ler a evolução ao longo do tempo">
             A linha pontilhada de cada indicador é a tendência (regressão
             linear) no período, mostrando se está subindo ou descendo. É o sinal
             de que as ações tomadas (treinamento, ajuste de escala, cobrança de
             tempo de espera) estão ou não funcionando. Clique numa barra ou
             ponto pra ver as ações que compõem aquele número naquele dia.
-          </p>
+          </DicaAoPassar>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {!minimizado && (

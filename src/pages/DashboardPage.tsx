@@ -630,6 +630,16 @@ export function DashboardPage() {
             )
           }
         />
+        {/* Rodada 336: motoristas parados em "Aguardando documentação"
+            (antes contavam em "Tempo indefinido"). */}
+        <CartaoMetrica
+          titulo="Aguardando documentação"
+          valor={motoristas.aguardandoDocumentacao}
+          cor={motoristas.aguardandoDocumentacao > 0 ? "#7c3aed" : undefined}
+          onClick={() =>
+            abrir("aguardando-documentacao", "Motoristas aguardando documentação")
+          }
+        />
         <CartaoMetrica
           titulo="Sem jornada aberta"
           valor={motoristas.semJornadaAberta}

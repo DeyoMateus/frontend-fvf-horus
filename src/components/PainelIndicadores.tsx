@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { DicaAoPassar } from "./DicaAoPassar";
 import { baixarIndicadoresCsv, getIndicadoresPainel } from "../api/indicadores";
 import type {
   IndicadoresDiaTendencia,
@@ -11,6 +12,10 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { ModalDetalheTendencia, type PontoClicado } from "./TendenciaCharts";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
 import { RankingCompletoPopup } from "./RankingCompletoPopup";
+import {
+  PorMotoristaCompletoPopup,
+  colunasPorMotorista,
+} from "./PorMotoristaCompletoPopup";
 import { dataLocalIso } from '../utils/mascaras';
 
 /**
@@ -366,6 +371,11 @@ export function PainelIndicadores() {
   const [rankingCompletoAberto, setRankingCompletoAberto] = useState<
     "espera" | "indefinido" | null
   >(null);
+  // Rodada 338: "Por motorista" mostra um recorte (10/20/50/100) e tem
+  // relatório completo com todos os motoristas e download em Excel.
+  const [limitePorMotorista, setLimitePorMotorista] = useState(10);
+  const [porMotoristaCompletoAberto, setPorMotoristaCompletoAberto] =
+    useState(false);
 
   useEffect(() => {
     try {
@@ -531,12 +541,14 @@ export function PainelIndicadores() {
 
   return (
     <div>
-      <h2>Indicadores de Jornada</h2>
-      <p style={{ color: "#000000", marginTop: -8 }}>
-        Horas de direção, espera, extras, hora noturna e banco de horas por
-        motorista, sem valores em R$. As horas completas e separadas ficam
-        disponíveis para o RH decidir o pagamento fora da plataforma.
-      </p>
+      <h2>
+        Indicadores de Jornada
+        <DicaAoPassar label="Sobre os indicadores de jornada">
+          Horas de direção, espera, extras, hora noturna e banco de horas por
+          motorista, sem valores em R$. As horas completas e separadas ficam
+          disponíveis para o RH decidir o pagamento fora da plataforma.
+        </DicaAoPassar>
+      </h2>
 
       <div
         className="card"
@@ -1209,7 +1221,46 @@ export function PainelIndicadores() {
           )}
 
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>Por motorista</h3>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <h3 style={{ marginTop: 0 }}>Por motorista</h3>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <label style={{ fontSize: 12 }}>
+                  Mostrar{" "}
+                  <select
+                    value={limitePorMotorista}
+                    onChange={(e) => setLimitePorMotorista(Number(e.target.value))}
+                  >
+                    {[10, 20, 50, 100].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="secondary"
+                  style={{ padding: "4px 10px", fontSize: 12 }}
+                  onClick={() => setPorMotoristaCompletoAberto(true)}
+                >
+                  Relatório completo
+                </button>
+              </div>
+            </div>
+            {painel.motoristas.length > limitePorMotorista && (
+              <p style={{ color: "#000000", fontSize: 13, marginTop: -6 }}>
+                Mostrando {limitePorMotorista} de {painel.motoristas.length}{" "}
+                motoristas; o relatório completo traz todos.
+              </p>
+            )}
             {painel.motoristas.length === 0 ? (
               <p style={{ color: "#000000" }}>
                 Nenhum motorista com dados no período.
@@ -1219,47 +1270,20 @@ export function PainelIndicadores() {
                 <thead>
                   <tr>
                     <th>Motorista</th>
-                    {mostrar.horas && <th>Direção</th>}
-                    {mostrar.horas && <th>Espera</th>}
-                    {mostrar.extras && <th>Extras</th>}
-                    {mostrar.extras && <th>% extra/direção</th>}
-                    {mostrar.noturno && <th>Noturno</th>}
-                    {mostrar.espera && <th>% ociosidade</th>}
-                    {mostrar.bancoHoras && <th>Banco de horas (saldo)</th>}
-                    {mostrar.alertas && <th>Alertas (crít./atenção/fraude)</th>}
+                    {colunasPorMotorista(mostrar).map((c) => (
+                      <th key={c.titulo}>{c.titulo}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {painel.motoristas.map((m) => (
+                  {painel.motoristas.slice(0, limitePorMotorista).map((m) => (
                     <tr key={m.motoristaId}>
                       <td>
-                        <Link to={`/motoristas/${m.motoristaId}`}>
-                          {m.nome}
-                        </Link>
+                        <Link to={`/motoristas/${m.motoristaId}`}>{m.nome}</Link>
                       </td>
-                      {mostrar.horas && <td>{minParaHoras(m.direcaoMin)}</td>}
-                      {mostrar.horas && <td>{minParaHoras(m.esperaMin)}</td>}
-                      {mostrar.extras && <td>{minParaHoras(m.extraMin)}</td>}
-                      {mostrar.extras && (
-                        <td>{m.percentualExtraSobreDirecao}%</td>
-                      )}
-                      {mostrar.noturno && <td>{minParaHoras(m.noturnoMin)}</td>}
-                      {mostrar.espera && (
-                        <td>{m.percentualEsperaSobreTotal}%</td>
-                      )}
-                      {mostrar.bancoHoras && (
-                        <td>
-                          {m.bancoHoras.ativo
-                            ? minParaHoras(m.bancoHoras.saldoMin)
-                            : ","}
-                        </td>
-                      )}
-                      {mostrar.alertas && (
-                        <td>
-                          {m.alertas.criticos} / {m.alertas.atencao} /{" "}
-                          {m.alertas.riscoFraude}
-                        </td>
-                      )}
+                      {colunasPorMotorista(mostrar).map((c) => (
+                        <td key={c.titulo}>{c.texto(m)}</td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -1276,6 +1300,14 @@ export function PainelIndicadores() {
         />
       )}
 
+      {porMotoristaCompletoAberto && painel && (
+        <PorMotoristaCompletoPopup
+          motoristas={painel.motoristas}
+          colunas={colunasPorMotorista(mostrar)}
+          subtitulo={`Período: ${inicio} a ${fim}`}
+          onFechar={() => setPorMotoristaCompletoAberto(false)}
+        />
+      )}
       {rankingCompletoAberto === "espera" && (
         <RankingCompletoPopup
           titulo="Tempo parado esperando carga/descarga"
