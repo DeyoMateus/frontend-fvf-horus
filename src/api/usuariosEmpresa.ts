@@ -47,6 +47,24 @@ export function obterLimitesEspera() {
     .then((r) => r.data);
 }
 
+// ===== Limites de "Aguardando documentação" do grupo (Rodada 341) =====
+export function obterLimitesDocumentacao() {
+  return api
+    .get<LimitesEspera & { padrao: LimitesEspera }>(
+      "/usuarios-empresa/limites-documentacao",
+    )
+    .then((r) => r.data);
+}
+
+export function atualizarLimitesDocumentacao(input: LimitesEspera) {
+  return api
+    .patch<LimitesEspera & { padrao: LimitesEspera }>(
+      "/usuarios-empresa/limites-documentacao",
+      input,
+    )
+    .then((r) => r.data);
+}
+
 export function atualizarLimitesEspera(input: LimitesEspera) {
   return api
     .patch<LimitesEspera & { padrao: LimitesEspera }>(

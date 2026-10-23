@@ -1,7 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import {
+  atualizarLimitesDocumentacao,
   atualizarLimitesEspera,
   atualizarMeuPerfil,
+  obterLimitesDocumentacao,
   obterLimitesEspera,
   obterMeuPerfil,
 } from "../api/usuariosEmpresa";
@@ -51,6 +53,9 @@ export function PerfilPage() {
   const [limInfo, setLimInfo] = useState("3");
   const [limAtencao, setLimAtencao] = useState("4.75");
   const [limCritico, setLimCritico] = useState("5");
+  const [docInfo, setDocInfo] = useState("3");
+  const [docAtencao, setDocAtencao] = useState("4.75");
+  const [docCritico, setDocCritico] = useState("5");
   const [salvandoGr, setSalvandoGr] = useState(false);
   const [erroGr, setErroGr] = useState<string | null>(null);
   const [sucessoGr, setSucessoGr] = useState<string | null>(null);
@@ -74,6 +79,14 @@ export function PerfilPage() {
         setLimInfo(minParaHoras(l.infoMin));
         setLimAtencao(minParaHoras(l.atencaoMin));
         setLimCritico(minParaHoras(l.criticoMin));
+      } catch {
+        /* mantém os padrões na tela */
+      }
+      try {
+        const d = await obterLimitesDocumentacao();
+        setDocInfo(minParaHoras(d.infoMin));
+        setDocAtencao(minParaHoras(d.atencaoMin));
+        setDocCritico(minParaHoras(d.criticoMin));
       } catch {
         /* mantém os padrões na tela */
       }
@@ -129,6 +142,11 @@ export function PerfilPage() {
         infoMin: horasParaMin(limInfo),
         atencaoMin: horasParaMin(limAtencao),
         criticoMin: horasParaMin(limCritico),
+      });
+      await atualizarLimitesDocumentacao({
+        infoMin: horasParaMin(docInfo),
+        atencaoMin: horasParaMin(docAtencao),
+        criticoMin: horasParaMin(docCritico),
       });
       setSucessoGr("Configurações de GR salvas.");
     } catch (err: any) {
@@ -285,6 +303,41 @@ export function PerfilPage() {
             type="number" min={0.25} max={24} step={0.25} required
             value={limCritico}
             onChange={(e) => setLimCritico(e.target.value)}
+          />
+          <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
+            Os valores precisam estar em ordem crescente. Vale para jornadas
+            novas e para as que ainda estão em andamento.
+          </p>
+
+          <h4 style={{ marginBottom: 4 }}>
+            Limites de aguardando documentação
+          </h4>
+          <p style={{ fontSize: 12, color: "#000000", marginTop: 0 }}>
+            Tempo acumulado do motorista em "Aguardando documentação" na
+            jornada, em horas (ex.: 4,75 = 4h45). Funciona igual à espera:
+            aviso informativo, atenção e crítico. Padrão: 3 / 4,75 / 5.
+          </p>
+          <label>Aviso informativo (horas)</label>
+          <input
+            type="number" min={0.25} max={24} step={0.25} required
+            value={docInfo}
+            onChange={(e) => setDocInfo(e.target.value)}
+          />
+          <label style={{ marginTop: 8, display: "block" }}>
+            Próximo do limite (horas)
+          </label>
+          <input
+            type="number" min={0.25} max={24} step={0.25} required
+            value={docAtencao}
+            onChange={(e) => setDocAtencao(e.target.value)}
+          />
+          <label style={{ marginTop: 8, display: "block" }}>
+            Limite atingido (horas)
+          </label>
+          <input
+            type="number" min={0.25} max={24} step={0.25} required
+            value={docCritico}
+            onChange={(e) => setDocCritico(e.target.value)}
           />
           <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
             Os valores precisam estar em ordem crescente. Vale para jornadas

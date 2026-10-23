@@ -78,6 +78,9 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   JORNADA_ATUAL_DIRECAO_EXCEDIDA: "Direção desta jornada passou de 10h",
   ESPERA_PROXIMA_LIMITE: "Espera perto do limite",
   ESPERA_LIMITE_LEGAL_ATINGIDO: "Limite legal de espera atingido",
+  DOCUMENTACAO_ACUMULADA: "Tempo aguardando documentação acumulado",
+  DOCUMENTACAO_PROXIMA_LIMITE: "Aguardando documentação perto do limite",
+  DOCUMENTACAO_LIMITE_ATINGIDO: "Limite de aguardando documentação atingido",
   OCIOSIDADE_DIRECAO_SUSPEITA: 'Ociosidade suspeita em "Em direção"',
   VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS:
     "Velocidade impossível entre registros",

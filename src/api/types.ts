@@ -279,6 +279,9 @@ export type TipoAlertaJornada =
   | "JORNADA_ATUAL_DIRECAO_EXCEDIDA"
   | "ESPERA_PROXIMA_LIMITE"
   | "ESPERA_LIMITE_LEGAL_ATINGIDO"
+  | "DOCUMENTACAO_ACUMULADA"
+  | "DOCUMENTACAO_PROXIMA_LIMITE"
+  | "DOCUMENTACAO_LIMITE_ATINGIDO"
   | "OCIOSIDADE_DIRECAO_SUSPEITA"
   // Motor de antifraude (AntifraudeService, backend) , ver
   // backend/src/common/antifraude/antifraude.service.ts.
