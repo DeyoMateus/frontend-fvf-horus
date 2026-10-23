@@ -154,16 +154,18 @@ export function FormularioTratamentoAlerta({
             }}
           >
             <p style={{ fontSize: 13, margin: "0 0 6px" }}>
-              O último ponto do motorista foi gravado com a hora adulterada.
-              Para liberar o aparelho, informe a hora CORRETA desse ponto: ela
-              substitui a hora fraudulenta nos cálculos (o ponto original
-              continua guardado). A hora correta só pode ser menor do que a hora
-              que consta no registro e não pode passar do momento em que o
-              registro chegou ao servidor. A anotação acima (mínimo de 10
-              caracteres) é obrigatória.
+              O ponto que o motorista tentou bater foi recusado por causa do
+              relógio do aparelho e não foi gravado. Informe a hora REAL desse
+              ponto: o sistema lança um ajuste novo com essa hora e a sua
+              anotação, e libera o aparelho. Os pontos já registrados não são
+              alterados. A hora precisa ser igual ou menor do que a hora que o
+              aparelho mostrava, não pode passar do momento em que o servidor
+              recusou o ponto e tem de respeitar a ordem dos pontos e ajustes
+              do motorista. A anotação acima (mínimo de 10 caracteres) é
+              obrigatória.
             </p>
             <label style={{ fontSize: 13 }}>
-              Hora correta do ponto:{" "}
+              Hora correta do ponto recusado:{" "}
               <input
                 type="datetime-local"
                 value={horario}
@@ -174,7 +176,7 @@ export function FormularioTratamentoAlerta({
               disabled={salvando || !horario || obs.length < 10}
               onClick={liberarRelogio}
             >
-              Corrigir ponto e liberar aparelho
+              Lançar ajuste e liberar aparelho
             </button>
           </div>
         )}

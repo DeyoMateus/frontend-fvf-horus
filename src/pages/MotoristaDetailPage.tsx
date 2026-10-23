@@ -2940,7 +2940,7 @@ export function MotoristaDetailPage() {
             <p className="error-text" style={{ marginTop: 12 }}>
               {holeritePrevia.pontosSuspeitosPendentes} ponto(s) com relógio
               adulterado ficaram FORA do cálculo até o gestor corrigir a hora
-              (tela de Alertas, "Corrigir ponto e liberar aparelho"). Este
+              (tela de Alertas, "Lançar ajuste e liberar aparelho"). Este
               holerite está incompleto.
             </p>
           )}
