@@ -51,8 +51,15 @@ export function localizarAlvo(expressao: string): HTMLElement[] | null {
   }
   const alvo = normalizar(valor);
 
+  // Rodada 340: nunca considera o que está dentro do próprio tour (balão,
+  // escolha de módulo). Antes só o tipo "texto" fazia isso; os demais podiam
+  // achar o título do balão ("Fechamento de ponto") quando o campo real ainda
+  // não estava na tela, e o balão passava a apontar para si mesmo, pulando de
+  // lugar a cada quadro.
   const todos = (seletor: string) =>
-    Array.from(document.querySelectorAll<HTMLElement>(seletor));
+    Array.from(document.querySelectorAll<HTMLElement>(seletor)).filter(
+      (e) => !e.closest("[data-tour-camada]"),
+    );
 
   switch (tipo) {
     case "css": {

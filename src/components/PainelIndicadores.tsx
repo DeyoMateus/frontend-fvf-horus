@@ -12,6 +12,7 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { ModalDetalheTendencia, type PontoClicado } from "./TendenciaCharts";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
 import { RankingCompletoPopup } from "./RankingCompletoPopup";
+import { SelecaoMultiplaMotoristas } from "./SelecaoMultiplaMotoristas";
 import {
   PorMotoristaCompletoPopup,
   colunasPorMotorista,
@@ -317,7 +318,9 @@ function GraficoLinhaSaldoBancoHoras({
 
 export function PainelIndicadores() {
   const [motoristas, setMotoristas] = useState<Motorista[]>([]);
-  const [motoristaId, setMotoristaId] = useState<string>("");
+  // Rodada 338: um ou vários motoristas; vazio = todos. A API recebe os ids separados por vírgula.
+  const [motoristaIds, setMotoristaIds] = useState<string[]>([]);
+  const motoristaId = motoristaIds.join(",");
   const [indicador, setIndicador] = useState<ChaveIndicador>("todos");
   const [inicio, setInicio] = useState(inicioDoMes());
   const [fim, setFim] = useState(hoje());
@@ -601,21 +604,16 @@ export function PainelIndicadores() {
             </button>
           ))}
         </div>
-        <label>
+        {/* div (não label): a lista tem checkboxes com label próprio. */}
+        <div>
           Motorista
           <br />
-          <select
-            value={motoristaId}
-            onChange={(e) => setMotoristaId(e.target.value)}
-          >
-            <option value="">Todos os motoristas</option>
-            {motoristas.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+          <SelecaoMultiplaMotoristas
+            motoristas={motoristas}
+            selecionados={motoristaIds}
+            onChange={setMotoristaIds}
+          />
+        </div>
         <label>
           Indicador
           <br />

@@ -372,6 +372,59 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", aoTeclar, true);
   }, [ativo, seletor, proximo, voltar, encerrar]);
 
+  // Rodada 339: enquanto o tour está aberto, a página de fundo não rola
+  // (roda do mouse, toque e teclas de rolagem). Só rola o que está dentro da
+  // camada do tour (o balão, se for maior que a tela). A rolagem feita pelo
+  // próprio tour para mostrar o alvo (scrollIntoView) continua funcionando.
+  useEffect(() => {
+    if (!ativo && !seletor) return;
+    function rolavelDentroDoTour(alvo: EventTarget | null): boolean {
+      let el = alvo instanceof Element ? alvo : null;
+      if (!el || !el.closest("[data-tour-camada]")) return false;
+      while (el && el !== document.body) {
+        const estilo = window.getComputedStyle(el);
+        const rola = /(auto|scroll)/.test(estilo.overflowY);
+        if (rola && el.scrollHeight > el.clientHeight) return true;
+        if (el.hasAttribute("data-tour-camada")) break;
+        el = el.parentElement;
+      }
+      return false;
+    }
+    function bloquearRolagem(e: Event) {
+      if (rolavelDentroDoTour(e.target)) return;
+      if (e.cancelable) e.preventDefault();
+    }
+    const TECLAS_DE_ROLAGEM = new Set([
+      "ArrowUp",
+      "ArrowDown",
+      "PageUp",
+      "PageDown",
+      "Home",
+      "End",
+      " ",
+      "Spacebar",
+    ]);
+    function bloquearTecla(e: KeyboardEvent) {
+      if (!TECLAS_DE_ROLAGEM.has(e.key)) return;
+      const alvo = e.target as HTMLElement | null;
+      const tag = alvo?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      // Espaço em um botão é "clicar": deixa o botão agir.
+      if (e.key === " " && tag === "BUTTON") return;
+      if (rolavelDentroDoTour(alvo)) return;
+      e.preventDefault();
+    }
+    const opcoes = { passive: false, capture: true } as const;
+    window.addEventListener("wheel", bloquearRolagem, opcoes);
+    window.addEventListener("touchmove", bloquearRolagem, opcoes);
+    window.addEventListener("keydown", bloquearTecla, true);
+    return () => {
+      window.removeEventListener("wheel", bloquearRolagem, opcoes);
+      window.removeEventListener("touchmove", bloquearRolagem, opcoes);
+      window.removeEventListener("keydown", bloquearTecla, true);
+    };
+  }, [ativo, seletor]);
+
   const valor = useMemo(
     () => ({ iniciarTour, tourAtivo: ativo || seletor }),
     [iniciarTour, ativo, seletor],
