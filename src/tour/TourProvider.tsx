@@ -41,7 +41,8 @@ export function useTour(): TourContextValue {
 const PREFIXO_CHAVE = "fvfhorus.tourConcluido.v1.";
 const PREFIXO_MODULOS = "fvfhorus.tourModulos.v1.";
 const LARGURA_BALAO = 360;
-const FOLGA = 14;
+// Espaço entre o campo destacado e o balão: cabe a seta grossa (fora do balão).
+const FOLGA = 46;
 
 function lerVisto(chave: string): boolean {
   try {
@@ -472,7 +473,6 @@ function CamadaDoTour(props: {
   let lado: Lado = "centro";
   let topo = Math.max(12, (vh - altura) / 2);
   let esquerda = Math.max(12, (vw - largura) / 2);
-  let setaPos = 0;
 
   if (destaque && destaque.height < vh * 0.7) {
     const centroX = destaque.left + destaque.width / 2;
@@ -488,22 +488,18 @@ function CamadaDoTour(props: {
       lado = "baixo";
       topo = destaque.top + destaque.height + FOLGA;
       esquerda = limitarX(centroX - largura / 2);
-      setaPos = centroX - esquerda;
     } else if (cabeAcima) {
       lado = "cima";
       topo = destaque.top - FOLGA - altura;
       esquerda = limitarX(centroX - largura / 2);
-      setaPos = centroX - esquerda;
     } else if (cabeDireita) {
       lado = "direita";
       esquerda = destaque.left + destaque.width + FOLGA;
       topo = limitarY(centroY - altura / 2);
-      setaPos = centroY - topo;
     } else if (cabeEsquerda) {
       lado = "esquerda";
       esquerda = destaque.left - FOLGA - largura;
       topo = limitarY(centroY - altura / 2);
-      setaPos = centroY - topo;
     }
   }
   if (lado === "centro" && destaque) {
@@ -513,41 +509,24 @@ function CamadaDoTour(props: {
 
   const lim = (v: number, max: number) => Math.min(Math.max(v, 22), max - 22);
 
-  const estiloSeta: React.CSSProperties = {
-    position: "absolute",
-    width: 14,
-    height: 14,
-    background: "#fff",
-    transform: "rotate(45deg)",
-  };
-  if (lado === "baixo") {
-    Object.assign(estiloSeta, {
-      top: -8,
-      left: lim(setaPos, largura) - 7,
-      borderLeft: "2px solid #1a56db",
-      borderTop: "2px solid #1a56db",
-    });
-  } else if (lado === "cima") {
-    Object.assign(estiloSeta, {
-      bottom: -8,
-      left: lim(setaPos, largura) - 7,
-      borderRight: "2px solid #1a56db",
-      borderBottom: "2px solid #1a56db",
-    });
-  } else if (lado === "direita") {
-    Object.assign(estiloSeta, {
-      left: -8,
-      top: lim(setaPos, altura) - 7,
-      borderLeft: "2px solid #1a56db",
-      borderBottom: "2px solid #1a56db",
-    });
-  } else if (lado === "esquerda") {
-    Object.assign(estiloSeta, {
-      right: -8,
-      top: lim(setaPos, altura) - 7,
-      borderRight: "2px solid #1a56db",
-      borderTop: "2px solid #1a56db",
-    });
+  // Seta fora do balão (o balão tem overflow e cortava a seta antiga),
+  // grossa, apontando para o campo, com um anel pulsando em volta.
+  const TAM_SETA = 44;
+  let seta: { cx: number; cy: number; giro: number } | null = null;
+  if (destaque && lado !== "centro") {
+    const centroX = destaque.left + destaque.width / 2;
+    const centroY = destaque.top + destaque.height / 2;
+    const limX = Math.min(Math.max(centroX, 24), vw - 24);
+    const limY = Math.min(Math.max(centroY, 24), vh - 24);
+    if (lado === "baixo") {
+      seta = { cx: limX, cy: destaque.top + destaque.height + FOLGA / 2, giro: 0 };
+    } else if (lado === "cima") {
+      seta = { cx: limX, cy: destaque.top - FOLGA / 2, giro: 180 };
+    } else if (lado === "direita") {
+      seta = { cx: destaque.left + destaque.width + FOLGA / 2, cy: limY, giro: -90 };
+    } else if (lado === "esquerda") {
+      seta = { cx: destaque.left - FOLGA / 2, cy: limY, giro: 90 };
+    }
   }
 
   const progresso = Math.round((posicao / Math.max(1, total)) * 100);
@@ -560,13 +539,18 @@ function CamadaDoTour(props: {
           50% { box-shadow: 0 0 0 9999px rgba(8,12,24,.68), 0 0 0 7px rgba(96,165,250,.45); }
         }
         @keyframes fvf-tour-seta {
-          0%, 100% { margin: 0; }
-          50% { margin: 3px 0 0 3px; }
+          0%, 100% { transform: translateY(2px); }
+          50% { transform: translateY(-5px); }
         }
-        .fvf-tour-seta { animation: fvf-tour-seta 1.1s ease-in-out infinite; }
+        @keyframes fvf-tour-anel {
+          0% { transform: scale(.55); opacity: .95; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+        .fvf-tour-seta { animation: fvf-tour-seta 1s ease-in-out infinite; }
+        .fvf-tour-anel { animation: fvf-tour-anel 1.4s ease-out infinite; }
         .fvf-tour-bolha button { font-family: inherit; }
         @media (prefers-reduced-motion: reduce) {
-          .fvf-tour-seta, .fvf-tour-destaque { animation: none !important; }
+          .fvf-tour-seta, .fvf-tour-anel, .fvf-tour-destaque { animation: none !important; }
         }
       `}</style>
 
@@ -593,6 +577,49 @@ function CamadaDoTour(props: {
         />
       )}
 
+      {seta && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            zIndex: 10003,
+            left: seta.cx - TAM_SETA / 2,
+            top: seta.cy - TAM_SETA / 2,
+            width: TAM_SETA,
+            height: TAM_SETA,
+            pointerEvents: "none",
+            transition: "left .2s ease, top .2s ease",
+          }}
+        >
+          <span
+            className="fvf-tour-anel"
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              border: "4px solid rgba(96,165,250,.95)",
+            }}
+          />
+          <div style={{ position: "absolute", inset: 0, transform: `rotate(${seta.giro}deg)` }}>
+            <svg
+              className="fvf-tour-seta"
+              width={TAM_SETA}
+              height={TAM_SETA}
+              viewBox="0 0 44 44"
+              style={{ display: "block", filter: "drop-shadow(0 2px 3px rgba(0,0,0,.45))" }}
+            >
+              <path
+                d="M22 3 L38 21 L28 21 L28 40 L16 40 L16 21 L6 21 Z"
+                fill="#1a56db"
+                stroke="#fff"
+                strokeWidth="3"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      )}
+
       <div
         ref={bolhaRef}
         className="fvf-tour-bolha"
@@ -614,8 +641,6 @@ function CamadaDoTour(props: {
           overflowY: "auto",
         }}
       >
-        {lado !== "centro" && <span className="fvf-tour-seta" style={estiloSeta} />}
-
         <button
           type="button"
           onClick={props.onFechar}
