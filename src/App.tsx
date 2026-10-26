@@ -19,6 +19,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { IndicadoresPage } from "./pages/IndicadoresPage";
 import { PedidosFolgaPage } from "./pages/PedidosFolgaPage";
 import { EmpresasPage } from "./pages/EmpresasPage";
+import { RetencaoPage } from "./pages/RetencaoPage";
 import { RegrasSindicaisPage } from "./pages/RegrasSindicaisPage";
 import { PerfilPage } from "./pages/PerfilPage";
 import { AuditoriaPage } from "./pages/AuditoriaPage";
@@ -98,6 +99,7 @@ export function App() {
                     <Route path="/lgpd" element={<PrivacidadePainelPage />} />
                     {/* Rodada 109 , só ADMIN consegue entrar; GESTOR que digitar a URL direto cai no dashboard (ver ProtectedRoute/Layout). */}
                     <Route path="/usuarios" element={<UsuariosEmpresaPage />} />
+                    <Route path="/retencao" element={<RetencaoPage />} />
                   </Route>
                 </Route>
 

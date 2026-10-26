@@ -1,4 +1,5 @@
 import { obterDadosGrupo, type DadosGrupo } from "../api/empresas";
+import { obterMeuPerfil } from "../api/usuariosEmpresa";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -45,6 +46,7 @@ const ITENS_NAV: {
   // Rodada 109 , gestão do time do próprio grupo, exclusiva do ADMIN
   // (ver UsuariosEmpresaPage.tsx e UsuariosEmpresaController).
   { to: "/usuarios", label: "Usuários", abreviacao: "US", somenteAdmin: true },
+  { to: "/retencao", label: "Retenção de dados", abreviacao: "RE", somenteAdmin: true },
 ];
 
 // Rodada 42 , abaixo dessa largura a barra lateral expandida (220px)
@@ -68,6 +70,13 @@ export function Layout() {
 
 function LayoutInterno() {
   const { usuario, sair } = useAuth();
+  const [mfaPendente, setMfaPendente] = useState(false);
+  useEffect(() => {
+    if (usuario?.papel !== "ADMIN") return;
+    obterMeuPerfil()
+      .then((p) => setMfaPendente(!!p.mfaCadastroPendente))
+      .catch(() => setMfaPendente(false));
+  }, [usuario?.sub, usuario?.papel]);
   const { iniciarTour } = useTour();
   const [colapsada, setColapsada] = useState(() => {
     try {
@@ -209,6 +218,22 @@ function LayoutInterno() {
           <div className="content-topo">
             <NotificationBell />
           </div>
+          {mfaPendente && (
+            <div
+              role="alert"
+              style={{
+                background: "#fef3c7",
+                border: "1px solid #f59e0b",
+                borderRadius: 6,
+                padding: "8px 12px",
+                margin: "0 0 12px",
+                fontSize: 14,
+              }}
+            >
+              Sua empresa exige verificação em duas etapas para administradores.{" "}
+              <NavLink to="/perfil">Ativar agora em Meu perfil</NavLink>.
+            </div>
+          )}
           <Outlet />
         </div>
       </main>

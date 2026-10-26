@@ -185,7 +185,7 @@ export function BancoHorasPainel({ motoristaId }: { motoristaId: string }) {
                 style={{
                   fontSize: 22,
                   fontWeight: 700,
-                  color: saldo.saldoMin >= 0 ? "#111827" : "#b91c1c",
+                  color: saldo.saldoMin >= 0 ? "#000" : "#b91c1c",
                 }}
               >
                 {minParaHoras(saldo.saldoMin)}

@@ -36,3 +36,64 @@ export function registrarAjusteBancoHoras(
 ) {
   return api.post<AjusteBancoHoras>(`/motoristas/${motoristaId}/banco-horas/ajustes`, input).then((r) => r.data);
 }
+
+// ===== Rodada 379 (passo 31, interface): razão de lançamentos =====
+export type TipoLancamentoBanco =
+  | 'ABERTURA'
+  | 'CREDITO_HORAS'
+  | 'DEBITO_COMPENSACAO'
+  | 'DEBITO_PAGAMENTO'
+  | 'DEBITO_EXPIRACAO'
+  | 'CORRECAO_CREDITO'
+  | 'CORRECAO_DEBITO'
+  | 'SNAPSHOT_FECHAMENTO';
+
+export interface LancamentoBanco {
+  id: string;
+  sequencial: number;
+  dataEvento: string;
+  tipoDia: string;
+  tipoLancamento: TipoLancamentoBanco;
+  minutosBrutos: number;
+  fator: string;
+  minutosEquivalentes: number;
+  saldoAposMin: number;
+  venceEm: string | null;
+  observacao: string | null;
+  autorTipo: string;
+}
+
+export interface LoteBanco {
+  id: string;
+  venceEm: string | null;
+  restanteMin: number;
+}
+
+export interface VencimentosRazao {
+  saldoMin: number;
+  lotes: LoteBanco[];
+  vencidos: LoteBanco[];
+  aVencer: LoteBanco[];
+}
+
+export interface VerificacaoRazao {
+  cadeia: unknown;
+  somaMin: number;
+  saldoGravadoMin: number;
+  conciliado: boolean;
+}
+
+const base = (id: string) => `/motoristas/${id}/banco-horas/razao`;
+
+export const listarRazao = (id: string) => api.get<LancamentoBanco[]>(base(id)).then((r) => r.data);
+export const vencimentosRazao = (id: string) => api.get<VencimentosRazao>(`${base(id)}/vencimentos`).then((r) => r.data);
+export const verificarRazao = (id: string) => api.get<VerificacaoRazao>(`${base(id)}/verificar`).then((r) => r.data);
+export const creditarPeriodoRazao = (id: string, inicio: string, fim: string) =>
+  api.post(`${base(id)}/creditos/periodo`, { inicio, fim }).then((r) => r.data);
+export const debitarRazao = (id: string, input: { tipo: 'COMPENSACAO' | 'PAGAMENTO'; minutos: number; data: string; observacao?: string }) =>
+  api.post(`${base(id)}/debitos`, input).then((r) => r.data);
+export const corrigirRazao = (id: string, input: { sentido: 'CREDITO' | 'DEBITO'; minutos: number; data: string; observacao: string }) =>
+  api.post(`${base(id)}/correcoes`, input).then((r) => r.data);
+export const expirarVencidosRazao = (id: string) => api.post(`${base(id)}/expirar-vencidos`).then((r) => r.data);
+export const abrirRazao = (id: string, data: string) => api.post(`${base(id)}/abertura`, { data }).then((r) => r.data);
+export const snapshotRazao = (id: string, data: string) => api.post(`${base(id)}/snapshot`, { data }).then((r) => r.data);

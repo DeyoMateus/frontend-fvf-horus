@@ -53,10 +53,17 @@ export interface Empresa {
   grupoId: string;
   registroInpiAfd?: string | null;
   fusoHorario?: string;
+  /** Rodada 382: dados do estabelecimento (CAEPF/CNO e endereço). */
+  caepfCno?: string | null;
+  enderecoEstabelecimento?: string | null;
   createdAt: string;
   regraSindicalId?: string | null;
   regraSindical?: { id: string; nome: string } | null;
   ehMatriz?: boolean;
+  /** Passo 45: parametros de retencao (null = minimo da lei). */
+  retencaoRegistroAnos?: number | null;
+  retencaoPosDesligamentoMeses?: number | null;
+  retencaoMargemMeses?: number | null;
 }
 
 export type CategoriaTransporteSindical = "RODOVIARIO" | "URBANO";
@@ -73,6 +80,13 @@ export interface Feriado {
   createdAt: string;
   updatedAt: string;
 }
+
+export type BancoHorasTipo = "SEM_BANCO" | "INDIVIDUAL" | "COLETIVO" | "MENSAL";
+export type TratamentoFeriado =
+  | "PAGAR_DOBRO"
+  | "LANCAR_NO_BANCO"
+  | "EXIGIR_FOLGA_COMPENSATORIA";
+export type FonteFeriado = "BASE_DA_EMPRESA" | "LOCAL_DA_OPERACAO";
 
 export interface RegraSindical {
   id: string;
@@ -91,10 +105,27 @@ export interface RegraSindical {
   bancoHorasAtivo: boolean;
   bancoHorasPrazoExpiracaoMeses?: number | null;
   bancoHorasLimiteAlertaMin?: number | null;
-  primeiroPeriodoDescansoMinimoMin: number;
   intervaloRefeicaoMinimoMin: number;
   percentualHoraEspera: string;
   percentualHoraEsperaRefeicao?: string | null;
+  acordoColetivo?: boolean;
+  numeroMediador?: string | null;
+  sindicato?: string | null;
+  dataBase?: string | null;
+  janelaNoturnaInicioMin?: number;
+  janelaNoturnaFimMin?: number;
+  prorrogacaoNoturna?: boolean;
+  cctVigenciaInicio?: string | null;
+  cctVigenciaFim?: string | null;
+  cctDocumentoRef?: string | null;
+  declaracaoRespaldoCct?: boolean;
+  bancoHorasTipo?: BancoHorasTipo;
+  bancoHorasFator?: string | number;
+  feriadoTratamento?: TratamentoFeriado | null;
+  feriadoFonte?: FonteFeriado;
+  folgaDomingoACadaSemanas?: number | null;
+  marcoAdi5322Data?: string | null;
+  marcoAdi5322Referencia?: string | null;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -136,6 +167,12 @@ export interface Motorista {
   /** Rodada 65 , "Excluir cadastro": não nulo quando o cadastro foi excluído (soft-delete, histórico intacto). */
   excluidoEm?: string | null;
   motivoExclusao?: string | null;
+  /** Rodada 378: dados de contrato. */
+  dataAdmissao?: string | null;
+  cargo?: string | null;
+  matricula?: string | null;
+  matriculaEsocial?: string | null;
+  horarioContratualId?: string | null;
   dispositivoVinculado?: {
     deviceUuid: string;
     vinculadoEm?: string;
@@ -260,10 +297,23 @@ export interface DispositivoStatus {
   vinculadoEm?: string;
   atualizadoEm?: string;
   vinculadoPorUsuarioId?: string;
+  /** Rodada 394: telemetria do app (pontos em ERRO guardados no aparelho). */
+  errosAppQtd?: number | null;
+  errosAppDesde?: string | null;
+  errosAppAtualizadoEm?: string | null;
   vinculado?: false;
 }
 
 export type TipoAlertaJornada =
+  // Rodadas 367 e 368: refeição pendente e jornada total do dia.
+  | "INTERVALO_REFEICAO_PENDENTE"
+  | "JORNADA_TOTAL_PROXIMA_LIMITE"
+  | "JORNADA_TOTAL_EXCEDIDA"
+  | "JORNADA_TOTAL_EXTRAS_LIMITE"
+  // Rodadas 364 e 388: repouso semanal e DSR.
+  | "REPOUSO_SEMANAL_PROXIMO_LIMITE"
+  | "REPOUSO_SEMANAL_ATRASADO"
+  | "DSR_SEM_DESCANSO_SEMANAL"
   | "DIRECAO_CONTINUA_PROXIMA_LIMITE"
   | "DIRECAO_CONTINUA_EXCEDIDA"
   | "DIRECAO_RETOMADA_SEM_PAUSA"
@@ -288,6 +338,7 @@ export type TipoAlertaJornada =
   | "VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS"
   | "RELOGIO_DISPOSITIVO_SUSPEITO"
   | "RELOGIO_PONTO_RECUSADO"
+  | "PONTO_ACEITO_COM_FLAG"
   | "HORA_NAO_VERIFICADA_APOS_REINICIO"
   | "SEQUENCIA_JORNADA_MUITO_RAPIDA"
   | "ODOMETRO_REGRESSIVO"
@@ -522,6 +573,12 @@ export interface UsuarioEmpresaListado {
   adminPrincipal?: boolean;
   recebeWhatsappAlertas?: boolean;
   recebeWhatsappEquipeGr?: boolean;
+  /** Rodada 385: permissões separadas (só aparecem na lista do ADMIN). */
+  podeAprovarAjuste?: boolean;
+  podeAceitarDivergencia?: boolean;
+  /** Rodada 375: MFA (TOTP) ativo e aviso de cadastro exigido pela empresa. */
+  mfaAtivo?: boolean;
+  mfaCadastroPendente?: boolean;
   createdAt: string;
 }
 
@@ -542,6 +599,28 @@ export interface GrupoResumo {
   totalMotoristas: number;
 }
 
+export type RegimeBancoHoras =
+  | "NENHUM"
+  | "ACORDO_INDIVIDUAL_6M"
+  | "CONVENCAO_COLETIVA_12M"
+  | "COMPENSACAO_NO_MES";
+export type RegimeDomingoFeriado =
+  | "NAO_DEFINIDO"
+  | "DOBRA_NO_BANCO"
+  | "PAGO_NO_HOLERITE"
+  | "COMPENSACAO_1_PARA_1";
+
+/** Rodada 377: regime do banco de horas da empresa (definido só pelo super admin). */
+export interface RegimeBancoHorasEmpresa {
+  regime: RegimeBancoHoras;
+  domingoFeriado: RegimeDomingoFeriado;
+  documento: string | null;
+  vigenciaInicio: string | null;
+  tetoMin: number | null;
+  fator: number;
+  razaoAtivo: boolean;
+}
+
 export interface GrupoDetalhe {
   id: string;
   razaoSocial: string;
@@ -555,6 +634,7 @@ export interface GrupoDetalhe {
     registroInpiAfd: string | null;
     fusoHorario?: string;
     totalMotoristas: number;
+    bancoHoras?: RegimeBancoHorasEmpresa;
   }[];
   usuarios: UsuarioEmpresaListado[];
 }
@@ -571,6 +651,18 @@ export interface UpdateEmpresaInput {
   cnpj?: string;
   registroInpiAfd?: string;
   fusoHorario?: string;
+  /** Obrigatório quando algum dado do empregador muda. */
+  motivo?: string;
+}
+
+export interface AlteracaoIdentidadePendente {
+  id: string;
+  empresaId: string;
+  alteracao: Record<string, string>;
+  motivo: string;
+  solicitadoPorSuperAdminId: string;
+  createdAt: string;
+  empresa: { razaoSocial: string; cnpj: string };
 }
 
 export interface UpdateUsuarioSuperAdminInput {
