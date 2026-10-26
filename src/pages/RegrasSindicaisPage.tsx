@@ -16,6 +16,9 @@ import type {
   CategoriaTransporteSindical,
   Empresa,
   RegraSindical,
+  BancoHorasTipo,
+  FonteFeriado,
+  TratamentoFeriado,
 } from "../api/types";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
@@ -30,11 +33,21 @@ const REGRA_PADRAO: RegraSindicalInput = {
   percentualHoraExtra2: "70",
   percentualAdicionalNoturno: "20",
   duracaoMinutoNoturnoMin: "60",
-  primeiroPeriodoDescansoMinimoMin: 180,
   intervaloRefeicaoMinimoMin: 60,
   percentualHoraEspera: "30",
   bancoHorasAtivo: false,
+  janelaNoturnaInicioMin: 1320,
+  janelaNoturnaFimMin: 300,
+  prorrogacaoNoturna: true,
+  declaracaoRespaldoCct: false,
+  bancoHorasTipo: "SEM_BANCO",
+  bancoHorasFator: 1,
+  feriadoFonte: "BASE_DA_EMPRESA",
 };
+
+function dataCurta(v?: string | null): string | undefined {
+  return v ? v.slice(0, 10) : undefined;
+}
 
 /**
  * Cadastro de Convenções/Acordos Coletivos (CCT/ACT) do setor de
@@ -102,11 +115,27 @@ export function RegrasSindicaisPage() {
       bancoHorasPrazoExpiracaoMeses:
         regra.bancoHorasPrazoExpiracaoMeses ?? undefined,
       bancoHorasLimiteAlertaMin: regra.bancoHorasLimiteAlertaMin ?? undefined,
-      primeiroPeriodoDescansoMinimoMin: regra.primeiroPeriodoDescansoMinimoMin,
       intervaloRefeicaoMinimoMin: regra.intervaloRefeicaoMinimoMin,
       percentualHoraEspera: regra.percentualHoraEspera,
-      percentualHoraEsperaRefeicao:
-        regra.percentualHoraEsperaRefeicao ?? undefined,
+      acordoColetivo: regra.acordoColetivo ?? false,
+      numeroMediador: regra.numeroMediador ?? undefined,
+      sindicato: regra.sindicato ?? undefined,
+      dataBase: regra.dataBase ?? undefined,
+      janelaNoturnaInicioMin: regra.janelaNoturnaInicioMin ?? 1320,
+      janelaNoturnaFimMin: regra.janelaNoturnaFimMin ?? 300,
+      prorrogacaoNoturna: regra.prorrogacaoNoturna ?? true,
+      cctVigenciaInicio: dataCurta(regra.cctVigenciaInicio),
+      cctVigenciaFim: dataCurta(regra.cctVigenciaFim),
+      cctDocumentoRef: regra.cctDocumentoRef ?? undefined,
+      declaracaoRespaldoCct: regra.declaracaoRespaldoCct ?? false,
+      bancoHorasTipo: regra.bancoHorasTipo ?? "SEM_BANCO",
+      bancoHorasFator:
+        regra.bancoHorasFator !== undefined ? Number(regra.bancoHorasFator) : 1,
+      feriadoTratamento: regra.feriadoTratamento ?? undefined,
+      feriadoFonte: regra.feriadoFonte ?? "BASE_DA_EMPRESA",
+      folgaDomingoACadaSemanas: regra.folgaDomingoACadaSemanas ?? undefined,
+      marcoAdi5322Data: dataCurta(regra.marcoAdi5322Data),
+      marcoAdi5322Referencia: regra.marcoAdi5322Referencia ?? undefined,
       ativo: regra.ativo,
     });
   }
@@ -128,9 +157,12 @@ export function RegrasSindicaisPage() {
       }
       onCancelarEdicao();
       await carregar();
-    } catch {
+    } catch (err) {
+      const m = (err as { response?: { data?: { message?: string | string[] } } })
+        ?.response?.data?.message;
       setErroForm(
-        "Não foi possível salvar (confira os campos, principalmente o nome).",
+        (Array.isArray(m) ? m.join(" ") : m) ??
+          "Não foi possível salvar (confira os campos, principalmente o nome).",
       );
     } finally {
       setSalvando(false);
@@ -163,9 +195,8 @@ export function RegrasSindicaisPage() {
         sindicato/base territorial. Vale sobre a regra geral da CLT em vários
         pontos (Art. 611-A). Cadastre uma regra por convenção e vincule aos
         CNPJs que ela cobre. Os parâmetros alimentam a apuração de jornada
-        (categorização de horas extras, adicional noturno, banco de horas etc.);
-        o sistema não calcula a folha de pagamento completa nem entrega o
-        holerite pronto.
+        (categorização de horas extras, adicional noturno, banco de horas etc.),
+        o sistema não calcula a folha de pagamento completa.
       </p>
 
       {usuario?.papel === "ADMIN" && (
@@ -175,11 +206,50 @@ export function RegrasSindicaisPage() {
           </h3>
           <form onSubmit={onSubmit}>
             <label>Nome da convenção</label>
-            <CampoTextoExpansivel maxLength={200}
+            <CampoTextoExpansivel
+              maxLength={200}
               value={form.nome}
               onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
               placeholder="ex.: Sindicato Rodoviário de SP - Base 2026/2027"
               required
+            />
+
+            <label>Sindicato</label>
+            <input
+              maxLength={120}
+              value={form.sindicato ?? ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, sindicato: e.target.value || undefined }))
+              }
+            />
+            <label>Data-base da categoria</label>
+            <input
+              maxLength={40}
+              value={form.dataBase ?? ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, dataBase: e.target.value || undefined }))
+              }
+            />
+            <label>
+              <input
+                type="checkbox"
+                checked={form.acordoColetivo ?? false}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, acordoColetivo: e.target.checked }))
+                }
+              />{" "}
+              Regra vem de convenção ou acordo coletivo registrado
+            </label>
+            <label>Número do registro no Mediador</label>
+            <input
+              maxLength={60}
+              value={form.numeroMediador ?? ""}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  numeroMediador: e.target.value || undefined,
+                }))
+              }
             />
 
             <label>Categoria de transporte</label>
@@ -209,7 +279,7 @@ export function RegrasSindicaisPage() {
               }}
             >
               <div>
-                <label>Tolerância de marcação</label>
+                <label>Tolerância de marcação (máximo de 5 minutos, CLT art. 58, §1º). Ainda não aplicada ao cálculo</label>
                 <DuracaoInput
                   valorMin={form.toleranciaMarcacaoMin ?? 0}
                   onChange={(v) =>
@@ -260,7 +330,7 @@ export function RegrasSindicaisPage() {
                 <input
                   type="number"
                   step="0.01"
-                  min={0}
+                  min={50}
                   value={form.percentualHoraExtra1 ?? "50"}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -276,7 +346,7 @@ export function RegrasSindicaisPage() {
                 <input
                   type="number"
                   step="0.01"
-                  min={0}
+                  min={50}
                   value={form.percentualHoraExtra2 ?? "70"}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -396,18 +466,6 @@ export function RegrasSindicaisPage() {
               </div>
 
               <div>
-                <label>1º período de descanso, mínimo</label>
-                <DuracaoInput
-                  valorMin={form.primeiroPeriodoDescansoMinimoMin ?? 180}
-                  onChange={(v) =>
-                    setForm((f) => ({
-                      ...f,
-                      primeiroPeriodoDescansoMinimoMin: v ?? 180,
-                    }))
-                  }
-                />
-              </div>
-              <div>
                 <label>Intervalo de refeição, mínimo</label>
                 <DuracaoInput
                   valorMin={form.intervaloRefeicaoMinimoMin ?? 60}
@@ -421,7 +479,7 @@ export function RegrasSindicaisPage() {
               </div>
 
               <div>
-                <label>% sobre salário-hora para espera</label>
+                <label>Adicional de espera previsto em CCT (informativo, não entra no cálculo)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -435,17 +493,251 @@ export function RegrasSindicaisPage() {
                   }
                 />
               </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <h4 style={{ margin: "8px 0 0" }}>Trabalho noturno</h4>
+                <p style={{ color: "#000000", fontSize: 12, marginTop: 2 }}>
+                  Padrão da CLT: das 22h às 5h, hora de 52min30s e adicional
+                  mínimo de 20%. Valores diferentes só valem com respaldo em
+                  convenção ou acordo coletivo (documento e declaração abaixo).
+                </p>
+              </div>
               <div>
-                <label>% para espera durante refeição (opcional)</label>
+                <label>Início da janela noturna</label>
+                <DuracaoInput
+                  valorMin={form.janelaNoturnaInicioMin ?? 1320}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, janelaNoturnaInicioMin: v ?? 1320 }))
+                  }
+                />
+              </div>
+              <div>
+                <label>Fim da janela noturna</label>
+                <DuracaoInput
+                  valorMin={form.janelaNoturnaFimMin ?? 300}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, janelaNoturnaFimMin: v ?? 300 }))
+                  }
+                />
+              </div>
+              <div>
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.prorrogacaoNoturna ?? true}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        prorrogacaoNoturna: e.target.checked,
+                      }))
+                    }
+                  />
+                  Prorrogação do horário noturno após as 5h
+                </label>
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <h4 style={{ margin: "8px 0 0" }}>Respaldo na convenção</h4>
+              </div>
+              <div>
+                <label>Vigência da convenção, início</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  value={form.percentualHoraEsperaRefeicao ?? ""}
+                  type="date"
+                  value={form.cctVigenciaInicio ?? ""}
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      percentualHoraEsperaRefeicao: e.target.value || undefined,
+                      cctVigenciaInicio: e.target.value || undefined,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label>Vigência da convenção, fim</label>
+                <input
+                  type="date"
+                  value={form.cctVigenciaFim ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      cctVigenciaFim: e.target.value || undefined,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label>Referência do documento (registro no MTE, cláusula)</label>
+                <input
+                  type="text"
+                  maxLength={300}
+                  value={form.cctDocumentoRef ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      cctDocumentoRef: e.target.value || undefined,
+                    }))
+                  }
+                />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.declaracaoRespaldoCct ?? false}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        declaracaoRespaldoCct: e.target.checked,
+                      }))
+                    }
+                  />
+                  Declaro que os valores desta regra que diferem do padrão legal
+                  têm respaldo no documento acima
+                </label>
+                {(Number(form.duracaoMinutoNoturnoMin ?? 60) !== 52.5 ||
+                  (form.janelaNoturnaInicioMin ?? 1320) !== 1320 ||
+                  (form.janelaNoturnaFimMin ?? 300) !== 300 ||
+                  Number(form.percentualAdicionalNoturno ?? 20) < 20) && (
+                  <p style={{ color: "#000000", fontSize: 12, marginTop: 2 }}>
+                    Atenção: esta regra difere do padrão da CLT para o trabalho
+                    noturno (hora de 52min30s, janela das 22h às 5h, adicional
+                    de pelo menos 20%). Informe o documento, a vigência e marque
+                    a declaração, ou o servidor pode recusar o cadastro.
+                  </p>
+                )}
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <h4 style={{ margin: "8px 0 0" }}>Banco de horas e feriados</h4>
+              </div>
+              <div>
+                <label>Tipo de banco de horas</label>
+                <select
+                  value={form.bancoHorasTipo ?? "SEM_BANCO"}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      bancoHorasTipo: e.target.value as BancoHorasTipo,
+                    }))
+                  }
+                >
+                  <option value="SEM_BANCO">Sem banco de horas</option>
+                  <option value="INDIVIDUAL">
+                    Individual (compensação em até 6 meses)
+                  </option>
+                  <option value="COLETIVO">
+                    Coletivo (acordo ou convenção, até 12 meses)
+                  </option>
+                  <option value="MENSAL">Compensação no mesmo mês</option>
+                </select>
+              </div>
+              <div>
+                <label>Fator de conversão do crédito</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min={1}
+                  value={form.bancoHorasFator ?? 1}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      bancoHorasFator: e.target.value
+                        ? Number(e.target.value)
+                        : 1,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label>Tratamento do trabalho em feriado</label>
+                <select
+                  value={form.feriadoTratamento ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      feriadoTratamento: e.target.value
+                        ? (e.target.value as TratamentoFeriado)
+                        : undefined,
+                    }))
+                  }
+                >
+                  <option value="">Não definido</option>
+                  <option value="PAGAR_DOBRO">Pagar em dobro</option>
+                  <option value="LANCAR_NO_BANCO">Lançar no banco de horas</option>
+                  <option value="EXIGIR_FOLGA_COMPENSATORIA">
+                    Exigir folga compensatória
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label>Calendário de feriados usado</label>
+                <select
+                  value={form.feriadoFonte ?? "BASE_DA_EMPRESA"}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      feriadoFonte: e.target.value as FonteFeriado,
+                    }))
+                  }
+                >
+                  <option value="BASE_DA_EMPRESA">Cidade-base da empresa</option>
+                  <option value="LOCAL_DA_OPERACAO">Local da operação</option>
+                </select>
+              </div>
+              <div>
+                <label>Folga em domingo a cada quantas semanas (opcional)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.folgaDomingoACadaSemanas ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      folgaDomingoACadaSemanas: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    }))
+                  }
+                  placeholder="definido pela convenção"
+                />
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <h4 style={{ margin: "8px 0 0" }}>
+                  Marco da modulação da ADI 5322
+                </h4>
+                <p style={{ color: "#000000", fontSize: 12, marginTop: 2 }}>
+                  Em branco, vale a data padrão do sistema (12/07/2023). Se a
+                  empresa adotar outra data, registre a referência da decisão.
+                </p>
+              </div>
+              <div>
+                <label>Data do marco</label>
+                <input
+                  type="date"
+                  value={form.marcoAdi5322Data ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      marcoAdi5322Data: e.target.value || undefined,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label>Referência da decisão (ata, publicação)</label>
+                <input
+                  type="text"
+                  maxLength={300}
+                  value={form.marcoAdi5322Referencia ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      marcoAdi5322Referencia: e.target.value || undefined,
                     }))
                   }
                 />
@@ -556,15 +848,17 @@ export function RegrasSindicaisPage() {
 
         <details style={{ margin: "8px 0 16px", fontSize: 13 }}>
           <summary
-            style={{ cursor: "pointer", color: "#374151", fontWeight: 600 }}
+            style={{ cursor: "pointer", color: "#000", fontWeight: 600 }}
           >
             O que é o "padrão legal geral"? (clique para ver os valores)
           </summary>
-          <div style={{ marginTop: 8, color: "#4b5563", lineHeight: 1.6 }}>
+          <div style={{ marginTop: 8, color: "#000", lineHeight: 1.6 }}>
             <p style={{ margin: "4px 0" }}>
-              <strong>Sempre vale, com ou sem regra sindical vinculada</strong>{" "}
-              (não é possível desligar nem sobrescrever por convenção): são os
-              limites de segurança do motor de jornada:
+              <strong>Padrão do sistema, sem regra sindical vinculada.</strong>{" "}
+              Os limites de direção e de jornada podem ser sobrescritos por
+              CCT/ACT registrada. O descanso de 11h entre jornadas não pode ser
+              reduzido nem fracionado. Valores que não vêm da lei estão
+              indicados como parâmetro do sistema:
             </p>
             <ul style={{ margin: "0 0 8px", paddingLeft: 18 }}>
               <li>
@@ -577,15 +871,16 @@ export function RegrasSindicaisPage() {
               </li>
               <li>
                 Tempo de espera: informativo a partir de 3h, aviso em 4h45,
-                crítico em 5h (Lei 13.103, art. 235-C).
+                crítico em 5h. São parâmetros do sistema, não valores da lei. O
+                tempo de espera conta como tempo à disposição (CLT art. 235-C,
+                §1º). A referência de 5h é do art. 11, §5º, da Lei 11.442/2007,
+                usada na cobrança contra o contratante.
               </li>
               <li>
                 Descanso entre jornadas (interjornada): mínimo de 11h (CLT art.
-                66 / Lei 13.103). Só se aplica quando a jornada anterior já
-                tinha cumprido as 8h de direção (ou mais, com hora extra) , se a
-                jornada anterior ficou incompleta (ex.: motorista encerrou por
-                engano e reabriu), a nova jornada conta como complemento dela e
-                não gera esse alerta.
+                66 / Lei 13.103). Vale sempre, sem exceção. Se o motorista
+                encerrou por engano e reabriu, o RH trata o alerta e registra que
+                foi a mesma jornada (a decisão fica na trilha de auditoria).
               </li>
             </ul>
             <p style={{ margin: "4px 0" }}>
@@ -669,6 +964,20 @@ export function RegrasSindicaisPage() {
           paddingTop: 24,
         }}
       >
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Como funcionam os feriados</h3>
+          <p style={{ fontSize: 13, color: "#000", lineHeight: 1.6, margin: "4px 0" }}>
+            O sistema reconhece o domingo sozinho, mas não conhece os feriados,
+            porque eles mudam de cidade para cidade. Por isso, cada feriado que
+            a empresa aceita precisa ser cadastrado abaixo, com data e descrição.
+          </p>
+          <p style={{ fontSize: 13, color: "#000", lineHeight: 1.6, margin: "4px 0" }}>
+            Ao cadastrar, escolha se o feriado é "pago como domingo/feriado" (as
+            horas trabalhadas nesse dia recebem o percentual diferenciado da
+            convenção coletiva escolhida acima) ou apenas informativo. Se deixar o
+            CNPJ em branco, o feriado vale para todos os CNPJs do grupo.
+          </p>
+        </div>
         <FeriadosPage />
       </div>
     </div>

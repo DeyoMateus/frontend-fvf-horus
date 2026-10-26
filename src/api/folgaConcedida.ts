@@ -24,6 +24,8 @@ export interface FolgaConcedida {
 export interface CreateFolgaConcedidaInput {
   data: string;
   motivo?: string;
+  /** Rodada 387: CCT/ACT que autoriza folga depois de mais de 6 dias seguidos de trabalho. */
+  justificativaExcessoDias?: string;
 }
 
 // Espelha FolgaConcedidaController , lançada pelo RH/gestor (ADMIN/GESTOR),

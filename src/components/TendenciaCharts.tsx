@@ -80,7 +80,7 @@ const IND_HORAS_ESPERA: DefinicaoIndicador = {
   rotulo: "Horas de espera",
   cor: "#f59e0b",
   sufixo: "h",
-  descricao: "Soma das horas em espera de carga/descarga, por dia — é o tempo que conta pro limiar legal de 05:00 (ver alertas de espera).",
+  descricao: "Soma das horas em espera de carga/descarga, por dia — é o tempo que conta para o limite crítico de espera (referência de 5h do art. 11 da Lei 11.442/2007; o limite é configurável).",
 };
 // Rodada 68 — jornada aberta sem etapa em aberto (nem direção, nem
 // descanso, nem espera, nem "aguardando documentação").
@@ -771,7 +771,7 @@ export function ModalDetalheTendencia({
                     <td
                       style={{
                         fontSize: 12,
-                        color: ROTULO_SEVERIDADE_COR[a.severidade] ?? "#111827",
+                        color: ROTULO_SEVERIDADE_COR[a.severidade] ?? "#000",
                       }}
                     >
                       {a.tipo}
@@ -880,8 +880,8 @@ export function GraficoTendencia({
             A linha pontilhada de cada indicador é a tendência (regressão
             linear) no período, mostrando se está subindo ou descendo. É o sinal
             de que as ações tomadas (treinamento, ajuste de escala, cobrança de
-            tempo de espera) estão ou não funcionando. Clique numa barra ou
-            ponto pra ver as ações que compõem aquele número naquele dia.
+            tempo de espera) estão ou não funcionando. Clique em uma barra ou
+            ponto para ver as ações que compõem aquele número naquele dia.
           </DicaAoPassar>
         </div>
         <div style={{ display: "flex", gap: 6 }}>

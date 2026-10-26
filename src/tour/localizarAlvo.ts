@@ -56,8 +56,11 @@ export function localizarAlvo(expressao: string): HTMLElement[] | null {
   // achar o título do balão ("Fechamento de ponto") quando o campo real ainda
   // não estava na tela, e o balão passava a apontar para si mesmo, pulando de
   // lugar a cada quadro.
+  // Rodada 347: com uma tela de exemplo (palco) aberta, só o que está dentro
+  // dela conta; a página real fica escondida por baixo.
+  const palco = document.querySelector("[data-tour-palco]");
   const todos = (seletor: string) =>
-    Array.from(document.querySelectorAll<HTMLElement>(seletor)).filter(
+    Array.from((palco ?? document).querySelectorAll<HTMLElement>(seletor)).filter(
       (e) => !e.closest("[data-tour-camada]"),
     );
 

@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   atualizarEmpresaSuperAdmin,
+  decidirAlteracaoIdentidade,
+  listarAlteracoesIdentidadePendentes,
   atualizarGrupo,
   atualizarStatusEmpresaSuperAdmin,
   atualizarDestinatariosWhatsapp,
@@ -11,17 +13,23 @@ import {
   criarUsuarioGrupo,
   obterGrupo,
 } from "../api/superAdmin";
-import type { GrupoDetalhe, PapelUsuario } from "../api/types";
+import type {
+  AlteracaoIdentidadePendente,
+  GrupoDetalhe,
+  PapelUsuario,
+} from "../api/types";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { useConfirm } from "../components/ConfirmProvider";
 import { fusoIanaDoNavegador } from "../utils/fusoHorario";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
+import { RegimeBancoHorasForm } from "../components/RegimeBancoHorasForm";
 
 type FormEmpresa = {
   razaoSocial: string;
   cnpj: string;
   registroInpiAfd: string;
   fusoHorario: string;
+  motivo: string;
 };
 type FormUsuario = { nome: string; email: string };
 type FormNovoUsuario = {
@@ -58,6 +66,7 @@ export function SuperAdminGrupoDetailPage() {
   const [editandoGrupo, setEditandoGrupo] = useState(false);
   const [razaoSocialGrupo, setRazaoSocialGrupo] = useState("");
   const [limiteMotoristasGrupo, setLimiteMotoristasGrupo] = useState("");
+  const [regimeEmpresaId, setRegimeEmpresaId] = useState<string | null>(null);
   const [empresaEditandoId, setEmpresaEditandoId] = useState<string | null>(
     null,
   );
@@ -66,6 +75,7 @@ export function SuperAdminGrupoDetailPage() {
     cnpj: "",
     registroInpiAfd: "",
     fusoHorario: "America/Sao_Paulo",
+    motivo: "",
   });
   const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(
     null,
@@ -90,6 +100,29 @@ export function SuperAdminGrupoDetailPage() {
   // INICIAL (mount, com `comCarregamentoTelaCheia = true`) passa por
   // essa tela cheia; toda atualização depois de salvar só troca os
   // dados no lugar, sem desmontar nada.
+  const [pendentes, setPendentes] = useState<AlteracaoIdentidadePendente[]>([]);
+
+  async function carregarPendentes() {
+    try {
+      setPendentes(await listarAlteracoesIdentidadePendentes());
+    } catch {
+      setPendentes([]);
+    }
+  }
+
+  async function decidirPendente(id: string, confirmar: boolean) {
+    setErroEdicao(null);
+    try {
+      await decidirAlteracaoIdentidade(id, confirmar);
+      await carregar();
+      await carregarPendentes();
+    } catch (err) {
+      const m = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      setErroEdicao(m ?? "Não foi possível registrar a decisão.");
+    }
+  }
+
   async function carregar(comCarregamentoTelaCheia = false) {
     if (!grupoId) return;
     if (comCarregamentoTelaCheia) setCarregando(true);
@@ -106,6 +139,7 @@ export function SuperAdminGrupoDetailPage() {
 
   useEffect(() => {
     carregar(true);
+    void carregarPendentes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId]);
 
@@ -153,6 +187,7 @@ export function SuperAdminGrupoDetailPage() {
       cnpj: e.cnpj,
       registroInpiAfd: e.registroInpiAfd ?? "",
       fusoHorario: e.fusoHorario ?? "America/Sao_Paulo",
+      motivo: "",
     });
     setErroEdicao(null);
     setEmpresaEditandoId(empresaId);
@@ -164,19 +199,27 @@ export function SuperAdminGrupoDetailPage() {
     setErroEdicao(null);
     setSalvando(true);
     try {
-      await atualizarEmpresaSuperAdmin(empresaEditandoId, {
+      const resposta = await atualizarEmpresaSuperAdmin(empresaEditandoId, {
         razaoSocial: formEmpresa.razaoSocial,
         cnpj: formEmpresa.cnpj,
         registroInpiAfd: formEmpresa.registroInpiAfd.trim()
           ? formEmpresa.registroInpiAfd.trim()
           : undefined,
         fusoHorario: formEmpresa.fusoHorario,
+        motivo: formEmpresa.motivo.trim() || undefined,
       });
       setEmpresaEditandoId(null);
+      if (resposta?.pendente) {
+        window.alert(resposta.mensagem);
+      }
       await carregar();
-    } catch {
+      await carregarPendentes();
+    } catch (err) {
+      const m = (err as { response?: { data?: { message?: string | string[] } } })
+        ?.response?.data?.message;
       setErroEdicao(
-        "Não foi possível salvar (confira se o CNPJ já não está em uso por outra empresa).",
+        (Array.isArray(m) ? m.join(" ") : m) ??
+          "Não foi possível salvar (confira se o CNPJ já não está em uso por outra empresa).",
       );
     } finally {
       setSalvando(false);
@@ -351,6 +394,36 @@ export function SuperAdminGrupoDetailPage() {
         {grupo.limiteMotoristas != null ? grupo.limiteMotoristas : "sem limite"}
       </p>
       {erroEdicao && <p className="error-text">{erroEdicao}</p>}
+      {pendentes.filter((p) => grupo?.empresas.some((e) => e.id === p.empresaId))
+        .length > 0 && (
+        <section>
+          <h3>Alterações de dados do empregador aguardando confirmação</h3>
+          <ul>
+            {pendentes
+              .filter((p) => grupo?.empresas.some((e) => e.id === p.empresaId))
+              .map((p) => (
+                <li key={p.id}>
+                  {p.empresa.razaoSocial} ({p.empresa.cnpj}),{" "}
+                  {Object.entries(p.alteracao)
+                    .map(([k, v]) => `${k} para ${v}`)
+                    .join("; ")}{" "}
+                  Motivo informado {p.motivo}{" "}
+                  <button type="button" onClick={() => decidirPendente(p.id, true)}>
+                    Confirmar
+                  </button>{" "}
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => decidirPendente(p.id, false)}
+                  >
+                    Recusar
+                  </button>
+                </li>
+              ))}
+          </ul>
+          <p>A confirmação precisa ser de um super admin diferente de quem pediu.</p>
+        </section>
+      )}
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>CNPJs do grupo</h3>
@@ -456,6 +529,19 @@ export function SuperAdminGrupoDetailPage() {
                           Usar o fuso deste computador
                         </button>
                       </div>
+                      <div>
+                        <label>Motivo da alteração (obrigatório se algo mudar)</label>
+                        <input
+                          maxLength={300}
+                          value={formEmpresa.motivo}
+                          onChange={(ev) =>
+                            setFormEmpresa((f) => ({
+                              ...f,
+                              motivo: ev.target.value,
+                            }))
+                          }
+                        />
+                      </div>
                       <button type="submit" disabled={salvando}>
                         Salvar
                       </button>
@@ -485,6 +571,12 @@ export function SuperAdminGrupoDetailPage() {
                     </button>
                     <button
                       className="secondary"
+                      onClick={() => setRegimeEmpresaId(e.id)}
+                    >
+                      Banco de horas
+                    </button>
+                    <button
+                      className="secondary"
                       onClick={() => alternarStatusEmpresa(e.id, e.ativo)}
                     >
                       {e.ativo ? "Desativar" : "Reativar"}
@@ -495,6 +587,25 @@ export function SuperAdminGrupoDetailPage() {
             )}
           </tbody>
         </table>
+        {regimeEmpresaId && (() => {
+          const emp = grupo.empresas.find((x) => x.id === regimeEmpresaId);
+          if (!emp) return null;
+          return (
+            <div style={{ marginTop: 16 }}>
+              <RegimeBancoHorasForm
+                key={emp.id}
+                empresaId={emp.id}
+                nome={emp.razaoSocial}
+                inicial={emp.bancoHoras}
+                onFechar={() => setRegimeEmpresaId(null)}
+                onSalvo={() => {
+                  setRegimeEmpresaId(null);
+                  void carregar();
+                }}
+              />
+            </div>
+          );
+        })()}
       </div>
 
       <div className="card">
@@ -755,11 +866,12 @@ export function SuperAdminGrupoDetailPage() {
           </tbody>
         </table>
         <p style={{ fontSize: 12, color: "#000000", marginTop: 8 }}>
-          Desde a Rodada 38, só o super admin cadastra e ativa/desativa
-          funcionário (ADMIN/GESTOR) de uma empresa cliente. O painel da própria
-          empresa não tem mais essa tela. Cada usuário edita seu próprio nome,
-          contato e e-mail em "Meu perfil"; trocar o papel (ADMIN/GESTOR) exige
-          desativar e recriar o cadastro.
+          O super admin cadastra e ativa/desativa funcionários (ADMIN/GESTOR)
+          de uma empresa cliente; os administradores da empresa também podem
+          gerenciar os usuários dela na tela "Usuários", conforme a permissão.
+          Cada usuário edita seu próprio nome, contato e e-mail em "Meu
+          perfil"; trocar o papel (ADMIN/GESTOR) exige desativar e recriar o
+          cadastro.
         </p>
       </div>
     </div>

@@ -34,6 +34,17 @@ import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
  * documento enviado e abrir a cerca virtual (coordenadas do destinatário)
  * direto no Google Maps.
  */
+function cpfValido(cpf: string): boolean {
+  if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+  for (const t of [9, 10]) {
+    let soma = 0;
+    for (let i = 0; i < t; i++) soma += Number(cpf[i]) * (t + 1 - i);
+    const dv = ((soma * 10) % 11) % 10;
+    if (dv !== Number(cpf[t])) return false;
+  }
+  return true;
+}
+
 export function DocumentosCargaPage() {
   const confirm = useConfirm();
   const [documentos, setDocumentos] = useState<DocumentoCarga[]>([]);
@@ -47,6 +58,8 @@ export function DocumentosCargaPage() {
   const [statusCarga, setStatusCarga] =
     useState<StatusCargaViagem>("CARREGADO");
   const [motoristaId, setMotoristaId] = useState("");
+  const [cpfBusca, setCpfBusca] = useState("");
+  const [cpfMsg, setCpfMsg] = useState<string | null>(null);
   const [numero, setNumero] = useState("");
   const [chaveAcesso, setChaveAcesso] = useState("");
   const [observacao, setObservacao] = useState("");
@@ -208,10 +221,56 @@ export function DocumentosCargaPage() {
             <option value="VAZIO">Vazio</option>
           </select>
 
+          <label>Buscar motorista por CPF (opcional)</label>
+          <input
+            inputMode="numeric"
+            placeholder="Digite o CPF (só os números são considerados)"
+            value={cpfBusca}
+            maxLength={18}
+            onChange={(e) => {
+              const digitos = e.target.value.replace(/\D/g, "").slice(0, 11);
+              setCpfBusca(digitos);
+              if (digitos.length < 11) {
+                setCpfMsg(null);
+                return;
+              }
+              if (!cpfValido(digitos)) {
+                setCpfMsg("CPF inválido.");
+                setMotoristaId("");
+                return;
+              }
+              const achado = motoristas.find(
+                (m) => String(m.cpf ?? "").replace(/\D/g, "") === digitos,
+              );
+              if (!achado) {
+                setCpfMsg("Nenhum motorista da sua empresa tem esse CPF.");
+                setMotoristaId("");
+                return;
+              }
+              setMotoristaId(achado.id);
+              setCpfMsg(`Motorista selecionado: ${achado.nome}`);
+            }}
+          />
+          {cpfMsg && (
+            <p
+              style={{
+                fontSize: 12,
+                margin: "2px 0 6px",
+                color: cpfMsg.startsWith("Motorista") ? "#166534" : "#b91c1c",
+              }}
+            >
+              {cpfMsg}
+            </p>
+          )}
+
           <label>Motorista (opcional)</label>
           <select
             value={motoristaId}
-            onChange={(e) => setMotoristaId(e.target.value)}
+            onChange={(e) => {
+              setMotoristaId(e.target.value);
+              setCpfBusca("");
+              setCpfMsg(null);
+            }}
           >
             <option value="">Nenhum</option>
             {motoristas.map((m) => (

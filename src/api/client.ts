@@ -119,6 +119,15 @@ api.interceptors.response.use(
         return api(original);
       }
     }
+    // Rodada 392: a empresa exige MFA e este ADMIN ainda não cadastrou: leva ao perfil.
+    if (
+      error.response?.status === 403 &&
+      (error.response.data as { codigo?: string } | undefined)?.codigo ===
+        "MFA_CADASTRO_PENDENTE" &&
+      !window.location.pathname.startsWith("/perfil")
+    ) {
+      window.location.assign("/perfil");
+    }
     return Promise.reject(error);
   },
 );

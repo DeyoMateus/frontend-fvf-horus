@@ -9,6 +9,9 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  // Rodada 375: com MFA ativo o servidor pede o código do autenticador.
+  const [pedeCodigo, setPedeCodigo] = useState(false);
+  const [codigoMfa, setCodigoMfa] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -17,7 +20,7 @@ export function LoginPage() {
     setErro(null);
     setEnviando(true);
     try {
-      await entrar(email, senha);
+      await entrar(email, senha, pedeCodigo ? codigoMfa.trim() : undefined);
       // Rodada 42: estava indo pra /motoristas (resquício de antes do
       // dashboard existir) , o destino certo depois do login é o Painel.
       navigate("/dashboard");
@@ -32,6 +35,18 @@ export function LoginPage() {
           erro.response.data?.message ??
             "Muitas tentativas de login. Tente novamente mais tarde.",
         );
+      } else if (
+        erro instanceof AxiosError &&
+        erro.response?.data?.codigo === "MFA_REQUERIDO"
+      ) {
+        setPedeCodigo(true);
+        setErro(null);
+      } else if (
+        pedeCodigo &&
+        erro instanceof AxiosError &&
+        erro.response?.status === 401
+      ) {
+        setErro("Código de verificação inválido.");
       } else {
         setErro("Credenciais inválidas.");
       }
@@ -64,6 +79,23 @@ export function LoginPage() {
             onChange={(e) => setSenha(e.target.value)}
             required
           />
+          {pedeCodigo && (
+            <>
+              <label>Código do aplicativo autenticador</label>
+              <input
+                inputMode="text"
+                autoComplete="one-time-code"
+                maxLength={16}
+                value={codigoMfa}
+                onChange={(e) => setCodigoMfa(e.target.value)}
+                autoFocus
+                required
+              />
+              <p style={{ fontSize: 12, marginTop: 2 }}>
+                Digite os 6 números do aplicativo ou um código de reserva.
+              </p>
+            </>
+          )}
           {erro && <p className="error-text">{erro}</p>}
           <button type="submit" disabled={enviando}>
             {enviando ? "Entrando..." : "Entrar"}

@@ -11,10 +11,11 @@ export interface SuperAdminLoginResponse {
 export async function loginSuperAdmin(
   email: string,
   senha: string,
+  codigoMfa?: string,
 ): Promise<SuperAdminLoginResponse> {
   const { data } = await superAdminApi.post<SuperAdminLoginResponse>(
     "/super-admin/auth/login",
-    { email, senha },
+    { email, senha, ...(codigoMfa ? { codigoMfa } : {}) },
   );
   setSuperAdminAccessToken(data.accessToken);
   return data;
@@ -37,4 +38,29 @@ export async function redefinirSenhaSuperAdmin(
     token,
     novaSenha,
   });
+}
+
+// Rodada 384: MFA (TOTP) do próprio super admin.
+export function obterEstadoMfaSuperAdmin() {
+  return superAdminApi
+    .get<{ mfaAtivo: boolean; codigosReservaRestantes: number }>("/super-admin/auth/mfa/estado")
+    .then((r) => r.data);
+}
+
+export function iniciarMfaSuperAdmin() {
+  return superAdminApi
+    .post<{ segredo: string; uri: string }>("/super-admin/auth/mfa/iniciar")
+    .then((r) => r.data);
+}
+
+export function confirmarMfaSuperAdmin(codigo: string) {
+  return superAdminApi
+    .post<{ codigosReserva: string[] }>("/super-admin/auth/mfa/confirmar", { codigo })
+    .then((r) => r.data);
+}
+
+export function desativarMfaSuperAdmin(senha: string, codigo: string) {
+  return superAdminApi
+    .post("/super-admin/auth/mfa/desativar", { senha, codigo })
+    .then(() => undefined);
 }

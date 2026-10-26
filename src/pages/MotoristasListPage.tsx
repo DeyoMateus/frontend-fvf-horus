@@ -23,6 +23,7 @@ import type {
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { usePrompt } from "../components/PromptProvider";
+import { ImportarContratosCard } from "../components/ImportarContratosCard";
 
 export function MotoristasListPage() {
   const { usuario } = useAuth();
@@ -657,6 +658,7 @@ export function MotoristasListPage() {
           </>
         )}
       </div>
+    {usuario?.papel === "ADMIN" && <ImportarContratosCard />}
     </div>
   );
 }

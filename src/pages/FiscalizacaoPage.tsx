@@ -161,8 +161,10 @@ export function FiscalizacaoPage() {
       <h2>Documentos para fiscalização</h2>
       <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
         Extrações pensadas para quando um fiscal do trabalho chega na empresa,
-        ou para faturar o tempo de espera em carga/descarga do embarcador, tudo
-        assinado digitalmente ou no leiaute oficial exigido.
+        ou para faturar o tempo de espera em carga/descarga do embarcador. Os
+        arquivos oficiais seguem o leiaute exigido, mas ainda não levam a
+        assinatura digital qualificada (ICP-Brasil), que depende do certificado
+        da empresa.
       </p>
 
       <div
@@ -201,8 +203,8 @@ export function FiscalizacaoPage() {
       <div className="card" style={{ marginBottom: 16 }}>
         <h3 style={{ marginTop: 0 }}>AFD oficial (Portaria MTP 671/2021)</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
-          Arquivo Fonte de Dados no leiaute binário oficial exigido pela
-          fiscalização. É o documento que a Portaria 671/2021 pede diretamente.
+          Arquivo Fonte de Dados (arquivo de texto) no leiaute oficial exigido
+          pela fiscalização, ainda sem a assinatura digital qualificada. É o documento que a Portaria 671/2021 pede diretamente.
           Sempre por CNPJ.
         </p>
         <div
@@ -240,9 +242,11 @@ export function FiscalizacaoPage() {
       <div className="card" style={{ marginBottom: 16 }}>
         <h3 style={{ marginTop: 0 }}>Dossiê de cobrança do tempo de espera</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
-          Ocorrências em que a espera em carga/descarga passou de 5h no mesmo
-          dia (Lei 13.103/2015, art. 235-A §9º). Pode ser cobrado do
-          embarcador/contratante do frete. Valor a cobrar não é calculado aqui
+          Ocorrências em que a espera em carga/descarga passou de 5h
+          contadas da chegada ao destino (Lei 11.442/2007, art. 11, §5º). A
+          cobrança é contra o contratante do frete e vale para o transportador
+          autônomo (TAC) e para a empresa de transporte (ETC). Não é
+          indenização ao empregado. Valor a cobrar não é calculado aqui
           (preencher na conferência com o faturamento).
         </p>
         {carregandoDossie ? (
@@ -271,11 +275,12 @@ export function FiscalizacaoPage() {
       {/* ===== Espelhos REP-P assinados, em lote ===== */}
       <div className="card">
         <h3 style={{ marginTop: 0 }}>
-          Espelhos de Ponto (REP-P) assinados da frota
+          Espelhos de Ponto (REP-P) da frota
         </h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
-          Cada espelho é assinado digitalmente com o certificado do próprio
-          motorista e traz a cadeia de hash do período. Nenhum marcado abaixo =
+          Cada espelho traz a cadeia de hash do período e a assinatura interna
+          do sistema em cada registro. Ainda não tem a assinatura digital
+          qualificada (ICP-Brasil). Nenhum marcado abaixo =
           frota inteira (todos os motoristas ativos).
         </p>
         <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 13 }}>
@@ -315,7 +320,7 @@ export function FiscalizacaoPage() {
         <button onClick={onBaixarRepPLote} disabled={gerandoRepP}>
           {gerandoRepP
             ? "Gerando… (pode levar um pouco para a frota inteira)"
-            : "Extrair documentos assinados (PDF)"}
+            : "Extrair espelhos (PDF)"}
         </button>
         {erroRepP && (
           <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroRepP}</p>

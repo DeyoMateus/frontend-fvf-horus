@@ -1,8 +1,8 @@
 import { api } from "./client";
 
 // Espelha DossieCobrancaController (Rodada 66) , extração do Dossiê de
-// Cobrança (tempo de espera em carga/descarga acima do limiar legal de
-// 5h, Lei 13.103/2015 art. 235-A §9º).
+// Cobrança (tempo de espera em carga/descarga acima do limiar de 5h,
+// Lei 11.442/2007 art. 11 §5º, cobrança contra o contratante).
 export interface ItemDossieCobranca {
   alertaId: string;
   motoristaId: string;
@@ -15,6 +15,7 @@ export interface ItemDossieCobranca {
   registroGeradorId: string;
   observacao: string;
   criadoEm: string;
+  documentos?: { tipo: string; numero: string | null; chaveAcesso: string | null }[];
 }
 
 export function listarDossieCobranca(

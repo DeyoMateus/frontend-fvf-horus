@@ -17,6 +17,7 @@ import {
   PASSOS_DO_TOUR,
   type PassoDoTour,
 } from "./passosDoTour";
+import { PalcoDoTour } from "./PalcoDoTour";
 import { localizarAlvo, retanguloDe, type Retangulo } from "./localizarAlvo";
 
 // Rodada 264 , tour guiado do primeiro acesso (e botão "Refazer tour").
@@ -43,6 +44,25 @@ const PREFIXO_MODULOS = "fvfhorus.tourModulos.v1.";
 const LARGURA_BALAO = 360;
 // Espaço entre o campo destacado e o balão: cabe a seta grossa (fora do balão).
 const FOLGA = 46;
+
+/**
+ * Rodada 346: leva o alvo para a área visível. Alvo baixo fica no centro da
+ * tela; alvo mais alto que a tela fica com o topo à vista. Rolagem instantânea
+ * (sem animação) para o tour não ficar "no meio do caminho".
+ */
+function rolarAteAlvo(els: HTMLElement[]) {
+  try {
+    const r = retanguloDe(els);
+    const alto = r ? r.height > window.innerHeight * 0.6 : false;
+    els[0].scrollIntoView({
+      block: alto ? "start" : "center",
+      inline: "nearest",
+      behavior: "instant" as ScrollBehavior,
+    });
+  } catch {
+    // navegador antigo , segue sem rolar
+  }
+}
 
 function lerVisto(chave: string): boolean {
   try {
@@ -245,7 +265,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       setPreparando(true);
-      setRetangulo(null);
+      // Rodada 346: o balão e a seta ficam onde estavam enquanto o próximo
+      // passo é preparado (antes iam para o centro da tela e depois
+      // pulavam para o alvo). Só passos sem alvo limpam o destaque.
+      if (!passo.alvo) setRetangulo(null);
       elementosAlvo.current = null;
 
       if (passo.detalheMotorista) {
@@ -302,11 +325,23 @@ export function TourProvider({ children }: { children: ReactNode }) {
         if (cancelado) return;
         if (els && els.length > 0) {
           elementosAlvo.current = els;
-          try {
-            els[0].scrollIntoView({ block: "center", inline: "nearest" });
-          } catch {
-            // navegador antigo , segue sem rolar
+          // Rodada 346: ao chegar de outra página, o conteúdo ainda está
+          // carregando e o alvo muda de lugar. Espera o alvo parar (até
+          // 1,5 s) antes de rolar; depois o acompanhamento abaixo
+          // reajusta a rolagem se ele ainda sair do lugar.
+          let ultimo = "";
+          let estavel = 0;
+          for (let i = 0; i < 15 && estavel < 2 && !cancelado; i++) {
+            const r = retanguloDe(els);
+            const chave = r
+              ? `${Math.round(r.top)}|${Math.round(r.height)}`
+              : "";
+            estavel = chave === ultimo ? estavel + 1 : 0;
+            ultimo = chave;
+            await dormir(100);
           }
+          if (cancelado) return;
+          rolarAteAlvo(els);
           await dormir(60);
         }
       }
@@ -324,6 +359,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (!ativo || preparando) return;
     let quadro = 0;
     const alvoExpr = passo?.alvo;
+    // Rodada 346: se o alvo sair da área visível (a página mudou de
+    // tamanho depois da primeira rolagem), rola de novo. Como o usuário
+    // não pode rolar durante o tour, o tour precisa garantir sozinho que
+    // o alvo está à vista. Limita as tentativas para não brigar com o
+    // layout se o alvo for impossível de enquadrar.
+    let ultimaRolagem = 0;
+    let tentativas = 0;
     function atualizar() {
       let els = elementosAlvo.current;
       if (els && els.some((e) => !e.isConnected) && alvoExpr) {
@@ -331,6 +373,20 @@ export function TourProvider({ children }: { children: ReactNode }) {
         elementosAlvo.current = els;
       }
       const novo = els ? retanguloDe(els) : null;
+      if (els && novo && tentativas < 25) {
+        const agora = performance.now();
+        const altura = window.innerHeight;
+        const alto = novo.height > altura * 0.6;
+        const visivel = alto
+          ? novo.top >= 0 && novo.top <= altura * 0.4
+          : novo.top >= 70 && novo.top + novo.height <= altura - 70;
+        const dentroDeCamada = els.some((e) => e.closest("[data-tour-camada]"));
+        if (!visivel && !dentroDeCamada && agora - ultimaRolagem > 300) {
+          ultimaRolagem = agora;
+          tentativas += 1;
+          rolarAteAlvo(els);
+        }
+      }
       setRetangulo((antigo) => {
         if (!novo && !antigo) return antigo;
         if (!novo || !antigo) return novo;
@@ -440,6 +496,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
   return (
     <TourContext.Provider value={valor}>
       {children}
+      {ativo && passo?.palco
+        ? createPortal(<PalcoDoTour tipo={passo.palco} />, document.body)
+        : null}
       {ativo && passo
         ? createPortal(
             <CamadaDoTour
@@ -602,6 +661,7 @@ function CamadaDoTour(props: {
         .fvf-tour-seta { animation: fvf-tour-seta 1s ease-in-out infinite; }
         .fvf-tour-anel { animation: fvf-tour-anel 1.4s ease-out infinite; }
         .fvf-tour-bolha button { font-family: inherit; }
+        .fvf-tour-bolha button:focus, .fvf-tour-bolha button:focus-visible { outline: none; }
         @media (prefers-reduced-motion: reduce) {
           .fvf-tour-seta, .fvf-tour-anel, .fvf-tour-destaque { animation: none !important; }
         }
@@ -624,7 +684,6 @@ function CamadaDoTour(props: {
             height: destaque.height,
             borderRadius: 8,
             pointerEvents: "none",
-            transition: "all .2s ease",
             animation: "fvf-tour-pulso 1.8s ease-in-out infinite",
           }}
         />
@@ -641,7 +700,6 @@ function CamadaDoTour(props: {
             width: TAM_SETA,
             height: TAM_SETA,
             pointerEvents: "none",
-            transition: "left .2s ease, top .2s ease",
           }}
         >
           <span
@@ -684,12 +742,11 @@ function CamadaDoTour(props: {
           width: largura,
           boxSizing: "border-box",
           background: "#fff",
-          color: "#1a1d23",
+          color: "#000",
           border: "2px solid #1a56db",
           borderRadius: 12,
           padding: "16px 18px 14px",
           boxShadow: "0 12px 40px rgba(0,0,0,.35)",
-          transition: "top .2s ease, left .2s ease",
           maxHeight: vh - 24,
           overflowY: "auto",
         }}
@@ -715,7 +772,7 @@ function CamadaDoTour(props: {
         >
           ×
         </button>
-        <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 6, paddingRight: 30 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "#000", marginBottom: 6, paddingRight: 30 }}>
           {props.moduloTitulo ? `${props.moduloTitulo} , ` : ""}passo {posicao} de {total}
         </div>
         <div style={{ height: 4, background: "#e5e7eb", borderRadius: 2, marginBottom: 12 }}>
@@ -725,16 +782,12 @@ function CamadaDoTour(props: {
         </div>
 
         <h3 style={{ margin: "0 0 8px", fontSize: 17 }}>{passo.titulo}</h3>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: "#1f2937" }}>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, fontWeight: 600, color: "#000" }}>
           {passo.texto}
         </p>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16 }}>
-          <button
-            type="button"
-            onClick={props.onModulos}
-            style={{ background: "transparent", color: "#1a56db", padding: "8px 4px", fontSize: 13, textDecoration: "underline" }}
-          >
+          <button type="button" className="secondary" onClick={props.onModulos}>
             Módulos
           </button>
           <span style={{ flex: 1 }} />
@@ -787,7 +840,7 @@ function SeletorDeModulos(props: {
           overflowY: "auto",
           boxSizing: "border-box",
           background: "#fff",
-          color: "#1a1d23",
+          color: "#000",
           border: "2px solid #1a56db",
           borderRadius: 12,
           padding: "20px 22px",
@@ -818,7 +871,7 @@ function SeletorDeModulos(props: {
         <h3 style={{ margin: "0 0 6px", fontSize: 19, paddingRight: 30 }}>
           Conheça o FVF Hórus aos poucos
         </h3>
-        <p style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.5, color: "#1f2937" }}>
+        <p style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.5, fontWeight: 600, color: "#000" }}>
           O passeio é dividido em módulos curtos, um para cada parte do menu.
           Faça um agora e volte para os outros quando tiver um tempinho. O
           que você já viu fica marcado.
@@ -840,7 +893,7 @@ function SeletorDeModulos(props: {
           </p>
         )}
 
-        <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 4 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "#000", marginBottom: 4 }}>
           {feitos} de {modulos.length} módulos vistos
         </div>
         <div style={{ height: 6, background: "#e5e7eb", borderRadius: 3, marginBottom: 14 }}>
@@ -875,7 +928,7 @@ function SeletorDeModulos(props: {
               style={{
                 textAlign: "left",
                 background: m.concluido ? "#f0fdf4" : "#f3f4f6",
-                color: "#1f2937",
+                color: "#000",
                 border: `1px solid ${m.concluido ? "#86efac" : "#d1d5db"}`,
                 borderRadius: 8,
                 padding: "10px 12px",
@@ -885,7 +938,7 @@ function SeletorDeModulos(props: {
                 {m.concluido ? "✓ " : ""}
                 {m.titulo}
               </div>
-              <div style={{ fontSize: 12, color: "#4b5563", margin: "2px 0" }}>{m.descricao}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#000", margin: "2px 0" }}>{m.descricao}</div>
               <div style={{ fontSize: 12, color: "#1a56db" }}>
                 {m.passos} passos , cerca de {Math.max(1, Math.round(m.passos / 4))} min
               </div>
@@ -897,7 +950,7 @@ function SeletorDeModulos(props: {
           <button
             type="button"
             onClick={() => props.onEscolher(null)}
-            style={{ background: "transparent", color: "#4b5563", padding: "6px 2px", fontSize: 13, textDecoration: "underline" }}
+            style={{ background: "transparent", color: "#000", padding: "6px 2px", fontSize: 13, textDecoration: "underline" }}
           >
             {tudoFeito ? "Rever tudo em sequência" : "Prefiro ver tudo em sequência"}
           </button>

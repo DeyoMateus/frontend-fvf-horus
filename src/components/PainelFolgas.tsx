@@ -189,7 +189,7 @@ function CartaoFolga({
         style={{
           fontSize: 28,
           fontWeight: 700,
-          color: cor ?? "#111827",
+          color: cor ?? "#000",
           lineHeight: 1.3,
         }}
       >

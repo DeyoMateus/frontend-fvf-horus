@@ -86,7 +86,7 @@ export function TextoLongo({
               }}
             >
               <h3 style={{ margin: "0 0 4px" }}>{titulo}</h3>
-              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: "#000", marginBottom: 10 }}>
                 {conteudo.length} caracteres
               </div>
               <div

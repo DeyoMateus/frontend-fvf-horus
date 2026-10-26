@@ -4,6 +4,7 @@ import type {
   CreateUsuarioGrupoInput,
   GrupoDetalhe,
   GrupoResumo,
+  AlteracaoIdentidadePendente,
   UpdateEmpresaInput,
   UpdateGrupoInput,
   UpdateUsuarioSuperAdminInput,
@@ -48,6 +49,26 @@ export async function atualizarEmpresaSuperAdmin(
   const { data } = await superAdminApi.patch(
     `/super-admin/empresas/${empresaId}`,
     input,
+  );
+  return data;
+}
+
+export async function listarAlteracoesIdentidadePendentes(): Promise<
+  AlteracaoIdentidadePendente[]
+> {
+  const { data } = await superAdminApi.get(
+    "/super-admin/empresas-alteracoes-pendentes",
+  );
+  return data;
+}
+
+export async function decidirAlteracaoIdentidade(
+  id: string,
+  confirmar: boolean,
+) {
+  const { data } = await superAdminApi.post(
+    `/super-admin/empresas-alteracoes-pendentes/${id}/decisao`,
+    { confirmar },
   );
   return data;
 }
@@ -115,6 +136,26 @@ export async function atualizarStatusUsuarioGrupo(
 export async function excluirUsuarioGrupo(grupoId: string, usuarioId: string) {
   const { data } = await superAdminApi.delete(
     `/super-admin/grupos/${grupoId}/usuarios/${usuarioId}`,
+  );
+  return data;
+}
+
+export async function atualizarRegimeBancoHorasSuperAdmin(
+  empresaId: string,
+  input: {
+    regime: string;
+    domingoFeriado: string;
+    documento?: string;
+    vigenciaInicio?: string;
+    tetoMin?: number;
+    fator?: number;
+    razaoAtivo: boolean;
+    motivo: string;
+  },
+) {
+  const { data } = await superAdminApi.patch(
+    `/super-admin/empresas/${empresaId}/banco-horas-regime`,
+    input,
   );
   return data;
 }

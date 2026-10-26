@@ -17,6 +17,14 @@ export function atualizarStatusUsuarioEmpresa(id: string, ativo: boolean) {
     .then((r) => r.data);
 }
 
+// Rodada 385: o ADMIN liga/desliga "aprovar ajuste" e "aceitar divergência" de outro usuário.
+export function atualizarPermissoesUsuario(
+  id: string,
+  permissoes: { podeAprovarAjuste?: boolean; podeAceitarDivergencia?: boolean },
+) {
+  return api.patch(`/usuarios-empresa/${id}/permissoes`, permissoes).then((r) => r.data);
+}
+
 // ===== Meu perfil (Rodada 38) =====
 // O próprio usuário vê/edita o PRÓPRIO cadastro aqui.
 
@@ -65,11 +73,34 @@ export function atualizarLimitesDocumentacao(input: LimitesEspera) {
     .then((r) => r.data);
 }
 
-export function atualizarLimitesEspera(input: LimitesEspera) {
+export function atualizarLimitesEspera(
+  input: LimitesEspera & { motivo?: string; referenciaCct?: string },
+) {
   return api
     .patch<LimitesEspera & { padrao: LimitesEspera }>(
       "/usuarios-empresa/limites-espera",
       input,
     )
+    .then((r) => r.data);
+}
+
+// ===== Rodada 347 =====
+export function alterarMinhaSenha(senhaAtual: string, novaSenha: string) {
+  return api
+    .patch<{ ok: boolean }>("/usuarios-empresa/me/senha", {
+      senhaAtual,
+      novaSenha,
+    })
+    .then((r) => r.data);
+}
+
+export function criarGestor(input: {
+  nome: string;
+  email: string;
+  senha: string;
+  telefoneWhatsapp?: string;
+}) {
+  return api
+    .post<UsuarioEmpresaListado>("/usuarios-empresa", input)
     .then((r) => r.data);
 }

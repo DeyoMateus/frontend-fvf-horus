@@ -1,6 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
-import { listarAuditoria, listarOcorrenciasAuditoria } from "../api/auditoria";
+import {
+  buscarAtoresAuditoria,
+  listarAuditoria,
+  listarOcorrenciasAuditoria,
+} from "../api/auditoria";
+import type { AtorBuscado } from "../api/auditoria";
 import type {
   ActorType,
   OcorrenciaAuditoria,
@@ -43,7 +48,28 @@ export function AuditoriaPage() {
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  const [actorType, setActorType] = useState<ActorType | "">("");
+  // Rodada 347: "Quem fez" = pessoas escolhidas numa busca automática por
+  // nome ou CPF (nada de digitar e apertar botão).
+  const [atoresSel, setAtoresSel] = useState<AtorBuscado[]>([]);
+  const [buscaAtor, setBuscaAtor] = useState("");
+  const [sugestoes, setSugestoes] = useState<AtorBuscado[]>([]);
+  const [buscandoAtor, setBuscandoAtor] = useState(false);
+
+  useEffect(() => {
+    const termo = buscaAtor.trim();
+    if (termo.length < 2) {
+      setSugestoes([]);
+      return;
+    }
+    setBuscandoAtor(true);
+    const t = setTimeout(() => {
+      buscarAtoresAuditoria(termo)
+        .then(setSugestoes)
+        .catch(() => setSugestoes([]))
+        .finally(() => setBuscandoAtor(false));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [buscaAtor]);
   const [registros, setRegistros] = useState<RegistroAuditoria[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -85,7 +111,8 @@ export function AuditoriaPage() {
       const resultado = await listarAuditoria({
         page,
         pageSize,
-        actorType: actorType || undefined,
+        actorIds:
+          atoresSel.length > 0 ? atoresSel.map((a) => a.actorId) : undefined,
         acoes: acoesSelecionadas.length > 0 ? acoesSelecionadas : undefined,
         dataInicio: dataInicio ? new Date(dataInicio).toISOString() : undefined,
         dataFim: dataFim
@@ -107,7 +134,7 @@ export function AuditoriaPage() {
     carregar(!primeiraCargaFeita.current);
     primeiraCargaFeita.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, actorType, ordem]);
+  }, [page, pageSize, atoresSel, ordem]);
 
   const porEntidade = useMemo(() => {
     const mapa = new Map<string, OcorrenciaAuditoria[]>();
@@ -152,11 +179,8 @@ export function AuditoriaPage() {
         Todo evento relevante gravado automaticamente pelo sistema (login,
         alteração de cadastro, exclusão, alertas, etc.). É imutável, nunca pode
         ser editado nem apagado. Mostra sempre quem de fato fez cada ação, pelo
-        nome (não só "usuário do painel" ou "motorista"). É restrita aos eventos
-        do seu grupo: ações do super admin da plataforma não aparecem aqui (elas
-        têm uma trilha própria, separada). Marque abaixo quais tipos de
-        ocorrência você quer ver e, opcionalmente, um período; a lista já
-        filtra.
+        nome. É restrita aos eventos do seu grupo. Marque abaixo quais tipos de
+        ocorrência você quer ver e, opcionalmente, um período a lista já filtra.
       </p>
 
       {ocorrencias.length > 0 && (
@@ -171,7 +195,7 @@ export function AuditoriaPage() {
                   style={{
                     fontWeight: 600,
                     fontSize: 12,
-                    color: "#374151",
+                    color: "#000",
                     marginBottom: 4,
                   }}
                 >
@@ -224,22 +248,84 @@ export function AuditoriaPage() {
             onChange={(e) => setDataFim(e.target.value)}
           />
         </label>
-        <label>
-          Quem fez:{" "}
-          <select
-            value={actorType}
-            onChange={(e) => setActorType(e.target.value as ActorType | "")}
-          >
-            <option value="">Todos</option>
-            {(Object.keys(ROTULO_ACTOR_TYPE) as ActorType[])
-              .filter((t) => t !== "SUPER_ADMIN")
-              .map((t) => (
-                <option key={t} value={t}>
-                  {ROTULO_ACTOR_TYPE[t]}
-                </option>
+        <div style={{ position: "relative", minWidth: 260 }}>
+          <label>
+            Quem fez:{" "}
+            <input
+              value={buscaAtor}
+              onChange={(e) => setBuscaAtor(e.target.value)}
+              placeholder="Digite o nome ou o CPF"
+              maxLength={80}
+              autoComplete="off"
+            />
+          </label>
+          {buscaAtor.trim().length >= 2 && (
+            <div
+              className="card"
+              style={{
+                position: "absolute",
+                zIndex: 60,
+                top: "calc(100% + 2px)",
+                left: 0,
+                width: 340,
+                maxHeight: 260,
+                overflowY: "auto",
+                padding: 6,
+              }}
+            >
+              {buscandoAtor && <p style={{ margin: 4, fontSize: 13 }}>Buscando...</p>}
+              {!buscandoAtor && sugestoes.length === 0 && (
+                <p style={{ margin: 4, fontSize: 13 }}>Ninguém encontrado.</p>
+              )}
+              {sugestoes.map((a) => {
+                const marcado = atoresSel.some((x) => x.actorId === a.actorId);
+                return (
+                  <label
+                    key={a.actorId}
+                    style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "4px 2px", fontSize: 13 }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={marcado}
+                      onChange={() => {
+                        setPage(1);
+                        setAtoresSel((prev) =>
+                          marcado
+                            ? prev.filter((x) => x.actorId !== a.actorId)
+                            : [...prev, a],
+                        );
+                      }}
+                    />
+                    <span>
+                      <strong>{a.nome}</strong>
+                      <br />
+                      <span style={{ fontSize: 12 }}>{a.detalhe}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+          {atoresSel.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+              {atoresSel.map((a) => (
+                <button
+                  key={a.actorId}
+                  type="button"
+                  className="secondary"
+                  title="Remover do filtro"
+                  onClick={() => {
+                    setPage(1);
+                    setAtoresSel((prev) => prev.filter((x) => x.actorId !== a.actorId));
+                  }}
+                  style={{ fontSize: 12, padding: "2px 8px" }}
+                >
+                  {a.nome} ×
+                </button>
               ))}
-          </select>
-        </label>
+            </div>
+          )}
+        </div>
         <label>
           Ordem:{" "}
           <select

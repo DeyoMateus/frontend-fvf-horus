@@ -409,7 +409,7 @@ export function AlertasJornadaPage() {
                                   ? "#b91c1c"
                                   : a.severidade === "ATENCAO"
                                     ? "#b45309"
-                                    : "#374151",
+                                    : "#000",
                               fontWeight: 600,
                             }}
                           >

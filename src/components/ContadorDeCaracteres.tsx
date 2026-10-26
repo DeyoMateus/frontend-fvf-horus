@@ -95,7 +95,7 @@ export function ContadorDeCaracteres() {
             ? "#b91c1c"
             : tamanho >= max * 0.9
               ? "#b45309"
-              : "#6b7280";
+              : "#000";
         const peso = tamanho >= max ? "700" : "400";
         if (span.style.color !== cor) span.style.color = cor;
         if (span.style.fontWeight !== peso) span.style.fontWeight = peso;

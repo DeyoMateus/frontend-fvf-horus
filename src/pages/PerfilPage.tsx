@@ -8,10 +8,13 @@ import {
   obterMeuPerfil,
 } from "../api/usuariosEmpresa";
 import type { UsuarioEmpresaListado } from "../api/types";
+import { alterarMinhaSenha } from "../api/usuariosEmpresa";
+import { useAuth } from "../context/AuthContext";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { obterMinhaPolitica } from "../api/privacidade";
 import type { MinhaPolitica } from "../api/privacidade";
 import { PoliticaPrivacidadeModal } from "../components/PoliticaPrivacidadeModal";
+import { MfaCard } from "../components/MfaCard";
 
 /**
  * "Meu perfil" (Rodada 38) , o próprio ADMIN/GESTOR logado edita seu
@@ -25,12 +28,15 @@ import { PoliticaPrivacidadeModal } from "../components/PoliticaPrivacidadeModal
  * preciso sair e entrar de novo pra usar o e-mail novo no próximo
  * login (a sessão atual continua válida normalmente até então).
  */
-// A tela trabalha em horas (ex.: 4.75 = 4h45); a API continua em minutos.
+// A tela trabalha em HH:MM (ex.: 04:45); a API continua em minutos.
 function minParaHoras(min: number): string {
-  return String(Math.round((min / 60) * 100) / 100);
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 function horasParaMin(h: string): number {
-  return Math.round(Number(String(h).replace(",", ".")) * 60);
+  const [hh, mm] = String(h).split(":");
+  return Number(hh) * 60 + Number(mm ?? 0);
 }
 
 export function PerfilPage() {
@@ -50,15 +56,24 @@ export function PerfilPage() {
   const [email, setEmail] = useState("");
   const [telefoneWhatsapp, setTelefoneWhatsapp] = useState("");
   const [telefoneGr, setTelefoneGr] = useState("");
-  const [limInfo, setLimInfo] = useState("3");
-  const [limAtencao, setLimAtencao] = useState("4.75");
-  const [limCritico, setLimCritico] = useState("5");
-  const [docInfo, setDocInfo] = useState("3");
-  const [docAtencao, setDocAtencao] = useState("4.75");
-  const [docCritico, setDocCritico] = useState("5");
+  const [limInfo, setLimInfo] = useState("03:00");
+  const [limAtencao, setLimAtencao] = useState("04:45");
+  const [limCritico, setLimCritico] = useState("05:00");
+  const [limMotivo, setLimMotivo] = useState("");
+  const [limCct, setLimCct] = useState("");
+  const [docInfo, setDocInfo] = useState("03:00");
+  const [docAtencao, setDocAtencao] = useState("04:45");
+  const [docCritico, setDocCritico] = useState("05:00");
   const [salvandoGr, setSalvandoGr] = useState(false);
   const [erroGr, setErroGr] = useState<string | null>(null);
   const [sucessoGr, setSucessoGr] = useState<string | null>(null);
+  const { sair } = useAuth();
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmaSenha, setConfirmaSenha] = useState("");
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+  const [erroSenha, setErroSenha] = useState<string | null>(null);
+  const [sucessoSenha, setSucessoSenha] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -126,6 +141,33 @@ export function PerfilPage() {
     }
   }
 
+  async function onTrocarSenha(e: FormEvent) {
+    e.preventDefault();
+    setErroSenha(null);
+    setSucessoSenha(null);
+    if (novaSenha !== confirmaSenha) {
+      setErroSenha("A confirmação não confere com a nova senha.");
+      return;
+    }
+    setSalvandoSenha(true);
+    try {
+      await alterarMinhaSenha(senhaAtual, novaSenha);
+      setSucessoSenha("Senha alterada. Você será desconectado para entrar de novo.");
+      setTimeout(() => {
+        void sair();
+      }, 1800);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      setErroSenha(
+        Array.isArray(msg)
+          ? msg.join(" ")
+          : (msg ?? "Não foi possível alterar a senha."),
+      );
+    } finally {
+      setSalvandoSenha(false);
+    }
+  }
+
   async function salvarGr(e: FormEvent) {
     e.preventDefault();
     setErroGr(null);
@@ -142,6 +184,8 @@ export function PerfilPage() {
         infoMin: horasParaMin(limInfo),
         atencaoMin: horasParaMin(limAtencao),
         criticoMin: horasParaMin(limCritico),
+        motivo: limMotivo.trim() || undefined,
+        referenciaCct: limCct.trim() || undefined,
       });
       await atualizarLimitesDocumentacao({
         infoMin: horasParaMin(docInfo),
@@ -249,9 +293,60 @@ export function PerfilPage() {
             </button>
           </div>
         </form>
+
+        <form onSubmit={onTrocarSenha} style={{ marginTop: 20 }}>
+          <h4 style={{ marginBottom: 4 }}>Alterar senha</h4>
+          <label>Senha atual</label>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={senhaAtual}
+            onChange={(e) => setSenhaAtual(e.target.value)}
+            maxLength={128}
+            required
+          />
+          <label style={{ marginTop: 8, display: "block" }}>Nova senha</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+            minLength={8}
+            maxLength={128}
+            required
+          />
+          <label style={{ marginTop: 8, display: "block" }}>
+            Confirmar nova senha
+          </label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={confirmaSenha}
+            onChange={(e) => setConfirmaSenha(e.target.value)}
+            minLength={8}
+            maxLength={128}
+            required
+          />
+          <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
+            Mínimo de 8 caracteres. Ao alterar, todas as sessões são encerradas
+            e você entra de novo com a nova senha.
+          </p>
+          {erroSenha && <p className="error-text">{erroSenha}</p>}
+          {sucessoSenha && (
+            <p style={{ color: "#166534", fontSize: 13 }}>{sucessoSenha}</p>
+          )}
+          <div style={{ marginTop: 12 }}>
+            <button type="submit" disabled={salvandoSenha}>
+              {salvandoSenha ? "Alterando…" : "Alterar senha"}
+            </button>
+          </div>
+        </form>
       </div>
 
-      <div className="card" style={{ maxWidth: 480, margin: "0 auto" }}>
+      <MfaCard ativo={!!perfil?.mfaAtivo} onMudou={() => obterMeuPerfil().then(setPerfil).catch(() => undefined)}
+      />
+
+      <div className="card" style={{ maxWidth: 480, margin: "16px auto 0" }}>
         <h3 style={{ marginTop: 0 }}>Gerenciamento de Risco (GR)</h3>
         <form onSubmit={salvarGr}>
           {perfil?.papel === "ADMIN" && !perfil.adminPrincipal && (
@@ -279,28 +374,28 @@ export function PerfilPage() {
 
           <h4 style={{ marginBottom: 4 }}>Limites de espera do motorista</h4>
           <p style={{ fontSize: 12, color: "#000000", marginTop: 0 }}>
-            Tempo acumulado de espera em carga/descarga na jornada, em horas
-            (ex.: 4,75 = 4h45). A referência legal é 5 h. Padrão: 3 / 4,75 / 5.
+            Tempo acumulado de espera em carga/descarga na jornada, no formato
+            HH:MM. A referência legal é 05:00. Padrão: 03:00 / 04:45 / 05:00.
           </p>
-          <label>Aviso informativo (horas)</label>
+          <label>Aviso informativo</label>
           <input
-            type="number" min={0.25} max={24} step={0.25} required
+            type="time" required
             value={limInfo}
             onChange={(e) => setLimInfo(e.target.value)}
           />
           <label style={{ marginTop: 8, display: "block" }}>
-            Próximo do limite (horas)
+            Próximo do limite 
           </label>
           <input
-            type="number" min={0.25} max={24} step={0.25} required
+            type="time" required
             value={limAtencao}
             onChange={(e) => setLimAtencao(e.target.value)}
           />
           <label style={{ marginTop: 8, display: "block" }}>
-            Limite atingido (horas)
+            Limite atingido 
           </label>
           <input
-            type="number" min={0.25} max={24} step={0.25} required
+            type="time" required
             value={limCritico}
             onChange={(e) => setLimCritico(e.target.value)}
           />
@@ -308,34 +403,51 @@ export function PerfilPage() {
             Os valores precisam estar em ordem crescente. Vale para jornadas
             novas e para as que ainda estão em andamento.
           </p>
+          <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
+            Para ampliar o limite atingido acima de 2 horas, somente um
+            administrador, informando o motivo e a convenção ou acordo
+            coletivo que sustenta.
+          </p>
+          <label>Motivo da ampliação</label>
+          <input
+            maxLength={300}
+            value={limMotivo}
+            onChange={(e) => setLimMotivo(e.target.value)}
+          />
+          <label>Convenção ou acordo coletivo</label>
+          <input
+            maxLength={120}
+            value={limCct}
+            onChange={(e) => setLimCct(e.target.value)}
+          />
 
           <h4 style={{ marginBottom: 4 }}>
             Limites de aguardando documentação
           </h4>
           <p style={{ fontSize: 12, color: "#000000", marginTop: 0 }}>
             Tempo acumulado do motorista em "Aguardando documentação" na
-            jornada, em horas (ex.: 4,75 = 4h45). Funciona igual à espera:
-            aviso informativo, atenção e crítico. Padrão: 3 / 4,75 / 5.
+            jornada, no formato HH:MM. Funciona igual à espera: aviso
+            informativo, atenção e crítico. Padrão: 03:00 / 04:45 / 05:00.
           </p>
-          <label>Aviso informativo (horas)</label>
+          <label>Aviso informativo</label>
           <input
-            type="number" min={0.25} max={24} step={0.25} required
+            type="time" required
             value={docInfo}
             onChange={(e) => setDocInfo(e.target.value)}
           />
           <label style={{ marginTop: 8, display: "block" }}>
-            Próximo do limite (horas)
+            Próximo do limite 
           </label>
           <input
-            type="number" min={0.25} max={24} step={0.25} required
+            type="time" required
             value={docAtencao}
             onChange={(e) => setDocAtencao(e.target.value)}
           />
           <label style={{ marginTop: 8, display: "block" }}>
-            Limite atingido (horas)
+            Limite atingido 
           </label>
           <input
-            type="number" min={0.25} max={24} step={0.25} required
+            type="time" required
             value={docCritico}
             onChange={(e) => setDocCritico(e.target.value)}
           />

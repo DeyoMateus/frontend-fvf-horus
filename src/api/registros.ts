@@ -74,12 +74,43 @@ export function aceitarDivergenciaIntegridade(
   motoristaId: string,
   sequencial: number,
   motivo: string,
+  motivoTipo: string = "OUTRO",
 ) {
   return api
     .patch(
       `/registros-jornada/motorista/${motoristaId}/integridade/${sequencial}/aceitar`,
-      { motivo },
+      { motivo, motivoTipo },
     )
+    .then((r) => r.data);
+}
+
+export interface PedidoAceiteIntegridade {
+  id: string;
+  sequencial: number;
+  motivoTipo: string;
+  motivo: string;
+  solicitadoPorUsuarioId: string;
+  createdAt: string;
+}
+
+export function listarPedidosAceiteIntegridade(
+  motoristaId: string,
+): Promise<PedidoAceiteIntegridade[]> {
+  return api
+    .get(`/registros-jornada/motorista/${motoristaId}/integridade-pedidos`)
+    .then((r) => r.data);
+}
+
+export function decidirPedidoAceiteIntegridade(
+  pedidoId: string,
+  aprovar: boolean,
+  motivoDecisao?: string,
+) {
+  return api
+    .patch(`/registros-jornada/integridade-pedidos/${pedidoId}`, {
+      aprovar,
+      motivoDecisao,
+    })
     .then((r) => r.data);
 }
 
@@ -114,8 +145,8 @@ export function listarViagens(motoristaId: string) {
     .then((r) => r.data);
 }
 
-/** Baixa o AEJ (export estruturado em CSV , ver AejService sobre o que isto é e não é) e dispara o download. */
-export async function baixarAej(
+/** Baixa a planilha CSV da jornada (conveniência; NÃO é o AEJ oficial). */
+export async function baixarPlanilhaJornada(
   motoristaId: string,
   periodo?: { inicio?: string; fim?: string },
 ) {
@@ -124,7 +155,7 @@ export async function baixarAej(
   if (periodo?.fim) params.fim = periodo.fim;
 
   const resposta = await api.get(
-    `/registros-jornada/motorista/${motoristaId}/aej`,
+    `/registros-jornada/motorista/${motoristaId}/aej-planilha`,
     {
       params,
       responseType: "blob",
@@ -136,7 +167,7 @@ export async function baixarAej(
   );
   const link = document.createElement("a");
   link.href = url;
-  link.download = `aej-${motoristaId}.csv`;
+  link.download = `planilha-jornada-${motoristaId}.csv`;
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -202,6 +233,30 @@ export async function baixarEspelhoRepP(
   const link = document.createElement("a");
   link.href = url;
   link.download = `espelho-rep-p-${motoristaId}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+/** Baixa o AEJ no leiaute oficial (Anexo VI da Portaria 671/2021, texto ISO 8859-1). */
+export async function baixarAej(
+  motoristaId: string,
+  periodo?: { inicio?: string; fim?: string },
+) {
+  const params: Record<string, string> = {};
+  if (periodo?.inicio) params.inicio = periodo.inicio;
+  if (periodo?.fim) params.fim = periodo.fim;
+  const resposta = await api.get(
+    `/registros-jornada/motorista/${motoristaId}/aej`,
+    { params, responseType: "blob" },
+  );
+  const url = window.URL.createObjectURL(
+    new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `AEJ-${motoristaId}.txt`;
   document.body.appendChild(link);
   link.click();
   link.remove();

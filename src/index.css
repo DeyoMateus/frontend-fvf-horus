@@ -267,7 +267,7 @@ input[type="radio"] {
 label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #000;
 }
 
 button {
@@ -308,7 +308,7 @@ button {
   gap: 6px;
   width: auto;
   background: #fff;
-  color: #111827;
+  color: #000;
   border: 1px solid #d3d7de;
   border-radius: 6px;
   padding: 8px 10px;
@@ -338,7 +338,7 @@ button {
   height: 15px;
   border-radius: 2px;
   background: #eef1f5;
-  color: #374151;
+  color: #000;
   font-size: 9px;
   font-weight: 700;
   flex-shrink: 0;
@@ -373,7 +373,7 @@ button {
   margin: 0;
   font-size: 13px;
   font-weight: 400;
-  color: #111827;
+  color: #000;
   text-align: left;
   cursor: pointer;
 }
@@ -389,7 +389,7 @@ button:disabled {
 
 button.secondary {
   background: #e5e7eb;
-  color: #1f2937;
+  color: #000;
 }
 
 button.danger {
@@ -414,7 +414,7 @@ button.danger {
 }
 .badge.neutro {
   background: #e5e7eb;
-  color: #374151;
+  color: #000;
 }
 
 .error-text {
@@ -740,7 +740,7 @@ button.danger {
 .confirm-modal p {
   margin: 0 0 18px;
   font-size: 14px;
-  color: #374151;
+  color: #000;
   line-height: 1.5;
 }
 
@@ -762,7 +762,7 @@ textarea[maxlength] {
 /* ===== Botão de link externo (Rodada 95) , ex.: abrir no mapa ===== */
 .botao-link-externo {
   background: #e5e7eb;
-  color: #1f2937;
+  color: #000;
   border: 1px solid #d3d7de;
   border-radius: 6px;
   padding: 6px 12px;
@@ -1026,10 +1026,38 @@ textarea {
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
   cursor: help;
 }
+/* Rodada 350: no menu recolhido a bolinha fica à direita, na altura das
+   iniciais, e a aba com pendência ganha um espaço reservado para ela não
+   encostar nas letras. */
 .sidebar-colapsada .sidebar nav a .nav-bolinha {
-  right: 6px;
-  top: 8px;
-  margin-top: 0;
+  right: 4px;
+  top: 50%;
+  margin-top: -4px;
+  width: 8px;
+  height: 8px;
+}
+.sidebar-colapsada .sidebar nav a:has(.nav-bolinha) {
+  padding-left: 0;
+  padding-right: 14px;
+}
+
+/* Barra de rolagem do menu lateral: fina e discreta. */
+.sidebar nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.sidebar nav::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+}
+.sidebar nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 .nav-bolinha-resumo {
   position: fixed;
@@ -1056,5 +1084,5 @@ textarea {
 .nav-bolinha-mais {
   display: block;
   margin-top: 4px;
-  color: #6b7280;
+  color: #000;
 }

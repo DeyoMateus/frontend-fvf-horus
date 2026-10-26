@@ -248,7 +248,7 @@ export function SuperAdminAuditoriaPage() {
                   style={{
                     fontWeight: 600,
                     fontSize: 12,
-                    color: "#374151",
+                    color: "#000",
                     marginBottom: 4,
                   }}
                 >

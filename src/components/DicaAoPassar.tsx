@@ -49,7 +49,7 @@ export function DicaAoPassar({
           marginLeft: 8,
           borderRadius: "50%",
           border: "1.5px solid #6b7280",
-          color: "#4b5563",
+          color: "#000",
           fontSize: 12,
           fontWeight: 700,
           lineHeight: 1,

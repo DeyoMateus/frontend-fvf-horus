@@ -4,8 +4,13 @@ import { Link, useParams } from "react-router-dom";
 import {
   aceitarDivergenciaIntegridade,
   analisarEventoIntegridade,
+  decidirPedidoAceiteIntegridade,
+  listarPedidosAceiteIntegridade,
 } from "../api/registros";
-import type { AnaliseEventoIntegridade } from "../api/registros";
+import type {
+  AnaliseEventoIntegridade,
+  PedidoAceiteIntegridade,
+} from "../api/registros";
 import { usePrompt } from "../components/PromptProvider";
 
 function dataHora(v: string | null | undefined): string {
@@ -37,6 +42,7 @@ export function EventoIntegridadePage() {
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [aceitando, setAceitando] = useState(false);
+  const [pedidos, setPedidos] = useState<PedidoAceiteIntegridade[]>([]);
 
   async function carregar() {
     if (!motoristaId || !sequencial) return;
@@ -46,6 +52,12 @@ export function EventoIntegridadePage() {
       setAnalise(
         await analisarEventoIntegridade(motoristaId, Number(sequencial)),
       );
+      try {
+        const todos = await listarPedidosAceiteIntegridade(motoristaId);
+        setPedidos(todos.filter((p) => p.sequencial === Number(sequencial)));
+      } catch {
+        setPedidos([]);
+      }
     } catch {
       setErro("Não foi possível carregar a análise deste evento.");
     } finally {
@@ -73,14 +85,38 @@ export function EventoIntegridadePage() {
     if (motivo === null) return;
     setAceitando(true);
     try {
-      await aceitarDivergenciaIntegridade(
+      const resposta = await aceitarDivergenciaIntegridade(
         motoristaId,
         Number(sequencial),
         motivo.trim(),
       );
+      if (resposta?.pendente) window.alert(resposta.mensagem);
       await carregar();
     } finally {
       setAceitando(false);
+    }
+  }
+
+  async function onDecidirPedido(pedidoId: string, aprovar: boolean) {
+    let motivoDecisao: string | undefined;
+    if (!aprovar) {
+      const m = await prompt("Informe o motivo da recusa.", {
+        titulo: "Recusar pedido de aceite",
+        placeholder: "Motivo (obrigatório)",
+        multilinha: true,
+        textoConfirmar: "Recusar",
+        validar: (v) => (!v.trim() ? "Informe o motivo." : null),
+      });
+      if (m === null) return;
+      motivoDecisao = m.trim();
+    }
+    try {
+      await decidirPedidoAceiteIntegridade(pedidoId, aprovar, motivoDecisao);
+      await carregar();
+    } catch (err) {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      window.alert(msg ?? "Não foi possível registrar a decisão.");
     }
   }
 
@@ -135,6 +171,35 @@ export function EventoIntegridadePage() {
             Regularizado por {analise.aceite.aceitoPorNome} em{" "}
             {dataHora(analise.aceite.aceitoEm)}. Motivo: {analise.aceite.motivo}
           </p>
+        ) : pedidos.length > 0 ? (
+          <div style={{ marginTop: 8 }}>
+            {pedidos.map((p) => (
+              <p key={p.id} style={{ margin: "4px 0", fontSize: 13 }}>
+                Pedido de aceite aguardando outro administrador. Motivo{" "}
+                {p.motivo}{" "}
+                {usuario?.papel === "ADMIN" &&
+                  usuario.sub !== p.solicitadoPorUsuarioId && (
+                    <>
+                      <button
+                        type="button"
+                        style={{ fontSize: 12, padding: "2px 8px" }}
+                        onClick={() => onDecidirPedido(p.id, true)}
+                      >
+                        Aprovar
+                      </button>{" "}
+                      <button
+                        type="button"
+                        className="secondary"
+                        style={{ fontSize: 12, padding: "2px 8px" }}
+                        onClick={() => onDecidirPedido(p.id, false)}
+                      >
+                        Recusar
+                      </button>
+                    </>
+                  )}
+              </p>
+            ))}
+          </div>
         ) : (
           analise.divergente && (
             <button

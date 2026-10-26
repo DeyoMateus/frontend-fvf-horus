@@ -7,6 +7,7 @@ import {
 } from "../api/empresas";
 import { useConfirm } from "../components/ConfirmProvider";
 import { useAuth } from "../context/AuthContext";
+import { EstabelecimentoCard } from "../components/EstabelecimentoCard";
 import type { Empresa } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
@@ -88,7 +89,7 @@ export function EmpresasPage() {
     setErroLinha(null);
     setSalvandoEdit(true);
     try {
-      await atualizarEmpresa(id, { razaoSocial: razaoEdit, cnpj: cnpjEdit });
+      await atualizarEmpresa(id, { razaoSocial: razaoEdit });
       setEditandoId(null);
       await carregar();
     } catch (err) {
@@ -204,12 +205,7 @@ export function EmpresasPage() {
                           />
                         </td>
                         <td>
-                          <input
-                            value={cnpjEdit}
-                            onChange={(e) => setCnpjEdit(e.target.value)}
-                            maxLength={14}
-                            inputMode="numeric"
-                          />
+                          {cnpjEdit}
                         </td>
                         <td style={{ whiteSpace: "nowrap" }}>
                           <button
@@ -274,6 +270,10 @@ export function EmpresasPage() {
           </>
         )}
       </div>
+
+      {usuario?.papel === "ADMIN" && empresas.length > 0 && (
+        <EstabelecimentoCard empresas={empresas} onSalvo={() => void carregar()} />
+      )}
     </div>
   );
 }

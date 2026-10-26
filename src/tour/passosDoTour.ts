@@ -7,6 +7,8 @@
 //
 // Regra de escrita dos textos , sem dois pontos e sem travessão.
 
+import type { TipoDePalco } from "./PalcoDoTour";
+
 export interface ModuloDoTour {
   id: string;
   titulo: string;
@@ -28,7 +30,7 @@ export const MODULOS_DO_TOUR: ModuloDoTour[] = [
   { id: "regras", titulo: "Regras sindicais", descricao: "Convenção coletiva, horas extras, adicional noturno e banco de horas." },
   { id: "empresas", titulo: "Empresas", descricao: "Os CNPJs que fazem parte do seu grupo." },
   { id: "auditoria", titulo: "Auditoria", descricao: "Histórico de tudo o que foi feito no sistema." },
-  { id: "lgpd", titulo: "Privacidade (LGPD)", descricao: "Pedidos dos titulares, encarregado e termos aceitos." },
+  { id: "lgpd", titulo: "Privacidade (LGPD)", descricao: "Pedidos dos titulares, contato interno do encarregado e termos aceitos." },
   { id: "usuarios", titulo: "Usuários", descricao: "Quem tem acesso ao painel do grupo.", somenteAdmin: true },
   { id: "configuracao", titulo: "Configuração", descricao: "Seus dados, política de privacidade, gerenciamento de risco e limites de espera." },
 ];
@@ -40,6 +42,12 @@ export interface PassoDoTour {
   rota?: string;
   /** Passo da ficha de um motorista (abre o primeiro motorista da lista). */
   detalheMotorista?: boolean;
+  /**
+   * Rodada 347: tela de exemplo (teatro com dados inventados) desenhada por
+   * cima da página real durante o passo, para o tour funcionar mesmo em
+   * empresa nova, sem nenhum motorista ou pedido cadastrado.
+   */
+  palco?: TipoDePalco;
   /** Expressão do elemento destacado. Sem alvo, o balão fica no centro. */
   alvo?: string;
   titulo: string;
@@ -133,7 +141,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: nav("/lgpd"),
     titulo: "Privacidade (LGPD)",
     texto:
-      "Central de privacidade. Aqui você atende os pedidos dos titulares dos dados, cadastra o encarregado pelo tratamento de dados e acompanha quem já aceitou a política e os termos.",
+      "Central de privacidade. Aqui você atende os pedidos dos titulares dos dados, cadastra o contato interno do encarregado pelo tratamento de dados e acompanha quem já aceitou a política e os termos.",
   },
   {
     modulo: "menu",
@@ -383,6 +391,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   // ===== Motoristas =====
   {
     modulo: "motoristas",
+    palco: "motoristas",
     rota: "/motoristas",
     alvo: "titulo:Motoristas",
     titulo: "Motoristas",
@@ -391,6 +400,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "titulo:Cadastrar motorista",
     titulo: "Cadastrar motorista",
     texto:
@@ -398,12 +408,14 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "rotulo:Nome",
     titulo: "Nome",
     texto: "Nome completo do motorista, do jeito que aparece no documento.",
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "rotulo:CPF",
     titulo: "CPF",
     texto:
@@ -411,12 +423,14 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "rotulo:CNH",
     titulo: "CNH",
     texto: "Número da carteira de habilitação do motorista.",
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "rotulo:Telefone de contato",
     titulo: "Telefone de contato",
     texto:
@@ -424,6 +438,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "rotulo:ID do rastreador",
     titulo: "Rastreador",
     texto:
@@ -431,6 +446,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "rotulo:Empresa (CNPJ)",
     titulo: "Empresa do motorista",
     texto:
@@ -438,6 +454,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "titulo:Radar",
     titulo: "Radar de dias sem interação",
     texto:
@@ -445,6 +462,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "titulo:Solicitações de troca de aparelho",
     titulo: "Pedidos de troca de aparelho",
     texto:
@@ -452,6 +470,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "coluna:Dispositivo",
     titulo: "Lista de motoristas",
     texto:
@@ -459,6 +478,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "motoristas",
+    palco: "motoristas",
     alvo: "botao:Ver detalhes",
     titulo: "Ver detalhes",
     texto:
@@ -468,14 +488,54 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   // ===== Ficha do motorista =====
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     titulo: "Ficha do motorista",
     texto:
       "Esta é a ficha de um motorista. Tudo sobre ele fica reunido aqui, dos dados cadastrais até a jornada de cada dia.",
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
+    alvo: "botao:Editar",
+    titulo: "Botão Editar",
+    texto:
+      "Abre o formulário para corrigir os dados cadastrais do motorista. É o formulário que aparece logo abaixo, neste exemplo.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
+    alvo: "botao:Reativar",
+    titulo: "Botão Reativar",
+    texto:
+      "Aparece quando o motorista está suspenso ou inativo. Ao reativar, ele volta a registrar o ponto normalmente no aplicativo.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
+    alvo: "botao:Suspender",
+    titulo: "Botão Suspender",
+    texto:
+      "Bloqueia o acesso do motorista por um tempo, por exemplo durante uma investigação ou um afastamento. Nada é apagado e é possível reativar depois.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
+    alvo: "botao:Inativar",
+    titulo: "Botão Inativar",
+    texto:
+      "Move o motorista para o arquivo morto, indicado quando ele deixou a empresa. O histórico completo continua guardado e consultável.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
+    alvo: "botao:Excluir cadastro",
+    titulo: "Botão Excluir cadastro",
+    texto:
+      "Tira o motorista das listas do dia a dia. O sistema pede um motivo e nada do histórico é perdido, porque os registros de jornada não podem ser apagados.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
     alvo: "titulo:Editar dados cadastrais",
     titulo: "Dados cadastrais",
     texto:
@@ -483,7 +543,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Dispositivo vinculado",
     titulo: "Dispositivo vinculado",
     texto:
@@ -491,7 +551,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Veículo de tração vinculado",
     titulo: "Veículo de tração",
     texto:
@@ -499,15 +559,15 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Integridade da cadeia de jornada",
     titulo: "Integridade da jornada",
     texto:
-      "Cada registro é ligado ao anterior por uma assinatura digital. O botão Verificar integridade confere se alguém mexeu em algum registro depois de salvo.",
+      "Cada registro é ligado ao anterior por um código de integridade (hash). O botão Verificar integridade confere se alguém mexeu em algum registro depois de salvo.",
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Registros de jornada",
     titulo: "Registros de jornada",
     texto:
@@ -515,7 +575,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Jornadas por dia",
     titulo: "Jornadas por dia",
     texto:
@@ -523,7 +583,15 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
+    alvo: "botao:Ver ciclo",
+    titulo: "Ver ciclo",
+    texto:
+      "Em cada dia, este botão abre a lista das jornadas encadeadas que formam o ciclo de direção daquele dia. Ciclo é o conjunto de jornadas com menos de onze horas de descanso entre elas.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
     alvo: "titulo:Jornadas que compõem o ciclo",
     titulo: "Ciclo de jornadas",
     texto:
@@ -531,7 +599,15 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
+    alvo: "titulo:Banco de horas",
+    titulo: "Banco de horas",
+    texto:
+      "Quando a convenção coletiva do CNPJ tem o banco de horas ativado, a hora extra apurada vira crédito do motorista. O saldo do período é o crédito de hora extra, mais as correções lançadas pelo RH, menos os débitos. O débito é lançado pelo RH quando a hora é compensada em folga, paga ou corrigida, porque o sistema não decide sozinho entre compensar e pagar. O alerta avisa quando o saldo passa do limite definido nas regras sindicais.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
     alvo: "titulo:Status de carga",
     titulo: "Status de carga",
     texto:
@@ -539,7 +615,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Folgas autorrelatadas",
     titulo: "Folgas autorrelatadas",
     texto:
@@ -547,7 +623,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Folgas concedidas pelo RH",
     titulo: "Folgas concedidas pelo RH",
     texto:
@@ -555,7 +631,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Alertas de jornada",
     titulo: "Alertas de jornada",
     texto:
@@ -563,7 +639,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Tratamento de ponto",
     titulo: "Tratamento de ponto",
     texto:
@@ -571,7 +647,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "ficha",
-    detalheMotorista: true,
+    palco: "ficha",
     alvo: "titulo:Holerite",
     titulo: "Holerite",
     texto:
@@ -581,6 +657,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   // ===== Pedidos de folga =====
   {
     modulo: "folgas",
+    palco: "folgas",
     rota: "/pedidos-folga",
     alvo: "titulo:Pedidos de folga",
     titulo: "Pedidos de folga",
@@ -589,6 +666,15 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "folgas",
+    palco: "folgas",
+    alvo: "titulo:O que cada indicador mostra",
+    titulo: "Indicadores de folga",
+    texto:
+      "No topo da tela da sua empresa ficam os cartões de folga, e este quadro explica cada um. Clique em um cartão para ver a lista completa de motoristas ou pedidos por trás do número.",
+  },
+  {
+    modulo: "folgas",
+    palco: "folgas",
     alvo: "titulo:Aguardando decisão",
     titulo: "Aguardando decisão",
     texto:
@@ -596,6 +682,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "folgas",
+    palco: "folgas",
     alvo: "titulo:Já decididos",
     titulo: "Já decididos",
     texto:
@@ -653,6 +740,13 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     titulo: "Status da carga",
     texto:
       "Diga em que ponto a carga está, para que o acompanhamento fique correto.",
+  },
+  {
+    modulo: "documentos",
+    alvo: "rotulo:Buscar motorista por CPF",
+    titulo: "Buscar motorista pelo CPF",
+    texto:
+      "Digite o CPF do motorista. Pontos e traços são ignorados, só os números contam. Quando o CPF é válido e pertence a um motorista da sua empresa, ele é selecionado automaticamente no campo abaixo.",
   },
   {
     modulo: "documentos",
@@ -783,6 +877,13 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
 
   // ===== Empresas =====
   {
+    modulo: "regras",
+    alvo: "titulo:Como funcionam os feriados",
+    titulo: "Feriados",
+    texto:
+      "O sistema reconhece o domingo sozinho, mas os feriados mudam de cidade para cidade e por isso precisam ser cadastrados. Para cada feriado você informa a data, a descrição e se ele é pago como domingo ou feriado. Se deixar o CNPJ em branco, o feriado vale para todos os CNPJs do grupo.",
+  },
+  {
     modulo: "empresas",
     rota: "/empresas",
     alvo: "titulo:Empresas do grupo",
@@ -819,7 +920,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "botao:Filtrar",
     titulo: "Filtros",
     texto:
-      "Use os filtros para achar um ato específico, por pessoa, por tipo de ação ou por data, e clique em Filtrar.",
+      "Use os filtros para achar um ato específico, por pessoa, por tipo de ação ou por data, e clique em Filtrar. No campo Quem fez, digite o nome ou o CPF e a busca aparece sozinha. Marque as pessoas que quiser ver.",
   },
   {
     modulo: "auditoria",
@@ -847,6 +948,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "lgpd",
+    palco: "ciencia",
     alvo: "coluna:Termo de GPS",
     titulo: "Ciência e termos",
     texto:
@@ -857,7 +959,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:Encarregado pelo tratamento de dados",
     titulo: "Encarregado (DPO)",
     texto:
-      "Cadastre o nome, o e-mail e o telefone da pessoa responsável pelos dados pessoais. Estes contatos aparecem para os motoristas no aplicativo e na página pública de privacidade.",
+      "Cadastre o nome, o e-mail e o telefone da pessoa responsável pelos dados pessoais. Este contato é interno, de uso do RH e da gestão, e não aparece para os motoristas nem na página pública de privacidade.",
   },
 
   // ===== Usuários =====
@@ -868,7 +970,15 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:Usuários",
     titulo: "Usuários do painel",
     texto:
-      "Veja quem tem acesso ao painel do grupo. Desativar um usuário só bloqueia o login dele, o histórico de tudo o que ele fez continua guardado. Para cadastrar uma pessoa nova, fale com o suporte técnico.",
+      "Veja quem tem acesso ao painel do grupo. Desativar um usuário só bloqueia o login dele, o histórico de tudo o que ele fez continua guardado.",
+  },
+  {
+    modulo: "usuarios",
+    somenteAdmin: true,
+    alvo: "titulo:Gestores",
+    titulo: "Cadastrar gestor",
+    texto:
+      "O administrador pode cadastrar até dois gestores para a empresa. Informe nome, e-mail, uma senha inicial e, se quiser, o WhatsApp. Peça para o gestor trocar a senha no primeiro acesso, em Configuração.",
   },
   {
     modulo: "usuarios",
@@ -886,7 +996,14 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:Dados do usuário",
     titulo: "Seus dados",
     texto:
-      "Edite o seu nome, o seu contato de WhatsApp e o e-mail de acesso. O papel e o status só podem ser mudados por quem administra a plataforma.",
+      "Edite o seu nome, o seu contato de WhatsApp e o e-mail de acesso. O papel e o status só podem ser mudados por quem administra a plataforma. Logo abaixo, no mesmo quadro, fica a troca de senha.",
+  },
+  {
+    modulo: "configuracao",
+    alvo: "titulo:Alterar senha",
+    titulo: "Alterar senha",
+    texto:
+      "Para trocar a senha, informe a senha atual, escreva a nova senha duas vezes e confirme. Ao concluir, todas as sessões são encerradas e você entra de novo com a senha nova.",
   },
   {
     modulo: "configuracao",
@@ -900,7 +1017,14 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:Limites de espera do motorista",
     titulo: "Limites de espera",
     texto:
-      "Defina depois de quantas horas de espera o sistema deve primeiro apenas informar e depois chamar a atenção do gestor.",
+      "Defina depois de quanto tempo de espera o sistema deve primeiro apenas informar e depois chamar a atenção do gestor. Os valores são digitados em horas e minutos, no formato HH:MM, por exemplo 04:45.",
+  },
+  {
+    modulo: "configuracao",
+    alvo: "titulo:Limites de aguardando documentação",
+    titulo: "Limites de aguardando documentação",
+    texto:
+      "Funciona como a espera. Defina depois de quanto tempo acumulado em aguardando documentação o sistema deve informar, chamar a atenção e marcar como crítico. Também usa o formato HH:MM.",
   },
   {
     modulo: "configuracao",

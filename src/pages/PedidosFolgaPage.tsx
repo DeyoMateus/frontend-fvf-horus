@@ -31,7 +31,7 @@ function totalDias(s: SolicitacaoFolga): number {
 }
 
 /**
- * Rodada 221: o motorista PEDE folga pelo app; o RH decide aqui. Aprovar
+ * Rodada 221: o motorista PEDE folga pelo app, o RH decide aqui. Aprovar
  * cria uma folga por dia do período; negar exige justificativa (o
  * motorista vê a resposta no app). O lançamento direto de folga pelo RH
  * (quando não há pedido) continua na tela do motorista.
@@ -103,15 +103,53 @@ export function PedidosFolgaPage() {
   return (
     <div>
       <h1>Pedidos de folga</h1>
+      <div className="card" style={{ marginBottom: 12 }}>
+        <h3 style={{ marginTop: 0 }}>O que cada indicador mostra</h3>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.7, color: "#000" }}>
+          <li>
+            <strong>De folga hoje:</strong> motoristas com folga concedida para
+            o dia de hoje.
+          </li>
+          <li>
+            <strong>Folgas vencidas:</strong> motoristas que já passaram do
+            número de dias de trabalho permitido pela regra de folga e ainda não
+            folgaram. Fica em atenção e passa a crítico ao atingir o limite
+            configurado.
+          </li>
+          <li>
+            <strong>Folgas marcadas:</strong> motoristas com folga concedida em
+            um dia futuro.
+          </li>
+          <li>
+            <strong>Pedidos em aberto:</strong> pedidos feitos pelos motoristas
+            que aguardam a decisão do RH.
+          </li>
+          <li>
+            <strong>Pedidos negados:</strong> pedidos negados pelo RH ou
+            automaticamente por falta de resposta, nos últimos 90 dias.
+          </li>
+          <li>
+            <strong>Folgas não realizadas:</strong> dias de folga marcados em que
+            o motorista acabou trabalhando, nos últimos 90 dias. Ficam
+            registrados para o RH.
+          </li>
+        </ul>
+        <p style={{ fontSize: 12, color: "#000", margin: "8px 0 0" }}>
+          Clique em qualquer indicador logo abaixo para ver a lista completa de
+          motoristas ou pedidos.
+        </p>
+      </div>
       <PainelFolgas versao={versaoDashboard} />
       <p style={{ fontSize: 13 }}>
-        Os motoristas pedem a folga pelo aplicativo (um ou vários dias
-        seguidos, de hoje em diante). Aceite ou negue com justificativa. Para
-        lançar folga sem pedido, use a tela do motorista.
+        Os motoristas pedem a folga pelo aplicativo (um ou vários dias seguidos,
+        de hoje em diante). Aceite ou negue com justificativa. Para lançar folga
+        sem pedido, use a tela do motorista.
       </p>
 
       <div className="card">
-        <h2 style={{ marginTop: 0 }}>Aguardando decisão ({pendentes.length})</h2>
+        <h2 style={{ marginTop: 0 }}>
+          Aguardando decisão ({pendentes.length})
+        </h2>
         {carregando && <p>Carregando...</p>}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && pendentes.length === 0 && (
@@ -141,8 +179,11 @@ export function PedidosFolgaPage() {
                     {totalDias(s) === 1 ? "" : "s"})
                   </td>
                   <td style={{ maxWidth: 240 }}>
-                      <TextoLongo texto={s.observacao} titulo="Motivo do motorista" />
-                    </td>
+                    <TextoLongo
+                      texto={s.observacao}
+                      titulo="Motivo do motorista"
+                    />
+                  </td>
                   <td>{new Date(s.createdAt).toLocaleString("pt-BR")}</td>
                   <td>
                     <div
@@ -189,7 +230,9 @@ export function PedidosFolgaPage() {
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Já decididos</h2>
-        {historico && historico.dados.length === 0 && <p>Nada decidido ainda.</p>}
+        {historico && historico.dados.length === 0 && (
+          <p>Nada decidido ainda.</p>
+        )}
         {historico && historico.dados.length > 0 && (
           <>
             <table>
@@ -221,7 +264,10 @@ export function PedidosFolgaPage() {
                       {s.status === "APROVADA" ? "Aprovada" : "Negada"}
                     </td>
                     <td style={{ maxWidth: 240 }}>
-                      <TextoLongo texto={s.motivoDecisao} titulo="Justificativa" />
+                      <TextoLongo
+                        texto={s.motivoDecisao}
+                        titulo="Justificativa"
+                      />
                     </td>
                     <td>
                       {s.decididoPorUsuario?.nome ??

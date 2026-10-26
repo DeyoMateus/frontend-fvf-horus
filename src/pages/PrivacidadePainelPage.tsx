@@ -555,10 +555,10 @@ function AbaEncarregado({ ehAdmin }: { ehAdmin: boolean }) {
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Encarregado pelo tratamento de dados (DPO)</h3>
       <p style={{ fontSize: 13 }}>
-        <strong>Opcional.</strong> Se a empresa não tem uma pessoa só para isso,
-        deixe em branco: os pedidos dos motoristas chegam ao gestor (sininho e
-        aba "Pedidos dos titulares"). Quando preenchido, aparece para o motorista
-        no aplicativo. Vale para os {empresas.length} CNPJ(s) do grupo.
+        <strong>Opcional e interno.</strong> Este contato é só para uso do RH e da
+        gestão: ele não aparece para os motoristas nem na página pública de
+        privacidade. Os pedidos dos motoristas chegam ao gestor (sininho e aba
+        "Pedidos dos titulares"). Vale para os {empresas.length} CNPJ(s) do grupo.
       </p>
       {msg && <p style={{ fontSize: 13 }}>{msg}</p>}
       {ehAdmin ? (

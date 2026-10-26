@@ -6,7 +6,14 @@
  * novo: usa as linhas que o popup já tem na tela.
  */
 
-function escaparCelulaCsv(valor: string): string {
+/** N45: texto iniciado por = + - @ tab ou CR vira fórmula no Excel; prefixa apóstrofo. */
+function neutralizarCelula(valor: string): string {
+  if (/^-?\d+([.,]\d+)?$/.test(valor)) return valor;
+  return /^[=+\-@\t\r]/.test(valor) ? `'${valor}` : valor;
+}
+
+function escaparCelulaCsv(valorBruto: string): string {
+  const valor = neutralizarCelula(valorBruto);
   if (/[",\n;]/.test(valor)) {
     return `"${valor.replace(/"/g, '""')}"`;
   }

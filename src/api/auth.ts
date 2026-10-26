@@ -12,10 +12,12 @@ export interface LoginResponse {
 export async function login(
   email: string,
   senha: string,
+  codigoMfa?: string,
 ): Promise<LoginResponse> {
   const { data } = await api.post<LoginResponse>("/auth/login", {
     email,
     senha,
+    ...(codigoMfa ? { codigoMfa } : {}),
   });
   setAccessToken(data.accessToken);
   return data;

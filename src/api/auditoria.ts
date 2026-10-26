@@ -10,6 +10,8 @@ export interface FiltroAuditoria {
   page?: number;
   pageSize?: number;
   actorType?: ActorType;
+  /** Rodada 347: pessoas específicas (ids). */
+  actorIds?: string[];
   acoes?: string[];
   entidade?: string;
   entidadeId?: string;
@@ -24,6 +26,8 @@ function paramsDoFiltro(filtro: FiltroAuditoria) {
     page: filtro.page,
     pageSize: filtro.pageSize,
     actorType: filtro.actorType || undefined,
+    actorIds:
+      filtro.actorIds && filtro.actorIds.length > 0 ? filtro.actorIds : undefined,
     acoes: filtro.acoes && filtro.acoes.length > 0 ? filtro.acoes : undefined,
     entidade: filtro.entidade || undefined,
     entidadeId: filtro.entidadeId || undefined,
@@ -63,5 +67,19 @@ export function listarOcorrenciasAuditoriaSuperAdmin(grupoId?: string) {
     .get<
       OcorrenciaAuditoria[]
     >("/super-admin/auditoria/ocorrencias", { params: { grupoId: grupoId || undefined } })
+    .then((r) => r.data);
+}
+
+export interface AtorBuscado {
+  actorType: ActorType;
+  actorId: string;
+  nome: string;
+  detalhe: string;
+}
+
+// Rodada 347: busca automática de pessoas (nome ou CPF) para o filtro "Quem fez".
+export function buscarAtoresAuditoria(busca: string) {
+  return api
+    .get<AtorBuscado[]>("/auditoria/atores", { params: { busca } })
     .then((r) => r.data);
 }

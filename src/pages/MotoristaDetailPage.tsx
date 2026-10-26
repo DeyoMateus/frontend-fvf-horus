@@ -44,6 +44,7 @@ import type {
 import {
   aceitarDivergenciaIntegridade,
   baixarAej,
+  baixarPlanilhaJornada,
   baixarComprovante,
   baixarEspelhoRepP,
   listRegistros,
@@ -66,9 +67,11 @@ import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { baixarCsvTabela, imprimirTabela } from "../utils/exportarTabelaModal";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { useListaPaginada } from "../hooks/useListaPaginada";
+import { DadosContratoCard } from "../components/DadosContratoCard";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { baixarHoleritePdf, calcularHolerite } from "../api/holerite";
 import { BancoHorasPainel } from "../components/BancoHorasPainel";
+import { BancoHorasRazaoPainel } from "../components/BancoHorasRazaoPainel";
 import type { OpcoesHolerite, ResultadoHolerite } from "../api/holerite";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
@@ -231,6 +234,7 @@ export function MotoristaDetailPage() {
 
   const [baixandoComprovante, setBaixandoComprovante] = useState(false);
   const [baixandoAej, setBaixandoAej] = useState(false);
+  const [baixandoPlanilha, setBaixandoPlanilha] = useState(false);
   const [baixandoEspelhoRepP, setBaixandoEspelhoRepP] = useState(false);
   const [novaDeviceUuid, setNovaDeviceUuid] = useState("");
   const [deviceApiKeyGerada, setDeviceApiKeyGerada] = useState<string | null>(
@@ -293,6 +297,8 @@ export function MotoristaDetailPage() {
 
   const [dataFolga, setDataFolga] = useState("");
   const [motivoFolga, setMotivoFolga] = useState("");
+  const [justificativaExcessoFolga, setJustificativaExcessoFolga] = useState("");
+  const [pedeJustificativaFolga, setPedeJustificativaFolga] = useState(false);
   const [concedendoFolga, setConcedendoFolga] = useState(false);
   const [erroFolga, setErroFolga] = useState<string | null>(null);
 
@@ -335,6 +341,15 @@ export function MotoristaDetailPage() {
       await baixarComprovante(motoristaId, periodoDosRegistros());
     } finally {
       setBaixandoComprovante(false);
+    }
+  }
+
+  async function onBaixarPlanilha() {
+    setBaixandoPlanilha(true);
+    try {
+      await baixarPlanilhaJornada(motoristaId, periodoDosRegistros());
+    } finally {
+      setBaixandoPlanilha(false);
     }
   }
 
@@ -631,11 +646,12 @@ export function MotoristaDetailPage() {
     if (motivo === null) return;
     setAceitandoDivergencia(sequencial);
     try {
-      await aceitarDivergenciaIntegridade(
+      const resposta = await aceitarDivergenciaIntegridade(
         motoristaId,
         sequencial,
         motivo.trim(),
       );
+      if (resposta?.pendente) window.alert(resposta.mensagem);
       setIntegridade(await verificarIntegridade(motoristaId));
     } finally {
       setAceitandoDivergencia(null);
@@ -1070,14 +1086,27 @@ export function MotoristaDetailPage() {
       await concederFolga(motoristaId, {
         data: dataFolga,
         motivo: motivoFolga || undefined,
+        justificativaExcessoDias: pedeJustificativaFolga
+          ? justificativaExcessoFolga.trim() || undefined
+          : undefined,
       });
       setDataFolga("");
       setMotivoFolga("");
+      setJustificativaExcessoFolga("");
+      setPedeJustificativaFolga(false);
       await carregarTudo();
-    } catch {
-      setErroFolga(
-        "Não foi possível conceder a folga (confira se já não existe uma folga concedida para esse dia).",
-      );
+    } catch (err) {
+      // Rodada 387: o servidor pede a justificativa quando a folga vem depois de mais de 6 dias seguidos.
+      const msg = (err as { response?: { status?: number; data?: { message?: unknown } } })?.response;
+      const texto = typeof msg?.data?.message === "string" ? msg.data.message : "";
+      if (msg?.status === 400 && texto.includes("Informe a justificativa")) {
+        setPedeJustificativaFolga(true);
+        setErroFolga(texto);
+      } else {
+        setErroFolga(
+          "Não foi possível conceder a folga (confira se já não existe uma folga concedida para esse dia).",
+        );
+      }
     } finally {
       setConcedendoFolga(false);
     }
@@ -1276,10 +1305,10 @@ export function MotoristaDetailPage() {
             <label style={{ marginTop: 8, display: "block" }}>CPF</label>
             <input value={motorista.cpf} disabled />
             <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
-              CPF e CNH não podem ser editados aqui, pois são a âncora da cadeia
-              de hash e do certificado digital do motorista. Em caso de erro de
-              digitação, é preciso excluir e recadastrar (o histórico não se
-              perde).
+              CPF e CNH não podem ser editados aqui, pois identificam o
+              motorista nos registros e na cadeia de integridade (hash). Em caso
+              de erro de digitação, é preciso excluir e recadastrar (o
+              histórico não se perde).
             </p>
 
             <label style={{ marginTop: 8, display: "block" }}>
@@ -1355,7 +1384,7 @@ export function MotoristaDetailPage() {
                     ? "#166534"
                     : motorista.status === "SUSPENSO"
                       ? "#b45309"
-                      : "#6b7280",
+                      : "#000",
                 fontWeight: 600,
               }}
             >
@@ -1447,6 +1476,14 @@ export function MotoristaDetailPage() {
         </div>
       )}
 
+      {motorista && (
+        <DadosContratoCard
+          motorista={motorista}
+          podeCriarHorario={usuario?.papel === "ADMIN"}
+          onSalvo={() => void carregarTudo()}
+        />
+      )}
+
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Dispositivo vinculado</h3>
 
@@ -1478,6 +1515,23 @@ export function MotoristaDetailPage() {
                 {new Date(dispositivo.vinculadoEm!).toLocaleString("pt-BR")}
               </strong>
             </p>
+            {(dispositivo.errosAppQtd ?? 0) > 0 && (
+              <p style={{ color: "#000000" }}>
+                <strong>
+                  {dispositivo.errosAppQtd} ponto(s) com erro neste aparelho
+                </strong>
+                {dispositivo.errosAppDesde
+                  ? ` desde ${new Date(dispositivo.errosAppDesde).toLocaleString("pt-BR")}`
+                  : ""}
+                . Os pontos continuam guardados no celular; peça ao motorista
+                para abrir o app com internet; se o erro persistir, acione o
+                suporte sem apagar o app. Informado pelo app
+                {dispositivo.errosAppAtualizadoEm
+                  ? ` em ${new Date(dispositivo.errosAppAtualizadoEm).toLocaleString("pt-BR")}`
+                  : ""}
+                .
+              </p>
+            )}
             <button className="danger" onClick={onRevogar}>
               Revogar vínculo
             </button>
@@ -1544,7 +1598,7 @@ export function MotoristaDetailPage() {
         <p style={{ fontSize: 13, color: "#000000" }}>
           Placa do cavalo mecânico (o veículo que puxa a carga, não o
           reboque/carreta), obrigatória. O motorista também pode trocar direto
-          pelo app; toda troca de placa (não o primeiro cadastro) fica
+          pelo app, toda troca de placa (não o primeiro cadastro) fica
           registrada abaixo, em &quot;Trocas de veículo&quot;. ID e tecnologia
           do rastreador são opcionais.
         </p>
@@ -1660,7 +1714,9 @@ export function MotoristaDetailPage() {
                       onChange={(e) => {
                         setFiltroStatusDivergencia(
                           e.target.value as
-                            "PENDENTES" | "REGULARIZADAS" | "TODAS",
+                            | "PENDENTES"
+                            | "REGULARIZADAS"
+                            | "TODAS",
                         );
                         listaDivergencias.irParaPagina(1);
                       }}
@@ -1859,9 +1915,16 @@ export function MotoristaDetailPage() {
             <button
               onClick={onBaixarAej}
               disabled={baixandoAej}
-              title="Export estruturado com todos os campos legalmente relevantes. Não é o layout binário oficial do AFD/Portaria 671, ver ARCHITECTURE.md §16"
+              title="Arquivo Eletrônico de Jornada no leiaute do Anexo VI da Portaria 671/2021 (sem a assinatura digital, que depende do certificado ICP-Brasil)"
             >
-              {baixandoAej ? "Gerando..." : "Baixar AEJ (CSV)"}
+              {baixandoAej ? "Gerando..." : "Baixar AEJ (oficial)"}
+            </button>
+            <button
+              onClick={onBaixarPlanilha}
+              disabled={baixandoPlanilha}
+              title="Planilha CSV com todos os campos da jornada. Não é o AEJ oficial."
+            >
+              {baixandoPlanilha ? "Gerando..." : "Baixar planilha (CSV)"}
             </button>
             <button
               onClick={onBaixarEspelhoRepP}
@@ -2290,8 +2353,8 @@ export function MotoristaDetailPage() {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Folgas concedidas pelo RH</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
-          Lançada pelo RH/gestor. Num dia futuro, o motorista simplesmente não
-          precisa bater ponto. Num dia que já tem registro de ponto, nada é
+          Lançada pelo RH/gestor. No dia futuro, o motorista simplesmente não
+          precisa bater ponto. No dia que já tem registro de ponto, nada é
           apagado. A folga entra como um status novo ao lado do que já foi
           marcado, e um alerta é gerado abaixo, em &quot;Alertas de
           jornada&quot;, pra você conferir o conflito.
@@ -2310,6 +2373,16 @@ export function MotoristaDetailPage() {
             onChange={(e) => setMotivoFolga(e.target.value)}
             maxLength={400}
           />
+          {pedeJustificativaFolga && (
+            <>
+              <label>Justificativa (CCT/ACT que autoriza, mínimo 20 caracteres)</label>
+              <CampoTextoExpansivel
+                value={justificativaExcessoFolga}
+                onChange={(e) => setJustificativaExcessoFolga(e.target.value)}
+                maxLength={400}
+              />
+            </>
+          )}
           {erroFolga && <p className="error-text">{erroFolga}</p>}
           <button type="submit" disabled={concedendoFolga}>
             {concedendoFolga ? "Concedendo..." : "Conceder folga"}
@@ -2358,10 +2431,9 @@ export function MotoristaDetailPage() {
       <div className="card" ref={secaoAlertasJornadaRef}>
         <h3 style={{ marginTop: 0 }}>Alertas de jornada (Lei do Motorista)</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
-          Gerados automaticamente a cada ponto batido: direção contínua acima de
+          Gerados automaticamente a cada ponto batido, direção contínua acima de
           5h/5h30, jornada de direção acima de 8h/10h no dia, e tempo de espera
-          em carga/descarga (3h / 4h45 / 5h, limiar legal para diária de
-          espera).
+          em carga/descarga).
         </p>
         {/* Rodada 107 , mesmo padrão da Rodada 77: "mostrar N por vez" +
             popup dedicado de página quando passar disso, pra essa
@@ -2499,7 +2571,7 @@ export function MotoristaDetailPage() {
                               ? "#b91c1c"
                               : a.severidade === "ATENCAO"
                                 ? "#b45309"
-                                : "#374151",
+                                : "#000",
                           fontWeight: 600,
                         }}
                       >
@@ -2992,6 +3064,7 @@ export function MotoristaDetailPage() {
       </div>
 
       <BancoHorasPainel motoristaId={motoristaId} />
+      <BancoHorasRazaoPainel motoristaId={motoristaId} ehAdmin={usuario?.papel === "ADMIN"} />
     </div>
   );
 }

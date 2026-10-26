@@ -11,7 +11,7 @@ import type { SuperAdminAutenticado } from "../api/types";
 interface SuperAdminAuthContextValue {
   superAdmin: SuperAdminAutenticado | null;
   carregando: boolean;
-  entrar: (email: string, senha: string) => Promise<void>;
+  entrar: (email: string, senha: string, codigoMfa?: string) => Promise<void>;
   sair: () => Promise<void>;
 }
 
@@ -48,10 +48,10 @@ export function SuperAdminAuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setCarregando(false));
   }, []);
 
-  async function entrar(email: string, senha: string) {
+  async function entrar(email: string, senha: string, codigoMfa?: string) {
     setCarregando(true);
     try {
-      const tokens = await loginSuperAdmin(email, senha);
+      const tokens = await loginSuperAdmin(email, senha, codigoMfa);
       setSuperAdmin(decodeJwtSuperAdmin(tokens.accessToken));
     } finally {
       setCarregando(false);

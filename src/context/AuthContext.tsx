@@ -13,7 +13,7 @@ import type { UsuarioAutenticado } from "../api/types";
 interface AuthContextValue {
   usuario: UsuarioAutenticado | null;
   carregando: boolean;
-  entrar: (email: string, senha: string) => Promise<void>;
+  entrar: (email: string, senha: string, codigoMfa?: string) => Promise<void>;
   sair: () => Promise<void>;
 }
 
@@ -40,10 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setCarregando(false));
   }, []);
 
-  async function entrar(email: string, senha: string) {
+  async function entrar(email: string, senha: string, codigoMfa?: string) {
     setCarregando(true);
     try {
-      const tokens = await apiLogin(email, senha);
+      const tokens = await apiLogin(email, senha, codigoMfa);
       marcarSessao(true);
       setUsuario(decodeJwt(tokens.accessToken));
     } finally {

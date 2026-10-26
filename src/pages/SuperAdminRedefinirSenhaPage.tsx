@@ -68,7 +68,7 @@ export function SuperAdminRedefinirSenhaPage() {
               onChange={(e) => setNovaSenha(e.target.value)}
               required
             />
-            <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 12px' }}>Mínimo de 8 caracteres.</p>
+            <p style={{ fontSize: 12, color: '#000', margin: '4px 0 12px' }}>Mínimo de 8 caracteres.</p>
             <label>Confirmar nova senha</label>
             <input
               type={mostrar ? 'text' : 'password'}

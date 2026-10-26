@@ -36,6 +36,7 @@ const TIPOS_FRAUDE: TipoAlertaJornada[] = [
   "VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS",
   "RELOGIO_DISPOSITIVO_SUSPEITO",
   "RELOGIO_PONTO_RECUSADO",
+  "PONTO_ACEITO_COM_FLAG",
   "HORA_NAO_VERIFICADA_APOS_REINICIO",
   "SEQUENCIA_JORNADA_MUITO_RAPIDA",
   "ODOMETRO_REGRESSIVO",
@@ -63,6 +64,13 @@ function existeAlertaAbertoHaMuitoTempo(
 }
 
 const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
+  INTERVALO_REFEICAO_PENDENTE: "Refeição pendente (jornada acima de 6h)",
+  JORNADA_TOTAL_PROXIMA_LIMITE: "Jornada total do dia perto do limite",
+  JORNADA_TOTAL_EXCEDIDA: "Jornada total do dia acima do limite",
+  JORNADA_TOTAL_EXTRAS_LIMITE: "Jornada total com 2h extras (limite)",
+  REPOUSO_SEMANAL_PROXIMO_LIMITE: "Repouso semanal perto do limite",
+  REPOUSO_SEMANAL_ATRASADO: "Repouso semanal atrasado",
+  DSR_SEM_DESCANSO_SEMANAL: "Semana sem 24 h de descanso (DSR)",
   DIRECAO_CONTINUA_PROXIMA_LIMITE: "Direção contínua perto do limite",
   DIRECAO_CONTINUA_EXCEDIDA: "Direção contínua excedida",
   DIRECAO_RETOMADA_SEM_PAUSA: "Direção retomada sem pausa",
@@ -77,7 +85,7 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   JORNADA_ATUAL_DIRECAO_PROXIMA_LIMITE: "Direção desta jornada perto de 8h",
   JORNADA_ATUAL_DIRECAO_EXCEDIDA: "Direção desta jornada passou de 10h",
   ESPERA_PROXIMA_LIMITE: "Espera perto do limite",
-  ESPERA_LIMITE_LEGAL_ATINGIDO: "Limite legal de espera atingido",
+  ESPERA_LIMITE_LEGAL_ATINGIDO: "Espera atingiu o limite crítico",
   DOCUMENTACAO_ACUMULADA: "Tempo aguardando documentação acumulado",
   DOCUMENTACAO_PROXIMA_LIMITE: "Aguardando documentação perto do limite",
   DOCUMENTACAO_LIMITE_ATINGIDO: "Limite de aguardando documentação atingido",
@@ -86,6 +94,7 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
     "Velocidade impossível entre registros",
   RELOGIO_DISPOSITIVO_SUSPEITO: "Relógio do aparelho suspeito",
   RELOGIO_PONTO_RECUSADO: "Ponto recusado por relógio suspeito",
+  PONTO_ACEITO_COM_FLAG: "Ponto aceito com sinal de relógio suspeito",
   HORA_NAO_VERIFICADA_APOS_REINICIO: "Hora do ponto não verificada após reinício",
   SEQUENCIA_JORNADA_MUITO_RAPIDA: "Sequência de batidas muito rápida",
   ODOMETRO_REGRESSIVO: "Odômetro regressivo",
@@ -190,7 +199,7 @@ function CartaoMetrica({
         style={{
           fontSize: 28,
           fontWeight: 700,
-          color: cor ?? "#111827",
+          color: cor ?? "#000",
           lineHeight: 1.3,
         }}
       >
@@ -414,7 +423,7 @@ function PainelDetalheCard({
                     <td
                       style={{
                         fontSize: 12,
-                        color: ROTULO_SEVERIDADE[a.severidade] ?? "#111827",
+                        color: ROTULO_SEVERIDADE[a.severidade] ?? "#000",
                       }}
                     >
                       {ROTULO_TIPO_ALERTA[a.tipo] ?? a.tipo}
