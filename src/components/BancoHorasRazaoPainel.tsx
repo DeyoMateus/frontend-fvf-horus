@@ -14,6 +14,7 @@ import {
 import type { LancamentoBanco, TipoLancamentoBanco, VencimentosRazao, VerificacaoRazao } from "../api/bancoHoras";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { dataLocalIso } from "../utils/mascaras";
+import { ContestacoesBancoHoras } from "./ContestacoesBancoHoras";
 
 const ROTULO: Record<TipoLancamentoBanco, string> = {
   ABERTURA: "Abertura (saldo inicial)",
@@ -224,6 +225,7 @@ export function BancoHorasRazaoPainel({
       <p style={{ fontSize: 12, marginTop: 6 }}>
         Os lançamentos não se apagam nem se editam: um erro se corrige com outro lançamento.
       </p>
+      <ContestacoesBancoHoras motoristaId={motoristaId} />
     </div>
   );
 }

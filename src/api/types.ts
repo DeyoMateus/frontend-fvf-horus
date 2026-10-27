@@ -106,6 +106,11 @@ export interface RegraSindical {
   bancoHorasPrazoExpiracaoMeses?: number | null;
   bancoHorasLimiteAlertaMin?: number | null;
   intervaloRefeicaoMinimoMin: number;
+  intervaloEntreJornadasMin?: number;
+  repousoSemanalMinimoH?: number | null;
+  viagemLongaDias?: number | null;
+  compensacaoFeriadoDias?: number | null;
+  percentualDomingoFeriadoSemCompensacao?: string | number | null;
   percentualHoraEspera: string;
   percentualHoraEsperaRefeicao?: string | null;
   acordoColetivo?: boolean;
@@ -621,6 +626,15 @@ export interface RegimeBancoHorasEmpresa {
   razaoAtivo: boolean;
 }
 
+/** Rodada 415: chave de liberacao de uma empresa (ligada/desligada pelo super admin). */
+export interface ChaveLiberacaoEstado {
+  chave: string;
+  rotulo: string;
+  descricao: string;
+  naoDesliga: boolean;
+  ligada: boolean;
+}
+
 export interface GrupoDetalhe {
   id: string;
   razaoSocial: string;
@@ -635,6 +649,7 @@ export interface GrupoDetalhe {
     fusoHorario?: string;
     totalMotoristas: number;
     bancoHoras?: RegimeBancoHorasEmpresa;
+    chaves?: ChaveLiberacaoEstado[];
   }[];
   usuarios: UsuarioEmpresaListado[];
 }

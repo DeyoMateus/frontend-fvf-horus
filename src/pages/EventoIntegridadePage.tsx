@@ -85,11 +85,38 @@ export function EventoIntegridadePage() {
     if (motivo === null) return;
     setAceitando(true);
     try {
-      const resposta = await aceitarDivergenciaIntegridade(
-        motoristaId,
-        Number(sequencial),
-        motivo.trim(),
-      );
+      let resposta;
+      try {
+        resposta = await aceitarDivergenciaIntegridade(
+          motoristaId,
+          Number(sequencial),
+          motivo.trim(),
+        );
+      } catch (err) {
+        const dados = (
+          err as { response?: { data?: { codigo?: string; message?: string } } }
+        )?.response?.data;
+        if (dados?.codigo !== "ROMPIMENTO_DE_VIDRO_NECESSARIO") {
+          window.alert(dados?.message ?? "Não foi possível aceitar a divergência.");
+          return;
+        }
+        // Rodada 406 (N67): sem segundo administrador, só com rompimento de vidro explícito.
+        if (!window.confirm(`${dados.message}\n\nConfirmar o rompimento de vidro?`)) return;
+        try {
+          resposta = await aceitarDivergenciaIntegridade(
+            motoristaId,
+            Number(sequencial),
+            motivo.trim(),
+            "OUTRO",
+            true,
+          );
+        } catch (err2) {
+          const msg = (err2 as { response?: { data?: { message?: string } } })
+            ?.response?.data?.message;
+          window.alert(msg ?? "Não foi possível aceitar a divergência.");
+          return;
+        }
+      }
       if (resposta?.pendente) window.alert(resposta.mensagem);
       await carregar();
     } finally {

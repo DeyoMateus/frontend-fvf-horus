@@ -104,3 +104,27 @@ export function criarGestor(input: {
     .post<UsuarioEmpresaListado>("/usuarios-empresa", input)
     .then((r) => r.data);
 }
+
+// ===== Rodada 418 (N75): empresas (CNPJ) de que o usuário recebe alertas =====
+export interface EmpresasDoUsuario {
+  usuarioId: string;
+  /** false = sem restrição: recebe de todas as empresas do grupo. */
+  restrito: boolean;
+  empresaIds: string[];
+  empresas: { id: string; razaoSocial: string; cnpj: string }[];
+}
+
+export function obterEmpresasDoUsuario(id: string) {
+  return api
+    .get<EmpresasDoUsuario>(`/usuarios-empresa/${id}/empresas`)
+    .then((r) => r.data);
+}
+
+export function definirEmpresasDoUsuario(id: string, empresaIds: string[]) {
+  return api
+    .put<{ usuarioId: string; restrito: boolean; empresaIds: string[] }>(
+      `/usuarios-empresa/${id}/empresas`,
+      { empresaIds },
+    )
+    .then((r) => r.data);
+}

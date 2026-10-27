@@ -12,6 +12,7 @@ import type { UsuarioEmpresaListado } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
+import { EmpresasDoUsuarioPainel } from "../components/EmpresasDoUsuarioPainel";
 
 /**
  * Gestão do time do próprio grupo (Rodada 31). O ADMIN só ativa/desativa
@@ -50,6 +51,8 @@ export function UsuariosEmpresaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario?.grupoId]);
 
+  // Rodada 418 (N75): usuário cujas empresas (alertas) estão sendo editadas.
+  const [editandoEmpresas, setEditandoEmpresas] = useState<UsuarioEmpresaListado | null>(null);
   const gestoresAtuais = usuarios.filter((u) => u.papel === "GESTOR").length;
   const [formAberto, setFormAberto] = useState(false);
   const [gNome, setGNome] = useState("");
@@ -192,6 +195,13 @@ export function UsuariosEmpresaPage() {
       </div>
 
       {erro && <p className="error-text">{erro}</p>}
+      {editandoEmpresas && (
+        <EmpresasDoUsuarioPainel
+          usuarioId={editandoEmpresas.id}
+          nome={editandoEmpresas.nome}
+          onFechar={() => setEditandoEmpresas(null)}
+        />
+      )}
       {carregando ? (
         <p>Carregando...</p>
       ) : (
@@ -248,6 +258,9 @@ export function UsuariosEmpresaPage() {
                   ))}
                   <td>{new Date(u.createdAt).toLocaleDateString("pt-BR")}</td>
                   <td>
+                    <button className="secondary" onClick={() => setEditandoEmpresas(u)}>
+                      Empresas
+                    </button>{" "}
                     {u.id !== usuario.sub && (
                       <button
                         className="secondary"

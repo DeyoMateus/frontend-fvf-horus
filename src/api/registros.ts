@@ -75,11 +75,12 @@ export function aceitarDivergenciaIntegridade(
   sequencial: number,
   motivo: string,
   motivoTipo: string = "OUTRO",
+  rompimentoDeVidro: boolean = false,
 ) {
   return api
     .patch(
       `/registros-jornada/motorista/${motoristaId}/integridade/${sequencial}/aceitar`,
-      { motivo, motivoTipo },
+      { motivo, motivoTipo, rompimentoDeVidro },
     )
     .then((r) => r.data);
 }

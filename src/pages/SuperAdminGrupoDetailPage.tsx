@@ -23,6 +23,7 @@ import { useConfirm } from "../components/ConfirmProvider";
 import { fusoIanaDoNavegador } from "../utils/fusoHorario";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 import { RegimeBancoHorasForm } from "../components/RegimeBancoHorasForm";
+import { ChavesLiberacaoPainel } from "../components/ChavesLiberacaoPainel";
 
 type FormEmpresa = {
   razaoSocial: string;
@@ -67,6 +68,7 @@ export function SuperAdminGrupoDetailPage() {
   const [razaoSocialGrupo, setRazaoSocialGrupo] = useState("");
   const [limiteMotoristasGrupo, setLimiteMotoristasGrupo] = useState("");
   const [regimeEmpresaId, setRegimeEmpresaId] = useState<string | null>(null);
+  const [chavesEmpresaId, setChavesEmpresaId] = useState<string | null>(null);
   const [empresaEditandoId, setEmpresaEditandoId] = useState<string | null>(
     null,
   );
@@ -577,6 +579,12 @@ export function SuperAdminGrupoDetailPage() {
                     </button>
                     <button
                       className="secondary"
+                      onClick={() => setChavesEmpresaId(e.id)}
+                    >
+                      Chaves
+                    </button>
+                    <button
+                      className="secondary"
                       onClick={() => alternarStatusEmpresa(e.id, e.ativo)}
                     >
                       {e.ativo ? "Desativar" : "Reativar"}
@@ -587,6 +595,22 @@ export function SuperAdminGrupoDetailPage() {
             )}
           </tbody>
         </table>
+        {chavesEmpresaId && (() => {
+          const emp = grupo.empresas.find((x) => x.id === chavesEmpresaId);
+          if (!emp) return null;
+          return (
+            <div style={{ marginTop: 16 }}>
+              <ChavesLiberacaoPainel
+                key={emp.id}
+                empresaId={emp.id}
+                nome={emp.razaoSocial}
+                chaves={emp.chaves ?? []}
+                onAlterado={() => void carregar()}
+                onFechar={() => setChavesEmpresaId(null)}
+              />
+            </div>
+          );
+        })()}
         {regimeEmpresaId && (() => {
           const emp = grupo.empresas.find((x) => x.id === regimeEmpresaId);
           if (!emp) return null;

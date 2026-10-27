@@ -97,3 +97,21 @@ export const corrigirRazao = (id: string, input: { sentido: 'CREDITO' | 'DEBITO'
 export const expirarVencidosRazao = (id: string) => api.post(`${base(id)}/expirar-vencidos`).then((r) => r.data);
 export const abrirRazao = (id: string, data: string) => api.post(`${base(id)}/abertura`, { data }).then((r) => r.data);
 export const snapshotRazao = (id: string, data: string) => api.post(`${base(id)}/snapshot`, { data }).then((r) => r.data);
+
+export interface ContestacaoBanco {
+  id: string;
+  lancamentoId: string;
+  sequencial: number;
+  dataEvento: string;
+  tipoLancamento: TipoLancamentoBanco;
+  minutosEquivalentes: number;
+  texto: string | null;
+  criadaEm: string;
+  respondida: boolean;
+}
+
+/** F15: contestações do trabalhador sobre lançamentos do banco de horas. */
+export const listarContestacoesBanco = (id: string) =>
+  api.get<ContestacaoBanco[]>(`${base(id)}/contestacoes`).then((r) => r.data);
+export const responderContestacaoBanco = (id: string, contestacaoId: string, texto: string) =>
+  api.post(`${base(id)}/contestacoes/${contestacaoId}/resposta`, { texto }).then((r) => r.data);

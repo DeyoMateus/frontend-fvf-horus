@@ -34,6 +34,7 @@ const REGRA_PADRAO: RegraSindicalInput = {
   percentualAdicionalNoturno: "20",
   duracaoMinutoNoturnoMin: "60",
   intervaloRefeicaoMinimoMin: 60,
+  intervaloEntreJornadasMin: 660,
   percentualHoraEspera: "30",
   bancoHorasAtivo: false,
   janelaNoturnaInicioMin: 1320,
@@ -116,6 +117,14 @@ export function RegrasSindicaisPage() {
         regra.bancoHorasPrazoExpiracaoMeses ?? undefined,
       bancoHorasLimiteAlertaMin: regra.bancoHorasLimiteAlertaMin ?? undefined,
       intervaloRefeicaoMinimoMin: regra.intervaloRefeicaoMinimoMin,
+      intervaloEntreJornadasMin: regra.intervaloEntreJornadasMin ?? 660,
+      repousoSemanalMinimoH: regra.repousoSemanalMinimoH ?? null,
+      viagemLongaDias: regra.viagemLongaDias ?? null,
+      compensacaoFeriadoDias: regra.compensacaoFeriadoDias ?? null,
+      percentualDomingoFeriadoSemCompensacao:
+        regra.percentualDomingoFeriadoSemCompensacao != null
+          ? Number(regra.percentualDomingoFeriadoSemCompensacao)
+          : null,
       percentualHoraEspera: regra.percentualHoraEspera,
       acordoColetivo: regra.acordoColetivo ?? false,
       numeroMediador: regra.numeroMediador ?? undefined,
@@ -448,7 +457,7 @@ export function RegrasSindicaisPage() {
                       ...f,
                       bancoHorasPrazoExpiracaoMeses: e.target.value
                         ? Number(e.target.value)
-                        : undefined,
+                        : null,
                     }))
                   }
                   placeholder="ex.: 3, 6 ou 12"
@@ -476,6 +485,105 @@ export function RegrasSindicaisPage() {
                     }))
                   }
                 />
+              </div>
+
+              <div>
+                <label>Descanso mínimo entre jornadas (mínimo 11:00)</label>
+                <DuracaoInput
+                  valorMin={form.intervaloEntreJornadasMin ?? 660}
+                  onChange={(v) =>
+                    setForm((f) => ({
+                      ...f,
+                      intervaloEntreJornadasMin: Math.max(660, v ?? 660),
+                    }))
+                  }
+                />
+                <small>
+                  Uma jornada só termina depois deste tempo sem trabalho. A CCT pode
+                  aumentar, nunca reduzir abaixo de 11 h. Por ora só alimenta a
+                  apuração em modo sombra.
+                </small>
+              </div>
+
+              <div>
+                <label>Repouso semanal, duração em horas (opcional)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={168}
+                  value={form.repousoSemanalMinimoH ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      repousoSemanalMinimoH: e.target.value ? Number(e.target.value) : null,
+                    }))
+                  }
+                />
+                <small>
+                  Vazio = padrão do sistema (35 h: 24 h de repouso e 11 h de descanso), sujeito a
+                  parecer jurídico. Informe 24 se a regra for só o repouso semanal. Alimenta o
+                  alerta de repouso semanal.
+                </small>
+              </div>
+
+              <div>
+                <label>Viagem longa a partir de quantos dias (opcional)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={form.viagemLongaDias ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      viagemLongaDias: e.target.value ? Number(e.target.value) : null,
+                    }))
+                  }
+                />
+                <small>Vazio = 7 dias. Define quando o alerta de repouso semanal é de viagem longa.</small>
+              </div>
+
+              <div>
+                <label>Prazo para compensar domingo/feriado, em dias (opcional)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={62}
+                  value={form.compensacaoFeriadoDias ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      compensacaoFeriadoDias: e.target.value ? Number(e.target.value) : null,
+                    }))
+                  }
+                />
+                <small>
+                  Vazio = mesma semana (segunda a domingo). Só preencha com previsão em CCT/ACT ou
+                  banco de horas. Por ora alimenta apenas o relatório em modo sombra.
+                </small>
+              </div>
+
+              <div>
+                <label>% domingo/feriado sem compensação (opcional)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  max={300}
+                  value={form.percentualDomingoFeriadoSemCompensacao ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      percentualDomingoFeriadoSemCompensacao: e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                    }))
+                  }
+                />
+                <small>
+                  Vazio = 100 (dobro, Súmula 146 do TST), sujeito a parecer. Só alimenta o relatório
+                  em modo sombra; não altera pagamento.
+                </small>
               </div>
 
               <div>
@@ -699,7 +807,7 @@ export function RegrasSindicaisPage() {
                       ...f,
                       folgaDomingoACadaSemanas: e.target.value
                         ? Number(e.target.value)
-                        : undefined,
+                        : null,
                     }))
                   }
                   placeholder="definido pela convenção"

@@ -159,3 +159,14 @@ export async function atualizarRegimeBancoHorasSuperAdmin(
   );
   return data;
 }
+
+export async function atualizarChaveLiberacaoSuperAdmin(
+  empresaId: string,
+  input: { chave: string; ligada: boolean; motivo: string },
+) {
+  const { data } = await superAdminApi.patch(
+    `/super-admin/empresas/${empresaId}/chaves`,
+    input,
+  );
+  return data as { alterada: boolean; chaves: import("./types").ChaveLiberacaoEstado[] };
+}
