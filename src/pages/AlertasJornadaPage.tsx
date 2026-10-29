@@ -19,6 +19,7 @@ import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
 import { dataLocalIso } from "../utils/mascaras";
+import { rotuloSeveridade } from "../utils/rotulos";
 
 // Pedido do usuário: mesmos atalhos de 7/30/90 dias usados no gráfico de
 // evolução do Painel de operação, aqui aplicados ao filtro de período já
@@ -413,7 +414,7 @@ export function AlertasJornadaPage() {
                               fontWeight: 600,
                             }}
                           >
-                            {a.severidade}
+                            {rotuloSeveridade(a.severidade)}
                           </span>
                         </td>
                         <td>

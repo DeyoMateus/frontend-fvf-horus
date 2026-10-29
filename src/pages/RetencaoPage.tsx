@@ -10,6 +10,8 @@ import type { RelatorioRetencao } from "../api/retencao";
 import type { Empresa } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { useConfirm } from "../components/ConfirmProvider";
+import { usePrompt } from "../components/PromptProvider";
+import { rotuloStatusMotorista } from "../utils/rotulos";
 
 function mensagemErro(e: unknown): string {
   const m = (e as { response?: { data?: { message?: string | string[] } } })
@@ -126,6 +128,7 @@ function ParametrosEmpresa({
 
 function RetencaoConteudo() {
   const confirm = useConfirm();
+  const prompt = usePrompt();
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [rel, setRel] = useState<RelatorioRetencao | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -167,10 +170,15 @@ function RetencaoConteudo() {
   }
 
   async function bloquear(motoristaId: string, nome: string) {
-    const processo = window.prompt(
+    const processo = await prompt(
       `Número do processo ou referência do litígio para ${nome}:`,
+      {
+        titulo: "Bloquear exclusão",
+        textoConfirmar: "Bloquear",
+        validar: (v) => (v.trim().length < 3 ? "Informe ao menos 3 caracteres." : null),
+      },
     );
-    if (!processo || processo.trim().length < 3) return;
+    if (processo === null || processo.trim().length < 3) return;
     try {
       await atualizarRetencaoMotorista(motoristaId, {
         bloqueado: true,
@@ -240,7 +248,7 @@ function RetencaoConteudo() {
                   return (
                     <tr key={m.motoristaId}>
                       <td>{m.nome}</td>
-                      <td>{m.status}</td>
+                      <td>{rotuloStatusMotorista(m.status)}</td>
                       <td>
                         <input
                           type="date"

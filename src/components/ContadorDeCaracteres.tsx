@@ -105,12 +105,43 @@ export function ContadorDeCaracteres() {
         span.style.left = "auto";
         span.style.right = `${Math.round(window.innerWidth - r.right + 2)}px`;
       });
-      quadro = requestAnimationFrame(atualizar);
+      agendar();
     }
 
-    quadro = requestAnimationFrame(atualizar);
+    // Rodada 512 (N200): o laco por quadro so roda enquanto ha atividade (rolagem, digitacao,
+    // redimensionamento, foco); parado, confere a cada 400 ms (1 s com a aba oculta).
+    let ativoAte = 0;
+    let temporizador = 0;
+    function agendar() {
+      cancelAnimationFrame(quadro);
+      window.clearTimeout(temporizador);
+      if (document.hidden) {
+        temporizador = window.setTimeout(() => atualizar(performance.now()), 1000);
+      } else if (performance.now() < ativoAte) {
+        quadro = requestAnimationFrame(atualizar);
+      } else {
+        temporizador = window.setTimeout(() => atualizar(performance.now()), 400);
+      }
+    }
+    function acordar() {
+      ativoAte = performance.now() + 1000;
+      agendar();
+    }
+    const eventos: Array<[EventTarget, string, boolean]> = [
+      [window, "scroll", true],
+      [window, "resize", false],
+      [document, "input", true],
+      [document, "focusin", true],
+      [document, "click", true],
+      [document, "visibilitychange", false],
+    ];
+    eventos.forEach(([alvo, nome, captura]) => alvo.addEventListener(nome, acordar, captura));
+
+    acordar();
     return () => {
       cancelAnimationFrame(quadro);
+      window.clearTimeout(temporizador);
+      eventos.forEach(([alvo, nome, captura]) => alvo.removeEventListener(nome, acordar, captura));
       camada.remove();
     };
   }, []);

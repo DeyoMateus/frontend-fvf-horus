@@ -1,3 +1,4 @@
+import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   listarSolicitacoesTitular,
@@ -99,10 +100,10 @@ function AbaPedidos() {
             tipo: tipo || undefined,
             busca: busca.trim() || undefined,
             dataInicio: dataInicio
-              ? new Date(dataInicio).toISOString()
+              ? inicioDoDiaLocalIso(dataInicio)
               : undefined,
             dataFim: dataFim
-              ? new Date(`${dataFim}T23:59:59`).toISOString()
+              ? fimDoDiaLocalIso(dataFim)
               : undefined,
             vencidas: soVencidos,
             ordem,

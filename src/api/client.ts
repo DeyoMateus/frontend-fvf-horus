@@ -27,6 +27,8 @@ export function setAccessToken(token: string | null) {
 
 export const api = axios.create({
   baseURL: API_URL,
+  // Rodada 501 (N197): nenhuma chamada fica pendurada para sempre.
+  timeout: 120_000,
   withCredentials: true,
   headers: { [HEADER_ANTI_CSRF]: "1" },
 });
@@ -118,6 +120,16 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${novoAccessToken}`;
         return api(original);
       }
+    }
+    // Rodada 493: o prazo do MFA venceu: leva ao cadastro (perfil ou segurança do super admin).
+    if (
+      error.response?.status === 403 &&
+      (error.response.data as { codigo?: string } | undefined)?.codigo === "MFA_EXPIRADO"
+    ) {
+      const destino = window.location.pathname.startsWith("/super-admin")
+        ? "/super-admin/seguranca"
+        : "/perfil";
+      if (!window.location.pathname.startsWith(destino)) window.location.assign(destino);
     }
     // Rodada 392: a empresa exige MFA e este ADMIN ainda não cadastrou: leva ao perfil.
     if (

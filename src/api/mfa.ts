@@ -7,9 +7,12 @@ export function iniciarMfa() {
     .then((r) => r.data);
 }
 
-export function confirmarMfa(codigo: string) {
+export function confirmarMfa(codigo: string, validadeDias?: number) {
   return api
-    .post<{ codigosReserva: string[] }>("/auth/mfa/confirmar", { codigo })
+    .post<{ codigosReserva: string[] }>("/auth/mfa/confirmar", {
+      codigo,
+      ...(validadeDias ? { validadeDias } : {}),
+    })
     .then((r) => r.data);
 }
 

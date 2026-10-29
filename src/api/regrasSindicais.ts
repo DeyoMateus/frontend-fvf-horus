@@ -21,9 +21,13 @@ export function createRegraSindical(input: RegraSindicalInput) {
 export function updateRegraSindical(
   id: string,
   input: Partial<RegraSindicalInput>,
+  confirmarRetroatividade = false,
 ) {
   return api
-    .patch<RegraSindical>(`/regras-sindicais/${id}`, input)
+    .patch<RegraSindical>(`/regras-sindicais/${id}`, {
+      ...input,
+      ...(confirmarRetroatividade ? { confirmarRetroatividade: true } : {}),
+    })
     .then((r) => r.data);
 }
 

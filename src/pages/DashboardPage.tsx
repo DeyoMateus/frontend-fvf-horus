@@ -91,10 +91,10 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   DOCUMENTACAO_LIMITE_ATINGIDO: "Limite de aguardando documentação atingido",
   OCIOSIDADE_DIRECAO_SUSPEITA: 'Ociosidade suspeita em "Em direção"',
   VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS:
-    "Velocidade impossível entre registros",
-  RELOGIO_DISPOSITIVO_SUSPEITO: "Relógio do aparelho suspeito",
-  RELOGIO_PONTO_RECUSADO: "Ponto recusado por relógio suspeito",
-  PONTO_ACEITO_COM_FLAG: "Ponto aceito com sinal de relógio suspeito",
+    "Velocidade incompatível entre registros",
+  RELOGIO_DISPOSITIVO_SUSPEITO: "Divergência de relógio do aparelho",
+  RELOGIO_PONTO_RECUSADO: "Divergência de relógio do aparelho (ponto não registrado, registro antigo)",
+  PONTO_ACEITO_COM_FLAG: "Ponto registrado com divergência de relógio",
   HORA_NAO_VERIFICADA_APOS_REINICIO: "Hora do ponto não verificada após reinício",
   SEQUENCIA_JORNADA_MUITO_RAPIDA: "Sequência de batidas muito rápida",
   ODOMETRO_REGRESSIVO: "Odômetro regressivo",
@@ -108,10 +108,11 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
     "Descanso entre jornadas abaixo do mínimo legal",
   CTE_EM_ABERTO_SEM_VINCULO_RECENTE:
     "CT-e em aberto sem vínculo recente de direção",
-  SINCRONIZACAO_TARDIA_SUSPEITA: "Evento sincronizado com atraso suspeito",
+  SINCRONIZACAO_TARDIA_SUSPEITA: "Evento sincronizado com atraso",
   RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE:
     "Relógio divergente confirmado após reconectar (retroativo)",
   INTEGRIDADE_CADEIA_VIOLADA: "Integridade violada (cadeia de registros)",
+  FALHA_AVALIACAO_ALERTAS: "Falha ao avaliar alertas (conferir o ponto)",
 };
 
 const OPCOES_PERIODO = [
@@ -345,6 +346,12 @@ function PainelDetalheCard({
           <p style={{ fontSize: 13, color: "#000000" }}>Carregando…</p>
         )}
         {erro && <p style={{ fontSize: 13, color: "#b91c1c" }}>{erro}</p>}
+
+        {!carregando && !erro && dados?.tipo === "alertas" && dados.truncado && (
+          <p style={{ fontSize: 13, color: "#92400e" }}>
+            Lista limitada aos {dados.itens.length} mais recentes; há mais itens do que os exibidos.
+          </p>
+        )}
 
         {!carregando && !erro && dados && dados.itens.length === 0 && (
           <p style={{ fontSize: 13, color: "#000000" }}>
@@ -715,7 +722,7 @@ export function DashboardPage() {
           descricao="Todos os alertas (qualquer severidade) gerados nas últimas 24 horas, abertos ou já resolvidos."
         />
         <CartaoMetrica
-          titulo="Risco de fraude (7 dias)"
+          titulo="Divergências de registro (7 dias)"
           valor={alertas.riscoFraudeUltimos7d}
           cor={alertas.riscoFraudeUltimos7d > 0 ? "#b91c1c" : undefined}
           subtitulo="integridade"
@@ -723,7 +730,7 @@ export function DashboardPage() {
             TIPOS_FRAUDE.includes(a.tipo),
           )}
           onClick={() =>
-            abrir("risco-fraude-7d", "Alertas de risco de fraude (7 dias)")
+            abrir("risco-fraude-7d", "Alertas de divergência de registro (7 dias)")
           }
           descricao="Alertas de integridade do aparelho/GPS dos últimos 7 dias — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (localização falsificada, relógio manipulado, odômetro regressivo etc.)."
         />
@@ -901,7 +908,7 @@ export function DashboardPage() {
                 "Alertas críticos",
                 "Alertas de atenção",
                 "Alertas informativos",
-                "Risco de fraude",
+                "Divergências de registro",
                 "Horas de direção",
                 "Horas de espera",
                 "Horas indefinido",

@@ -27,3 +27,7 @@ seed.*
 *-seed.*
 *_seed.*
 seeds/
+
+# Artefatos gerados (N202)
+*.tsbuildinfo
+vite.config.ts.timestamp-*

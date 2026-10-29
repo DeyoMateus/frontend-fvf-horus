@@ -1,3 +1,4 @@
+import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useEffect, useRef, useState } from "react";
 import { baixarAfd, listEmpresas } from "../api/empresas";
 import {
@@ -6,7 +7,7 @@ import {
 } from "../api/dossieCobranca";
 import type { ItemDossieCobranca } from "../api/dossieCobranca";
 import { baixarEspelhosRepPFiscalizacaoPdf } from "../api/fechamentoFiscal";
-import { listMotoristas } from "../api/motoristas";
+import { listarTodosMotoristas } from "../api/motoristas";
 import type { Empresa, Motorista } from "../api/types";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { dataLocalIso } from '../utils/mascaras';
@@ -61,7 +62,7 @@ export function FiscalizacaoPage() {
         setEmpresaId((atual) => atual || (lista.length > 0 ? lista[0].id : ""));
       })
       .catch(() => {});
-    listMotoristas()
+    listarTodosMotoristas()
       .then((r) => setMotoristas(r.dados))
       .catch(() => {});
   }, []);
@@ -78,8 +79,8 @@ export function FiscalizacaoPage() {
     setErroDossie(null);
     try {
       const lista = await listarDossieCobranca(
-        new Date(inicio).toISOString(),
-        new Date(`${fim}T23:59:59.999Z`).toISOString(),
+        inicioDoDiaLocalIso(inicio),
+        fimDoDiaLocalIso(fim),
       );
       setDossies(lista);
     } catch {
@@ -102,8 +103,8 @@ export function FiscalizacaoPage() {
     try {
       await baixarAfd(
         empresaId,
-        new Date(inicio).toISOString(),
-        new Date(`${fim}T23:59:59.999Z`).toISOString(),
+        inicioDoDiaLocalIso(inicio),
+        fimDoDiaLocalIso(fim),
       );
     } catch {
       setErroAfd(
@@ -119,8 +120,8 @@ export function FiscalizacaoPage() {
     setGerandoDossiePdf(true);
     try {
       await baixarDossieCobrancaPdf(
-        new Date(inicio).toISOString(),
-        new Date(`${fim}T23:59:59.999Z`).toISOString(),
+        inicioDoDiaLocalIso(inicio),
+        fimDoDiaLocalIso(fim),
       );
     } catch {
       setErroDossie("Não foi possível gerar o PDF agora.");
@@ -143,8 +144,8 @@ export function FiscalizacaoPage() {
     setGerandoRepP(true);
     try {
       await baixarEspelhosRepPFiscalizacaoPdf(
-        new Date(inicio).toISOString(),
-        new Date(`${fim}T23:59:59.999Z`).toISOString(),
+        inicioDoDiaLocalIso(inicio),
+        fimDoDiaLocalIso(fim),
         selecionadosRepP.size === 0 ? null : Array.from(selecionadosRepP),
       );
     } catch {

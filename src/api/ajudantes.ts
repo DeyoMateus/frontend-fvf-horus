@@ -66,3 +66,42 @@ export function vincularDispositivoAjudante(id: string, deviceUuid: string) {
 export function revogarDispositivoAjudante(id: string) {
   return api.delete(`/ajudantes/${id}/dispositivo`);
 }
+
+/** Rodada 491 (N17): baixa o espelho de ponto do ajudante em PDF. */
+export async function baixarEspelhoAjudantePdf(
+  id: string,
+  nome: string,
+  inicio: string,
+  fim: string,
+) {
+  const resposta = await api.get(`/ajudantes/${id}/espelho/pdf`, {
+    params: { inicio, fim },
+    responseType: "blob",
+  });
+  const url = window.URL.createObjectURL(
+    new Blob([resposta.data], { type: "application/pdf" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `espelho-ajudante-${nome.replace(/\s+/g, "-")}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+export interface AlertaJornadaAbertaAjudante {
+  ajudanteId: string;
+  nome: string;
+  empresa: string;
+  inicio: string;
+  minutosAbertos: number;
+  limiteMin: number;
+}
+
+/** Rodada 493: ajudantes com jornada aberta alem do limite (so informa). */
+export function getAlertasJornadaAbertaAjudantes() {
+  return api
+    .get<AlertaJornadaAbertaAjudante[]>("/ajudantes/alertas/jornada-aberta")
+    .then((r) => r.data);
+}

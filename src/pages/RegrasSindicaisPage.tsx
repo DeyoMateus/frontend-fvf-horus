@@ -74,6 +74,10 @@ export function RegrasSindicaisPage() {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
+  // Rodada 483: campos reprovados pela API (ficam em vermelho no formulario).
+  const [camposComErro, setCamposComErro] = useState<string[]>([]);
+  // Campo obrigatorio vazio (validacao do navegador): depois da 1a tentativa de salvar, fica vermelho.
+  const [tentouSalvar, setTentouSalvar] = useState(false);
 
   async function carregar() {
     setCarregando(true);
@@ -119,12 +123,20 @@ export function RegrasSindicaisPage() {
       intervaloRefeicaoMinimoMin: regra.intervaloRefeicaoMinimoMin,
       intervaloEntreJornadasMin: regra.intervaloEntreJornadasMin ?? 660,
       repousoSemanalMinimoH: regra.repousoSemanalMinimoH ?? null,
+      dsrMinimoH: regra.dsrMinimoH ?? null,
       viagemLongaDias: regra.viagemLongaDias ?? null,
+      jornadaAbertaAlertaH: regra.jornadaAbertaAlertaH ?? null,
       compensacaoFeriadoDias: regra.compensacaoFeriadoDias ?? null,
       percentualDomingoFeriadoSemCompensacao:
         regra.percentualDomingoFeriadoSemCompensacao != null
           ? Number(regra.percentualDomingoFeriadoSemCompensacao)
           : null,
+      percentualAdicionalInterjornada:
+        regra.percentualAdicionalInterjornada != null
+          ? Number(regra.percentualAdicionalInterjornada)
+          : 50,
+      incideReflexoDsrInterjornada: regra.incideReflexoDsrInterjornada ?? true,
+      bancoGuarda: regra.bancoGuarda ?? "fictos",
       percentualHoraEspera: regra.percentualHoraEspera,
       acordoColetivo: regra.acordoColetivo ?? false,
       numeroMediador: regra.numeroMediador ?? undefined,
@@ -152,23 +164,46 @@ export function RegrasSindicaisPage() {
   function onCancelarEdicao() {
     setEditandoId(null);
     setForm(REGRA_PADRAO);
+    setCamposComErro([]);
+    setTentouSalvar(false);
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setErroForm(null);
     setSalvando(true);
+    setCamposComErro([]);
     try {
       if (editandoId) {
-        await updateRegraSindical(editandoId, form);
+        try {
+          await updateRegraSindical(editandoId, form);
+        } catch (err) {
+          const d = (
+            err as { response?: { status?: number; data?: { codigo?: string; message?: string } } }
+          )?.response;
+          if (d?.status === 409 && d.data?.codigo === "REGRA_RETROATIVA") {
+            const ok = await confirm(d.data.message ?? "Confirmar alteração da regra?");
+            if (!ok) return;
+            await updateRegraSindical(editandoId, form, true);
+          } else {
+            throw err;
+          }
+        }
       } else {
         await createRegraSindical(form);
       }
       onCancelarEdicao();
       await carregar();
     } catch (err) {
-      const m = (err as { response?: { data?: { message?: string | string[] } } })
-        ?.response?.data?.message;
+      const dados = (
+        err as {
+          response?: {
+            data?: { message?: string | string[]; campos?: string[] };
+          };
+        }
+      )?.response?.data;
+      const m = dados?.message;
+      setCamposComErro(Array.isArray(dados?.campos) ? dados.campos : []);
       setErroForm(
         (Array.isArray(m) ? m.join(" ") : m) ??
           "Não foi possível salvar (confira os campos, principalmente o nome).",
@@ -213,9 +248,9 @@ export function RegrasSindicaisPage() {
           <h3 style={{ marginTop: 0 }}>
             {editandoId ? "Editar regra" : "Nova regra sindical"}
           </h3>
-          <form onSubmit={onSubmit}>
+          <form onSubmit={onSubmit} onInvalidCapture={() => setTentouSalvar(true)}>
             <label>Nome da convenção</label>
-            <CampoTextoExpansivel
+            <CampoTextoExpansivel name="nome"
               maxLength={200}
               value={form.nome}
               onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
@@ -225,22 +260,31 @@ export function RegrasSindicaisPage() {
 
             <label>Sindicato</label>
             <input
+              name="sindicato"
               maxLength={120}
               value={form.sindicato ?? ""}
               onChange={(e) =>
-                setForm((f) => ({ ...f, sindicato: e.target.value || undefined }))
+                setForm((f) => ({
+                  ...f,
+                  sindicato: e.target.value || undefined,
+                }))
               }
             />
             <label>Data-base da categoria</label>
             <input
+              name="dataBase"
               maxLength={40}
               value={form.dataBase ?? ""}
               onChange={(e) =>
-                setForm((f) => ({ ...f, dataBase: e.target.value || undefined }))
+                setForm((f) => ({
+                  ...f,
+                  dataBase: e.target.value || undefined,
+                }))
               }
             />
             <label>
               <input
+                name="acordoColetivo"
                 type="checkbox"
                 checked={form.acordoColetivo ?? false}
                 onChange={(e) =>
@@ -249,9 +293,16 @@ export function RegrasSindicaisPage() {
               />{" "}
               Regra vem de convenção ou acordo coletivo registrado
             </label>
-            <label>Número do registro no Mediador</label>
+            <label>
+              Número do registro no Mediador
+              {form.acordoColetivo
+                ? " (obrigatório para acordo/convenção)"
+                : ""}
+            </label>
             <input
+              name="numeroMediador"
               maxLength={60}
+              required={form.acordoColetivo ?? false}
               value={form.numeroMediador ?? ""}
               onChange={(e) =>
                 setForm((f) => ({
@@ -263,6 +314,7 @@ export function RegrasSindicaisPage() {
 
             <label>Categoria de transporte</label>
             <select
+              name="categoriaTransporte"
               value={form.categoriaTransporte}
               onChange={(e) =>
                 setForm((f) => ({
@@ -288,8 +340,12 @@ export function RegrasSindicaisPage() {
               }}
             >
               <div>
-                <label>Tolerância de marcação (máximo de 5 minutos, CLT art. 58, §1º). Ainda não aplicada ao cálculo</label>
+                <label>
+                  Tolerância de marcação (máximo de 5 minutos, CLT art. 58,
+                  §1º). Aplicada ao extra do dia
+                </label>
                 <DuracaoInput
+                  name="toleranciaMarcacaoMin"
                   valorMin={form.toleranciaMarcacaoMin ?? 0}
                   onChange={(v) =>
                     setForm((f) => ({ ...f, toleranciaMarcacaoMin: v ?? 0 }))
@@ -299,6 +355,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Jornada normal antes de virar extra</label>
                 <DuracaoInput
+                  name="limiteJornadaNormalMin"
                   valorMin={form.limiteJornadaNormalMin ?? 480}
                   onChange={(v) =>
                     setForm((f) => ({ ...f, limiteJornadaNormalMin: v ?? 480 }))
@@ -309,6 +366,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Limite da 1ª faixa de hora extra</label>
                 <DuracaoInput
+                  name="limiteHoraExtraFaixa1Min"
                   valorMin={form.limiteHoraExtraFaixa1Min ?? 120}
                   onChange={(v) =>
                     setForm((f) => ({
@@ -321,6 +379,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Máximo de horas extras por dia</label>
                 <DuracaoInput
+                  name="limiteHoraExtraDiariaMaxMin"
                   valorMin={form.limiteHoraExtraDiariaMaxMin ?? 120}
                   onChange={(v) =>
                     setForm((f) => ({
@@ -337,6 +396,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>% hora extra (1ª faixa)</label>
                 <input
+                  name="percentualHoraExtra1"
                   type="number"
                   step="0.01"
                   min={50}
@@ -353,6 +413,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>% hora extra (demais horas)</label>
                 <input
+                  name="percentualHoraExtra2"
                   type="number"
                   step="0.01"
                   min={50}
@@ -368,6 +429,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>% hora extra domingo/feriado em viagem (opcional)</label>
                 <input
+                  name="percentualHoraExtraDomingoFeriado"
                   type="number"
                   step="0.01"
                   min={0}
@@ -385,6 +447,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>% adicional noturno</label>
                 <input
+                  name="percentualAdicionalNoturno"
                   type="number"
                   step="0.01"
                   min={0}
@@ -400,6 +463,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Duração da "hora noturna" (minutos reais)</label>
                 <input
+                  name="duracaoMinutoNoturnoMin"
                   type="number"
                   step="0.01"
                   min={1}
@@ -424,6 +488,7 @@ export function RegrasSindicaisPage() {
                   }}
                 >
                   <input
+                    name="bancoHorasAtivo"
                     type="checkbox"
                     checked={form.bancoHorasAtivo ?? false}
                     onChange={(e) =>
@@ -449,6 +514,7 @@ export function RegrasSindicaisPage() {
                   Prazo de expiração do banco de horas (meses, opcional)
                 </label>
                 <input
+                  name="bancoHorasPrazoExpiracaoMeses"
                   type="number"
                   min={1}
                   value={form.bancoHorasPrazoExpiracaoMeses ?? ""}
@@ -466,6 +532,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Alerta do banco de horas ao acumular (opcional)</label>
                 <DuracaoInput
+                  name="bancoHorasLimiteAlertaMin"
                   opcional
                   valorMin={form.bancoHorasLimiteAlertaMin ?? undefined}
                   onChange={(v) =>
@@ -477,6 +544,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Intervalo de refeição, mínimo</label>
                 <DuracaoInput
+                  name="intervaloRefeicaoMinimoMin"
                   valorMin={form.intervaloRefeicaoMinimoMin ?? 60}
                   onChange={(v) =>
                     setForm((f) => ({
@@ -490,6 +558,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Descanso mínimo entre jornadas (mínimo 11:00)</label>
                 <DuracaoInput
+                  name="intervaloEntreJornadasMin"
                   valorMin={form.intervaloEntreJornadasMin ?? 660}
                   onChange={(v) =>
                     setForm((f) => ({
@@ -499,15 +568,16 @@ export function RegrasSindicaisPage() {
                   }
                 />
                 <small>
-                  Uma jornada só termina depois deste tempo sem trabalho. A CCT pode
-                  aumentar, nunca reduzir abaixo de 11 h. Por ora só alimenta a
-                  apuração em modo sombra.
+                  Uma jornada só termina depois deste tempo sem trabalho. A CCT
+                  pode aumentar, nunca reduzir abaixo de 11 h. Por ora só
+                  alimenta a apuração em modo sombra.
                 </small>
               </div>
 
               <div>
                 <label>Repouso semanal, duração em horas (opcional)</label>
                 <input
+                  name="repousoSemanalMinimoH"
                   type="number"
                   min={1}
                   max={168}
@@ -515,20 +585,50 @@ export function RegrasSindicaisPage() {
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      repousoSemanalMinimoH: e.target.value ? Number(e.target.value) : null,
+                      repousoSemanalMinimoH: e.target.value
+                        ? Number(e.target.value)
+                        : null,
                     }))
                   }
                 />
                 <small>
-                  Vazio = padrão do sistema (35 h: 24 h de repouso e 11 h de descanso), sujeito a
-                  parecer jurídico. Informe 24 se a regra for só o repouso semanal. Alimenta o
-                  alerta de repouso semanal.
+                  Vazio = padrão do sistema (35 h: 24 h de repouso e 11 h de
+                  descanso), sujeito a parecer jurídico. Informe 24 se a regra
+                  for só o repouso semanal. Alimenta o alerta de repouso
+                  semanal.
+                </small>
+              </div>
+
+              <div>
+                <label>
+                  DSR, horas corridas sem jornada na semana (opcional)
+                </label>
+                <input
+                  name="dsrMinimoH"
+                  type="number"
+                  min={1}
+                  max={168}
+                  value={form.dsrMinimoH ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      dsrMinimoH: e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                    }))
+                  }
+                />
+                <small>
+                  Vazio = 24 h. Define quantas horas seguidas sem jornada contam
+                  como DSR na semana. Alimenta o alerta e o relatório de DSR;
+                  não altera pagamento.
                 </small>
               </div>
 
               <div>
                 <label>Viagem longa a partir de quantos dias (opcional)</label>
                 <input
+                  name="viagemLongaDias"
                   type="number"
                   min={1}
                   max={60}
@@ -536,16 +636,49 @@ export function RegrasSindicaisPage() {
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      viagemLongaDias: e.target.value ? Number(e.target.value) : null,
+                      viagemLongaDias: e.target.value
+                        ? Number(e.target.value)
+                        : null,
                     }))
                   }
                 />
-                <small>Vazio = 7 dias. Define quando o alerta de repouso semanal é de viagem longa.</small>
+                <small>
+                  Vazio = 7 dias. Define quando o alerta de repouso semanal é de
+                  viagem longa.
+                </small>
               </div>
 
               <div>
-                <label>Prazo para compensar domingo/feriado, em dias (opcional)</label>
+                <label>
+                  Alerta de jornada esquecida aberta, em horas (opcional)
+                </label>
                 <input
+                  name="jornadaAbertaAlertaH"
+                  type="number"
+                  min={8}
+                  max={48}
+                  value={form.jornadaAbertaAlertaH ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      jornadaAbertaAlertaH: e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                    }))
+                  }
+                />
+                <small>
+                  Vazio = 16 horas. Depois desse tempo sem fim de jornada o
+                  sistema alerta; ele nunca encerra a jornada sozinho.
+                </small>
+              </div>
+
+              <div>
+                <label>
+                  Prazo para compensar domingo/feriado, em dias (opcional)
+                </label>
+                <input
+                  name="compensacaoFeriadoDias"
                   type="number"
                   min={1}
                   max={62}
@@ -553,19 +686,23 @@ export function RegrasSindicaisPage() {
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      compensacaoFeriadoDias: e.target.value ? Number(e.target.value) : null,
+                      compensacaoFeriadoDias: e.target.value
+                        ? Number(e.target.value)
+                        : null,
                     }))
                   }
                 />
                 <small>
-                  Vazio = mesma semana (segunda a domingo). Só preencha com previsão em CCT/ACT ou
-                  banco de horas. Por ora alimenta apenas o relatório em modo sombra.
+                  Vazio = mesma semana (segunda a domingo). Só preencha com
+                  previsão em CCT/ACT ou banco de horas. Por ora alimenta apenas
+                  o relatório em modo sombra.
                 </small>
               </div>
 
               <div>
                 <label>% domingo/feriado sem compensação (opcional)</label>
                 <input
+                  name="percentualDomingoFeriadoSemCompensacao"
                   type="number"
                   step="0.01"
                   min={0}
@@ -581,14 +718,65 @@ export function RegrasSindicaisPage() {
                   }
                 />
                 <small>
-                  Vazio = 100 (dobro, Súmula 146 do TST), sujeito a parecer. Só alimenta o relatório
-                  em modo sombra; não altera pagamento.
+                  Vazio = 100 (dobro, Súmula 146 do TST), sujeito a parecer. Só
+                  alimenta o relatório em modo sombra; não altera pagamento.
                 </small>
               </div>
 
               <div>
-                <label>Adicional de espera previsto em CCT (informativo, não entra no cálculo)</label>
+                <label>Adicional da interjornada suprimida (%)</label>
                 <input
+                  name="percentualAdicionalInterjornada"
+                  type="number"
+                  step="0.01"
+                  min={50}
+                  max={300}
+                  value={form.percentualAdicionalInterjornada ?? 50}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      percentualAdicionalInterjornada: e.target.value
+                        ? Number(e.target.value)
+                        : 50,
+                    }))
+                  }
+                />
+                <small>
+                  Padrão 50 (mínimo, OJ 355 SDI-1 do TST), sujeito a parecer.
+                  Incide sobre as horas que faltaram para completar o descanso
+                  de 11 h. Hoje só aparece no relatório em modo sombra; não
+                  altera pagamento.
+                </small>
+              </div>
+
+              <div>
+                <label>
+                  <input
+                    name="incideReflexoDsrInterjornada"
+                    type="checkbox"
+                    checked={form.incideReflexoDsrInterjornada ?? true}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        incideReflexoDsrInterjornada: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Interjornada suprimida reflete no DSR
+                </label>
+                <small>
+                  Marcado por padrão (natureza salarial). Desmarque só se a CCT
+                  disser o contrário. Sujeito a parecer.
+                </small>
+              </div>
+
+              <div>
+                <label>
+                  Adicional de espera previsto em CCT (informativo, não entra no
+                  cálculo)
+                </label>
+                <input
+                  name="percentualHoraEspera"
                   type="number"
                   step="0.01"
                   min={0}
@@ -613,15 +801,20 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Início da janela noturna</label>
                 <DuracaoInput
+                  name="janelaNoturnaInicioMin"
                   valorMin={form.janelaNoturnaInicioMin ?? 1320}
                   onChange={(v) =>
-                    setForm((f) => ({ ...f, janelaNoturnaInicioMin: v ?? 1320 }))
+                    setForm((f) => ({
+                      ...f,
+                      janelaNoturnaInicioMin: v ?? 1320,
+                    }))
                   }
                 />
               </div>
               <div>
                 <label>Fim da janela noturna</label>
                 <DuracaoInput
+                  name="janelaNoturnaFimMin"
                   valorMin={form.janelaNoturnaFimMin ?? 300}
                   onChange={(v) =>
                     setForm((f) => ({ ...f, janelaNoturnaFimMin: v ?? 300 }))
@@ -633,6 +826,7 @@ export function RegrasSindicaisPage() {
                   style={{ display: "flex", alignItems: "center", gap: 8 }}
                 >
                   <input
+                    name="prorrogacaoNoturna"
                     type="checkbox"
                     checked={form.prorrogacaoNoturna ?? true}
                     onChange={(e) =>
@@ -652,6 +846,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Vigência da convenção, início</label>
                 <input
+                  name="cctVigenciaInicio"
                   type="date"
                   value={form.cctVigenciaInicio ?? ""}
                   onChange={(e) =>
@@ -665,6 +860,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Vigência da convenção, fim</label>
                 <input
+                  name="cctVigenciaFim"
                   type="date"
                   value={form.cctVigenciaFim ?? ""}
                   onChange={(e) =>
@@ -676,8 +872,11 @@ export function RegrasSindicaisPage() {
                 />
               </div>
               <div>
-                <label>Referência do documento (registro no MTE, cláusula)</label>
+                <label>
+                  Referência do documento (registro no MTE, cláusula)
+                </label>
                 <input
+                  name="cctDocumentoRef"
                   type="text"
                   maxLength={300}
                   value={form.cctDocumentoRef ?? ""}
@@ -694,6 +893,7 @@ export function RegrasSindicaisPage() {
                   style={{ display: "flex", alignItems: "center", gap: 8 }}
                 >
                   <input
+                    name="declaracaoRespaldoCct"
                     type="checkbox"
                     checked={form.declaracaoRespaldoCct ?? false}
                     onChange={(e) =>
@@ -723,8 +923,32 @@ export function RegrasSindicaisPage() {
                 <h4 style={{ margin: "8px 0 0" }}>Banco de horas e feriados</h4>
               </div>
               <div>
+                <label>Unidade do banco de horas</label>
+                <select
+                  name="bancoGuarda"
+                  value={form.bancoGuarda ?? "fictos"}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      bancoGuarda: e.target.value as "fictos" | "reais",
+                    }))
+                  }
+                >
+                  <option value="fictos">
+                    Horas fictas (hora noturna reduzida)
+                  </option>
+                  <option value="reais">Horas reais (relógio)</option>
+                </select>
+                <small>
+                  Padrão: horas fictas, as mesmas pagas no holerite. Em "reais"
+                  o banco credita só o tempo de relógio. Sujeito a parecer
+                  jurídico.
+                </small>
+              </div>
+              <div>
                 <label>Tipo de banco de horas</label>
                 <select
+                  name="bancoHorasTipo"
                   value={form.bancoHorasTipo ?? "SEM_BANCO"}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -746,6 +970,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Fator de conversão do crédito</label>
                 <input
+                  name="bancoHorasFator"
                   type="number"
                   step="0.01"
                   min={1}
@@ -763,6 +988,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Tratamento do trabalho em feriado</label>
                 <select
+                  name="feriadoTratamento"
                   value={form.feriadoTratamento ?? ""}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -775,7 +1001,9 @@ export function RegrasSindicaisPage() {
                 >
                   <option value="">Não definido</option>
                   <option value="PAGAR_DOBRO">Pagar em dobro</option>
-                  <option value="LANCAR_NO_BANCO">Lançar no banco de horas</option>
+                  <option value="LANCAR_NO_BANCO">
+                    Lançar no banco de horas
+                  </option>
                   <option value="EXIGIR_FOLGA_COMPENSATORIA">
                     Exigir folga compensatória
                   </option>
@@ -784,6 +1012,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Calendário de feriados usado</label>
                 <select
+                  name="feriadoFonte"
                   value={form.feriadoFonte ?? "BASE_DA_EMPRESA"}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -792,13 +1021,18 @@ export function RegrasSindicaisPage() {
                     }))
                   }
                 >
-                  <option value="BASE_DA_EMPRESA">Cidade-base da empresa</option>
+                  <option value="BASE_DA_EMPRESA">
+                    Cidade-base da empresa
+                  </option>
                   <option value="LOCAL_DA_OPERACAO">Local da operação</option>
                 </select>
               </div>
               <div>
-                <label>Folga em domingo a cada quantas semanas (opcional)</label>
+                <label>
+                  Folga em domingo a cada quantas semanas (opcional)
+                </label>
                 <input
+                  name="folgaDomingoACadaSemanas"
                   type="number"
                   min={1}
                   value={form.folgaDomingoACadaSemanas ?? ""}
@@ -826,6 +1060,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Data do marco</label>
                 <input
+                  name="marcoAdi5322Data"
                   type="date"
                   value={form.marcoAdi5322Data ?? ""}
                   onChange={(e) =>
@@ -839,6 +1074,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>Referência da decisão (ata, publicação)</label>
                 <input
+                  name="marcoAdi5322Referencia"
                   type="text"
                   maxLength={300}
                   value={form.marcoAdi5322Referencia ?? ""}
@@ -852,6 +1088,22 @@ export function RegrasSindicaisPage() {
               </div>
             </div>
 
+            {tentouSalvar && (
+              <style>
+                {`form input:invalid, form textarea:invalid, form select:invalid {border:2px solid #d32f2f !important;background:#fdecea !important;}`}
+              </style>
+            )}
+            {camposComErro.length > 0 && (
+              <style>
+                {camposComErro
+                  .filter((c) => /^[A-Za-z0-9_]+$/.test(c))
+                  .map(
+                    (c) =>
+                      `[name="${c}"]{border:2px solid #d32f2f !important;background:#fdecea !important;}`,
+                  )
+                  .join("\n")}
+              </style>
+            )}
             {erroForm && <p className="error-text">{erroForm}</p>}
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <button type="submit" disabled={salvando}>
@@ -987,8 +1239,8 @@ export function RegrasSindicaisPage() {
               <li>
                 Descanso entre jornadas (interjornada): mínimo de 11h (CLT art.
                 66 / Lei 13.103). Vale sempre, sem exceção. Se o motorista
-                encerrou por engano e reabriu, o RH trata o alerta e registra que
-                foi a mesma jornada (a decisão fica na trilha de auditoria).
+                encerrou por engano e reabriu, o RH trata o alerta e registra
+                que foi a mesma jornada (a decisão fica na trilha de auditoria).
               </li>
             </ul>
             <p style={{ margin: "4px 0" }}>
@@ -1074,16 +1326,31 @@ export function RegrasSindicaisPage() {
       >
         <div className="card" style={{ marginBottom: 16 }}>
           <h3 style={{ marginTop: 0 }}>Como funcionam os feriados</h3>
-          <p style={{ fontSize: 13, color: "#000", lineHeight: 1.6, margin: "4px 0" }}>
+          <p
+            style={{
+              fontSize: 13,
+              color: "#000",
+              lineHeight: 1.6,
+              margin: "4px 0",
+            }}
+          >
             O sistema reconhece o domingo sozinho, mas não conhece os feriados,
             porque eles mudam de cidade para cidade. Por isso, cada feriado que
-            a empresa aceita precisa ser cadastrado abaixo, com data e descrição.
+            a empresa aceita precisa ser cadastrado abaixo, com data e
+            descrição.
           </p>
-          <p style={{ fontSize: 13, color: "#000", lineHeight: 1.6, margin: "4px 0" }}>
+          <p
+            style={{
+              fontSize: 13,
+              color: "#000",
+              lineHeight: 1.6,
+              margin: "4px 0",
+            }}
+          >
             Ao cadastrar, escolha se o feriado é "pago como domingo/feriado" (as
             horas trabalhadas nesse dia recebem o percentual diferenciado da
-            convenção coletiva escolhida acima) ou apenas informativo. Se deixar o
-            CNPJ em branco, o feriado vale para todos os CNPJs do grupo.
+            convenção coletiva escolhida acima) ou apenas informativo. Se deixar
+            o CNPJ em branco, o feriado vale para todos os CNPJs do grupo.
           </p>
         </div>
         <FeriadosPage />

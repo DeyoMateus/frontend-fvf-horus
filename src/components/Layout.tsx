@@ -8,6 +8,7 @@ import { BolinhaPendencia } from "./BolinhaPendencia";
 import { usePendenciasDoMenu } from "./pendenciasMenu";
 import { PoliticaGate } from "./PoliticaGate";
 import { TourProvider, useTour } from "../tour/TourProvider";
+import { rotuloPapel } from "../utils/rotulos";
 
 const CHAVE_SIDEBAR_COLAPSADA = "fvfhorus.sidebarColapsada";
 
@@ -176,7 +177,7 @@ function LayoutInterno() {
             {!efetivamenteColapsada && (
               <div className="sidebar-usuario-info">
                 <div>{usuario?.email}</div>
-                <div>{usuario?.papel}</div>
+                <div>{rotuloPapel(usuario?.papel)}</div>
               </div>
             )}
           </div>

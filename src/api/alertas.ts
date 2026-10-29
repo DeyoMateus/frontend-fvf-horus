@@ -43,6 +43,21 @@ export function liberarRelogioAlerta(
     .then((r) => r.data);
 }
 
+// Rodada 450: corrige a hora de um ponto aceito com divergência de relógio.
+export function corrigirHoraPontoAlerta(
+  motoristaId: string,
+  alertaId: string,
+  horarioCorreto: string,
+  observacao: string,
+) {
+  return api
+    .patch(
+      `/motoristas/${motoristaId}/tratamentos-ponto/corrigir-hora/${alertaId}`,
+      { horarioCorreto, observacao },
+    )
+    .then((r) => r.data);
+}
+
 export function tratarAlerta(alertaId: string, observacao: string) {
   return api
     .patch<AlertaJornada>(`/alertas-jornada/${alertaId}/tratar`, { observacao })

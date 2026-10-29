@@ -1,3 +1,4 @@
+import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   getSaldoBancoHoras,
@@ -66,8 +67,8 @@ export function BancoHorasPainel({ motoristaId }: { motoristaId: string }) {
       const [s, a] = await Promise.all([
         getSaldoBancoHoras(
           motoristaId,
-          new Date(inicio).toISOString(),
-          new Date(`${fim}T23:59:59.999Z`).toISOString(),
+          inicioDoDiaLocalIso(inicio),
+          fimDoDiaLocalIso(fim),
         ),
         listarAjustesBancoHoras(motoristaId),
       ]);
@@ -89,13 +90,17 @@ export function BancoHorasPainel({ motoristaId }: { motoristaId: string }) {
   async function onRegistrar(e: FormEvent) {
     e.preventDefault();
     setErroForm(null);
+    if (observacao.trim().length < 5) {
+      setErroForm("Informe a observação (mínimo de 5 caracteres).");
+      return;
+    }
     setSalvando(true);
     try {
       await registrarAjusteBancoHoras(motoristaId, {
         tipo,
         minutos,
         data: new Date(dataAjuste).toISOString(),
-        observacao: observacao || undefined,
+        observacao: observacao.trim(),
       });
       setObservacao("");
       await carregar();

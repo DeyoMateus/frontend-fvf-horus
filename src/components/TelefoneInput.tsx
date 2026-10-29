@@ -1,26 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { PAISES_TELEFONE, montarTelefone, separarTelefone, urlBandeira } from '../data/paisesTelefone';
+import { PAISES_TELEFONE, montarTelefone, separarTelefone } from '../data/paisesTelefone';
 import type { PaisTelefone } from '../data/paisesTelefone';
 
 /**
- * Bandeira do país com fallback: se a imagem do flagcdn não carregar
- * (sem internet, CDN fora do ar), mostra a sigla em texto no lugar em
- * vez de deixar um ícone de imagem quebrada.
+ * Rodada 500 (N149): a bandeira agora é o emoji do país (letras regionais),
+ * sem nenhuma requisição a CDN de terceiro. Onde o sistema não desenha
+ * bandeiras (ex.: Windows), aparecem as duas letras da sigla.
  */
 function Bandeira({ pais }: { pais: PaisTelefone }) {
-  const [falhou, setFalhou] = useState(false);
-  if (falhou) {
-    return <span className="bandeira-fallback">{pais.sigla}</span>;
-  }
+  const sigla = pais.sigla.toUpperCase();
+  const emoji = /^[A-Z]{2}$/.test(sigla)
+    ? String.fromCodePoint(...[...sigla].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65))
+    : sigla;
   return (
-    <img
-      className="bandeira-img"
-      src={urlBandeira(pais.sigla)}
-      alt={pais.sigla}
-      width={20}
-      height={15}
-      onError={() => setFalhou(true)}
-    />
+    <span className="bandeira-fallback" role="img" aria-label={sigla}>
+      {emoji}
+    </span>
   );
 }
 

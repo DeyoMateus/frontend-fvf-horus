@@ -28,6 +28,7 @@ import { SuperAdminAuthProvider } from "./context/SuperAdminAuthContext";
 import { SuperAdminProtectedRoute } from "./components/SuperAdminProtectedRoute";
 import { SuperAdminLoginPage } from "./pages/SuperAdminLoginPage";
 import { SuperAdminDashboardPage } from "./pages/SuperAdminDashboardPage";
+import { SuperAdminSegurancaPage } from "./pages/SuperAdminSegurancaPage";
 import { SuperAdminGrupoDetailPage } from "./pages/SuperAdminGrupoDetailPage";
 import { SuperAdminAuditoriaPage } from "./pages/SuperAdminAuditoriaPage";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
@@ -133,6 +134,10 @@ export function App() {
                     <Route
                       path="/super-admin/auditoria"
                       element={<SuperAdminAuditoriaPage />}
+                    />
+                    <Route
+                      path="/super-admin/seguranca"
+                      element={<SuperAdminSegurancaPage />}
                     />
                   </Route>
                 </Route>

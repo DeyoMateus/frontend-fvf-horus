@@ -1,3 +1,4 @@
+import { useToast } from "./ToastProvider";
 import { useEffect, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link, useNavigate } from "react-router-dom";
@@ -111,6 +112,7 @@ function notificarPedidoTitularNoDesktop(nome: string) {
 }
 
 export function NotificationBell() {
+  const toast = useToast();
   const [alertas, setAlertas] = useState<AlertaJornada[]>([]);
   // Pedido do usuário: solicitação de ajuste enviada pelo motorista
   // também precisa avisar o gestor no sininho, igual já acontece com
@@ -361,7 +363,7 @@ export function NotificationBell() {
       // em silêncio.
       const msg = (erro as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
-      if (msg) window.alert(msg);
+      if (msg) toast.erro(msg);
     } finally {
       setCarregando(false);
     }

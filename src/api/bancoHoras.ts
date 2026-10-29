@@ -90,7 +90,7 @@ export const vencimentosRazao = (id: string) => api.get<VencimentosRazao>(`${bas
 export const verificarRazao = (id: string) => api.get<VerificacaoRazao>(`${base(id)}/verificar`).then((r) => r.data);
 export const creditarPeriodoRazao = (id: string, inicio: string, fim: string) =>
   api.post(`${base(id)}/creditos/periodo`, { inicio, fim }).then((r) => r.data);
-export const debitarRazao = (id: string, input: { tipo: 'COMPENSACAO' | 'PAGAMENTO'; minutos: number; data: string; observacao?: string }) =>
+export const debitarRazao = (id: string, input: { tipo: 'COMPENSACAO' | 'PAGAMENTO'; minutos: number; data: string; observacao: string; chaveIdempotencia?: string }) =>
   api.post(`${base(id)}/debitos`, input).then((r) => r.data);
 export const corrigirRazao = (id: string, input: { sentido: 'CREDITO' | 'DEBITO'; minutos: number; data: string; observacao: string }) =>
   api.post(`${base(id)}/correcoes`, input).then((r) => r.data);

@@ -54,7 +54,7 @@ export function colunasPorMotorista(
   }
   if (mostrar.alertas) {
     colunas.push({
-      titulo: "Alertas (crít./atenção/fraude)",
+      titulo: "Alertas (crít./atenção/integridade)",
       texto: (m) =>
         `${m.alertas.criticos} / ${m.alertas.atencao} / ${m.alertas.riscoFraude}`,
     });

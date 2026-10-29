@@ -1,3 +1,4 @@
+import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { DicaAoPassar } from "./DicaAoPassar";
@@ -6,7 +7,7 @@ import type {
   IndicadoresDiaTendencia,
   IndicadoresPainel,
 } from "../api/indicadores";
-import { listMotoristas } from "../api/motoristas";
+import { listarTodosMotoristas } from "../api/motoristas";
 import type { Motorista } from "../api/types";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { ModalDetalheTendencia, type PontoClicado } from "./TendenciaCharts";
@@ -392,7 +393,7 @@ export function PainelIndicadores() {
   }, [graficosMinimizados]);
 
   useEffect(() => {
-    listMotoristas()
+    listarTodosMotoristas()
       .then((r) => setMotoristas(r.dados))
       .catch(() => {
         /* seletor fica só com "Todos" , não impede a tela de funcionar */
@@ -410,8 +411,8 @@ export function PainelIndicadores() {
       setAtualizando(true);
       setErro(null);
       return getIndicadoresPainel(
-        new Date(inicio).toISOString(),
-        new Date(`${fim}T23:59:59.999Z`).toISOString(),
+        inicioDoDiaLocalIso(inicio),
+        fimDoDiaLocalIso(fim),
         motoristaId || undefined,
       )
         .then((r) => {
@@ -447,8 +448,8 @@ export function PainelIndicadores() {
     const cancelRef = { cancelado: false };
     setCarregandoEvolucao(true);
     getIndicadoresPainel(
-      new Date(inicioEvolucao).toISOString(),
-      new Date(`${fimEvolucao}T23:59:59.999Z`).toISOString(),
+      inicioDoDiaLocalIso(inicioEvolucao),
+      fimDoDiaLocalIso(fimEvolucao),
       motoristaId || undefined,
     )
       .then((r) => {
@@ -531,8 +532,8 @@ export function PainelIndicadores() {
     setExportando(true);
     try {
       await baixarIndicadoresCsv(
-        new Date(inicio).toISOString(),
-        new Date(`${fim}T23:59:59.999Z`).toISOString(),
+        inicioDoDiaLocalIso(inicio),
+        fimDoDiaLocalIso(fim),
         motoristaId || undefined,
       );
     } catch {
@@ -725,7 +726,7 @@ export function PainelIndicadores() {
                 subtitulo={`${painel.totais.percentualIndefinidoSobreJornada}% da jornada sem direção, descanso ou espera escolhidos`}
                 cor="#ea580c"
                 onClick={() => irParaGrafico("indefinido")}
-                descricao="Tempo com a jornada aberta sem o motorista ter marcado direção, descanso ou espera no app. Sinal de uso incorreto do app ou de jornada esquecida em aberto."
+                descricao="Tempo com a jornada aberta sem o motorista ter marcado direção, descanso ou espera no app. Pode indicar jornada esquecida em aberto ou dificuldade de uso do app; confirme com o motorista antes de qualquer conclusão."
               />
             )}
             {temBancoHoras &&
@@ -760,11 +761,11 @@ export function PainelIndicadores() {
                   descricao="Severidade intermediária: ainda não ultrapassou o limite legal, mas está perto dele, ou merece acompanhamento (ex.: descanso interjornada insuficiente, ociosidade suspeita)."
                 />
                 <CartaoIndicador
-                  titulo="Risco de fraude"
+                  titulo="Divergências de registro"
                   valor={String(painel.totais.alertas.riscoFraude)}
                   cor="#7c3aed"
                   onClick={() => irParaGrafico("alertas")}
-                  descricao="Alertas de integridade do aparelho/GPS — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (localização falsificada, relógio manipulado, odômetro regressivo etc.)."
+                  descricao="Alertas de integridade do aparelho/GPS — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (localização inconsistente, divergência de relógio, odômetro regressivo etc.)."
                 />
               </>
             )}

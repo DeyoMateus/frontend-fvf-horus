@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  corrigirHoraPontoAlerta,
   liberarRelogioAlerta,
   tratarAlerta,
   tratarAlertasEmLote,
@@ -80,6 +81,7 @@ export function FormularioTratamentoAlerta({
   const [horario, setHorario] = useState("");
   const [salvando, setSalvando] = useState(false);
   const ehRelogio = alerta.tipo === "RELOGIO_PONTO_RECUSADO";
+  const ehPontoComFlag = alerta.tipo === "PONTO_ACEITO_COM_FLAG";
   const obs = observacao.trim();
 
   async function salvar() {
@@ -94,6 +96,28 @@ export function FormularioTratamentoAlerta({
           e,
           "Não foi possível registrar o tratamento deste alerta.",
         ),
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function corrigirHora() {
+    if (obs.length < 10 || !horario) return;
+    const instante = new Date(horario);
+    if (Number.isNaN(instante.getTime())) return;
+    setSalvando(true);
+    try {
+      await corrigirHoraPontoAlerta(
+        alerta.motoristaId,
+        alerta.id,
+        instante.toISOString(),
+        obs,
+      );
+      await onConcluido();
+    } catch (e) {
+      onErro(
+        mensagemDeErro(e, "Não foi possível corrigir a hora deste ponto."),
       );
     } finally {
       setSalvando(false);
@@ -144,6 +168,38 @@ export function FormularioTratamentoAlerta({
           <button disabled={salvando || obs.length < 3} onClick={salvar}>
             {salvando ? "Salvando…" : "Salvar tratamento"}
           </button>
+        )}
+        {ehPontoComFlag && (
+          <div
+            style={{
+              marginTop: 10,
+              paddingTop: 8,
+              borderTop: "1px solid #e5e7eb",
+            }}
+          >
+            <p style={{ fontSize: 13, margin: "0 0 6px" }}>
+              Se o horário do ponto estiver errado, informe a hora correta: o
+              ponto original continua guardado e o ajuste com a hora correta
+              passa a valer nos cálculos, com a sua anotação (mínimo de 10
+              caracteres). A hora precisa ficar entre o ponto anterior e o
+              seguinte do motorista. Se o horário estiver certo, use apenas
+              "Salvar tratamento".
+            </p>
+            <label style={{ fontSize: 13 }}>
+              Hora correta do ponto:{" "}
+              <input
+                type="datetime-local"
+                value={horario}
+                onChange={(e) => setHorario(e.target.value)}
+              />
+            </label>{" "}
+            <button
+              disabled={salvando || !horario || obs.length < 10}
+              onClick={corrigirHora}
+            >
+              Corrigir hora do ponto
+            </button>
+          </div>
         )}
         {ehRelogio && (
           <div

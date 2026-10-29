@@ -498,59 +498,38 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
 
   function baixarTudo() {
     if (!dados) return;
+    // Rodada 499 (N124): pedidos, negados e nao realizadas tem colunas proprias no fim da
+    // planilha ("Periodo do pedido ou data" e "Motivo da decisao"), sem cair nas colunas de motorista.
+    const brancos = (n: number) => Array.from({ length: n }, () => "");
     const linhas: string[][] = [
       ...dados.deFolga.map((m) => linhaMotorista(ROTULO.deFolga, m)),
       ...dados.vencidas.map((m) => linhaMotorista(ROTULO.vencidas, m)),
       ...dados.marcadas.map((m) => linhaMotorista(ROTULO.marcadas, m)),
-    ];
+    ].map((l) => [...l, "", ""]);
     const negados = dados.pedidosNegados.map((p) => [
       ROTULO.negados,
       p.nome,
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
+      ...brancos(CABECALHOS_MOTORISTA.length - 2),
       `${fmtDia(p.dataInicio)} a ${fmtDia(p.dataFim)}`,
       p.motivoDecisao ?? "",
     ]);
     const naoRealizadas = dados.naoRealizadas.map((f) => [
       ROTULO.naoRealizadas,
       f.nome,
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
+      ...brancos(CABECALHOS_MOTORISTA.length - 2),
       fmtDia(f.data),
       "",
     ]);
     const pedidos = dados.pedidosEmAberto.map((p) => [
       ROTULO.pedidos,
       p.nome,
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
+      ...brancos(CABECALHOS_MOTORISTA.length - 2),
       `${fmtDia(p.dataInicio)} a ${fmtDia(p.dataFim)}`,
       "",
     ]);
     void baixarCsvTabela(
       "dashboard-de-folgas.xlsx",
-      CABECALHOS_MOTORISTA,
+      [...CABECALHOS_MOTORISTA, "Período do pedido ou data", "Motivo da decisão"],
       [...linhas, ...pedidos, ...negados, ...naoRealizadas],
       {
         titulo: "Dashboard de folgas",

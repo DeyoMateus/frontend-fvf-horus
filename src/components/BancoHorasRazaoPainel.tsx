@@ -15,6 +15,7 @@ import type { LancamentoBanco, TipoLancamentoBanco, VencimentosRazao, Verificaca
 import { minParaHoras } from "../utils/formatarDuracao";
 import { dataLocalIso } from "../utils/mascaras";
 import { ContestacoesBancoHoras } from "./ContestacoesBancoHoras";
+import { useConfirm } from "./ConfirmProvider";
 
 const ROTULO: Record<TipoLancamentoBanco, string> = {
   ABERTURA: "Abertura (saldo inicial)",
@@ -49,6 +50,7 @@ export function BancoHorasRazaoPainel({
   motoristaId: string;
   ehAdmin: boolean;
 }) {
+  const confirmar = useConfirm();
   const [venc, setVenc] = useState<VencimentosRazao | null>(null);
   const [lista, setLista] = useState<LancamentoBanco[]>([]);
   const [ver, setVer] = useState<VerificacaoRazao | null>(null);
@@ -62,6 +64,8 @@ export function BancoHorasRazaoPainel({
   const [dHoras, setDHoras] = useState("1");
   const [dData, setDData] = useState(dataLocalIso(new Date()));
   const [dObs, setDObs] = useState("");
+  // Rodada 510 (N142): mesma chave no reenvio/duplo clique; renovada depois de um lançamento aceito.
+  const [chaveDebito, setChaveDebito] = useState(() => crypto.randomUUID());
   const [kSentido, setKSentido] = useState<"CREDITO" | "DEBITO">("CREDITO");
   const [kHoras, setKHoras] = useState("1");
   const [kObs, setKObs] = useState("");
@@ -143,7 +147,7 @@ export function BancoHorasRazaoPainel({
             className="secondary"
             disabled={ocupado}
             title="Lança o saldo inicial do razão a partir do saldo atual do banco de horas."
-            onClick={() => { if (window.confirm("Abrir o razão com o saldo atual? O lançamento não poderá ser apagado.")) void executar(() => abrirRazao(motoristaId, aData)); }}
+            onClick={async () => { if (await confirmar("Abrir o razão com o saldo atual? O lançamento não poderá ser apagado.", { textoConfirmar: "Abrir razão" })) void executar(() => abrirRazao(motoristaId, aData)); }}
           >
             Abrir razão (saldo inicial)
           </button>
@@ -152,7 +156,7 @@ export function BancoHorasRazaoPainel({
             className="secondary"
             disabled={ocupado}
             title="Registra o saldo na data como lançamento de fechamento."
-            onClick={() => { if (window.confirm("Registrar o fechamento do saldo nesta data? O lançamento não poderá ser apagado.")) void executar(() => snapshotRazao(motoristaId, aData)); }}
+            onClick={async () => { if (await confirmar("Registrar o fechamento do saldo nesta data? O lançamento não poderá ser apagado.", { textoConfirmar: "Registrar fechamento" })) void executar(() => snapshotRazao(motoristaId, aData)); }}
           >
             Registrar fechamento
           </button>
@@ -169,7 +173,7 @@ export function BancoHorasRazaoPainel({
       </form>
 
       <form
-        onSubmit={(e: FormEvent) => { e.preventDefault(); void executar(() => debitarRazao(motoristaId, { tipo: dTipo, minutos: minutos(dHoras), data: dData, observacao: dObs.trim() || undefined })); }}
+        onSubmit={(e: FormEvent) => { e.preventDefault(); if (dObs.trim().length < 5) { setErro("Informe a observação (mínimo de 5 caracteres)."); return; } void executar(async () => { const r = await debitarRazao(motoristaId, { tipo: dTipo, minutos: minutos(dHoras), data: dData, observacao: dObs.trim(), chaveIdempotencia: chaveDebito }); setChaveDebito(crypto.randomUUID()); return r; }); }}
         style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 12 }}
       >
         <div>
@@ -181,7 +185,7 @@ export function BancoHorasRazaoPainel({
         </div>
         <div><label>Horas</label><input inputMode="decimal" value={dHoras} onChange={(e) => setDHoras(e.target.value)} style={{ width: 70 }} /></div>
         <div><label>Data</label><input type="date" value={dData} onChange={(e) => setDData(e.target.value)} /></div>
-        <div><label>Observação</label><input maxLength={400} value={dObs} onChange={(e) => setDObs(e.target.value)} /></div>
+        <div><label>Observação (obrigatória)</label><input maxLength={400} value={dObs} onChange={(e) => setDObs(e.target.value)} /></div>
         <button type="submit" disabled={ocupado}>Registrar débito</button>
       </form>
 

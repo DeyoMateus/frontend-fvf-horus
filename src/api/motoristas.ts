@@ -39,6 +39,28 @@ export function listMotoristas(
     .then((r) => r.data);
 }
 
+/**
+ * Rodada 500 (N127): busca TODAS as páginas (200 por vez), para telas que
+ * precisam da frota inteira (seletores, filtros) não truncarem em silêncio.
+ * Teto de 50 páginas (10.000 motoristas) como trava de segurança.
+ */
+export async function listarTodosMotoristas(
+  busca?: string,
+  incluirExcluidos?: boolean,
+): Promise<PaginaMotoristas> {
+  const primeira = await listMotoristas(1, 200, busca, incluirExcluidos);
+  const dados = [...primeira.dados];
+  const paginas = Math.min(
+    50,
+    Math.ceil(primeira.total / (primeira.pageSize || 200)),
+  );
+  for (let pg = 2; pg <= paginas; pg++) {
+    const proxima = await listMotoristas(pg, 200, busca, incluirExcluidos);
+    dados.push(...proxima.dados);
+  }
+  return { ...primeira, dados };
+}
+
 export interface AlertaIntegridadeDispositivo {
   id: string;
   acao: string;
@@ -113,7 +135,7 @@ export function atualizarCadastroMotorista(
  * banco, só tira da listagem normal do painel. Ver comentário completo
  * em MotoristasService.excluir (backend).
  */
-export function excluirMotorista(id: string, motivo?: string) {
+export function excluirMotorista(id: string, motivo: string) {
   return api
     .delete<Motorista>(`/motoristas/${id}`, { data: { motivo } })
     .then((r) => r.data);

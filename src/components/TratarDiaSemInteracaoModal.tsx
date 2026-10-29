@@ -17,7 +17,7 @@ const OPCOES: { valor: Escolha; titulo: string; explicacao: string }[] = [
     valor: "FALTA",
     titulo: "Falta",
     explicacao:
-      "O motorista não trabalhou e não tinha folga. Fica registrado como falta apurada por você.",
+      "O motorista não trabalhou e não tinha folga. Fica registrado como falta informada por você; a consequência trabalhista deve ser avaliada pela empresa.",
   },
   {
     valor: "ATESTADO",

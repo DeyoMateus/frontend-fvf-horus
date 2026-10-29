@@ -1,3 +1,4 @@
+import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
 import {
@@ -93,9 +94,9 @@ export function SuperAdminAuditoriaPage() {
         grupoId: grupoId || undefined,
         actorType: actorType || undefined,
         acoes: acoesSelecionadas.length > 0 ? acoesSelecionadas : undefined,
-        dataInicio: dataInicio ? new Date(dataInicio).toISOString() : undefined,
+        dataInicio: dataInicio ? inicioDoDiaLocalIso(dataInicio) : undefined,
         dataFim: dataFim
-          ? new Date(`${dataFim}T23:59:59`).toISOString()
+          ? fimDoDiaLocalIso(dataFim)
           : undefined,
         ordem,
       });

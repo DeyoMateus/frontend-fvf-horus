@@ -2,13 +2,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { criarEmpresaMae, listarGrupos } from "../api/superAdmin";
 import type { CreateEmpresaMaeInput, GrupoResumo } from "../api/types";
-import { MfaCard } from "../components/MfaCard";
-import {
-  confirmarMfaSuperAdmin,
-  desativarMfaSuperAdmin,
-  iniciarMfaSuperAdmin,
-  obterEstadoMfaSuperAdmin,
-} from "../api/superAdminAuth";
 import { SuperAdminAuditoriaPage } from "./SuperAdminAuditoriaPage";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
@@ -35,7 +28,6 @@ export function SuperAdminDashboardPage() {
   const [grupos, setGrupos] = useState<GrupoResumo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [mfaAtivo, setMfaAtivo] = useState<boolean | null>(null);
 
   const [form, setForm] = useState<CreateEmpresaMaeInput>(FORM_PADRAO);
   const [salvando, setSalvando] = useState(false);
@@ -56,9 +48,6 @@ export function SuperAdminDashboardPage() {
 
   useEffect(() => {
     carregar();
-    obterEstadoMfaSuperAdmin()
-      .then((e) => setMfaAtivo(e.mfaAtivo))
-      .catch(() => setMfaAtivo(null));
   }, []);
 
   async function onSubmit(e: FormEvent) {
@@ -80,7 +69,7 @@ export function SuperAdminDashboardPage() {
       await carregar();
     } catch {
       setErroForm(
-        "Não foi possível cadastrar (confira se o CNPJ e o e-mail do admin já não estão em uso, e se a senha tem pelo menos 8 caracteres).",
+        "Não foi possível cadastrar (confira se o CNPJ e o e-mail do admin já não estão em uso, e se a senha tem pelo menos 10 caracteres, com letra e número).",
       );
     } finally {
       setSalvando(false);
@@ -99,20 +88,6 @@ export function SuperAdminDashboardPage() {
         demais CNPJs do grupo e os motoristas. O super admin só provisiona a
         empresa mãe e o primeiro admin.
       </p>
-
-      {mfaAtivo !== null && (
-        <MfaCard
-          ativo={mfaAtivo}
-          onMudou={() => {
-            void obterEstadoMfaSuperAdmin().then((e) => setMfaAtivo(e.mfaAtivo));
-          }}
-          acoes={{
-            iniciar: iniciarMfaSuperAdmin,
-            confirmar: confirmarMfaSuperAdmin,
-            desativar: desativarMfaSuperAdmin,
-          }}
-        />
-      )}
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Cadastrar nova empresa mãe</h3>
@@ -191,7 +166,7 @@ export function SuperAdminDashboardPage() {
               <input
                 type="password" maxLength={128}
                 autoComplete="new-password"
-                minLength={8}
+                minLength={10}
                 value={form.senhaAdmin}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, senhaAdmin: e.target.value }))

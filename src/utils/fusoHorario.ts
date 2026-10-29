@@ -129,3 +129,15 @@ export function resolverFusoDoAjuste(
   }
   return { offsetMin: off, instanteMs: instanteDaParede(valor, off), doMotorista };
 }
+
+/** Rodada 499 (N125): "aaaa-mm-dd" -> 00:00:00.000 do computador de quem filtra (não UTC). */
+export function inicioDoDiaLocalIso(ymd: string): string {
+  const [a, m, d] = ymd.slice(0, 10).split("-").map(Number);
+  return new Date(a, m - 1, d, 0, 0, 0, 0).toISOString();
+}
+
+/** Rodada 499 (N125): "aaaa-mm-dd" -> 23:59:59.999 do computador de quem filtra (não UTC). */
+export function fimDoDiaLocalIso(ymd: string): string {
+  const [a, m, d] = ymd.slice(0, 10).split("-").map(Number);
+  return new Date(a, m - 1, d, 23, 59, 59, 999).toISOString();
+}

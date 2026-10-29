@@ -232,8 +232,8 @@ export function PerfilPage() {
         </button>
         {politicaFalhou && (
           <p style={{ fontSize: 12, color: "#b91c1c" }}>
-            Não foi possível carregar a política. Reinicie o servidor (backend)
-            para carregar as rotas novas e recarregue a página.
+            Não foi possível carregar a política agora. Recarregue a página e tente de
+            novo; se continuar, avise o suporte.
           </p>
         )}
         {politicaAberta && politica && (
@@ -311,7 +311,7 @@ export function PerfilPage() {
             autoComplete="new-password"
             value={novaSenha}
             onChange={(e) => setNovaSenha(e.target.value)}
-            minLength={8}
+            minLength={10}
             maxLength={128}
             required
           />
@@ -323,12 +323,12 @@ export function PerfilPage() {
             autoComplete="new-password"
             value={confirmaSenha}
             onChange={(e) => setConfirmaSenha(e.target.value)}
-            minLength={8}
+            minLength={10}
             maxLength={128}
             required
           />
           <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
-            Mínimo de 8 caracteres. Ao alterar, todas as sessões são encerradas
+            Mínimo de 10 caracteres, com letra e número. Ao alterar, todas as sessões são encerradas
             e você entra de novo com a nova senha.
           </p>
           {erroSenha && <p className="error-text">{erroSenha}</p>}
@@ -343,7 +343,7 @@ export function PerfilPage() {
         </form>
       </div>
 
-      <MfaCard ativo={!!perfil?.mfaAtivo} onMudou={() => obterMeuPerfil().then(setPerfil).catch(() => undefined)}
+      <MfaCard ativo={!!perfil?.mfaAtivo} validoAte={perfil?.mfaValidoAte} expirado={perfil?.mfaExpirado} onMudou={() => obterMeuPerfil().then(setPerfil).catch(() => undefined)}
       />
 
       <div className="card" style={{ maxWidth: 480, margin: "16px auto 0" }}>

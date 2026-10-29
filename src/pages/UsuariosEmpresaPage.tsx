@@ -12,7 +12,7 @@ import type { UsuarioEmpresaListado } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
-import { EmpresasDoUsuarioPainel } from "../components/EmpresasDoUsuarioPainel";
+import { rotuloPapel } from "../utils/rotulos";
 
 /**
  * Gestão do time do próprio grupo (Rodada 31). O ADMIN só ativa/desativa
@@ -23,13 +23,22 @@ import { EmpresasDoUsuarioPainel } from "../components/EmpresasDoUsuarioPainel";
  * usuário" daqui; criar um novo usuário do grupo continua sendo feito
  * pelo super admin da plataforma (`SuperAdminGrupoDetailPage.tsx`).
  */
+/**
+ * Rodada 496 (N126): o redirect fica num componente-casca, antes de qualquer hook do conteudo
+ * (return antecipado entre hooks quebra as Rules of Hooks).
+ */
 export function UsuariosEmpresaPage() {
+  const { usuario } = useAuth();
+  if (usuario?.papel !== "ADMIN") return <Navigate to="/dashboard" replace />;
+  return <UsuariosEmpresaConteudo />;
+}
+
+function UsuariosEmpresaConteudo() {
   const { usuario } = useAuth();
   const confirm = useConfirm();
   // Rodada 109 , tela é exclusiva do ADMIN (GESTOR nem tem acesso às
   // rotas de listar/ativar no backend); quem digitar a URL direto sem
   // ser ADMIN volta pro dashboard, sem nem chamar a API.
-  if (usuario?.papel !== "ADMIN") return <Navigate to="/dashboard" replace />;
   const [usuarios, setUsuarios] = useState<UsuarioEmpresaListado[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -51,8 +60,6 @@ export function UsuariosEmpresaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario?.grupoId]);
 
-  // Rodada 418 (N75): usuário cujas empresas (alertas) estão sendo editadas.
-  const [editandoEmpresas, setEditandoEmpresas] = useState<UsuarioEmpresaListado | null>(null);
   const gestoresAtuais = usuarios.filter((u) => u.papel === "GESTOR").length;
   const [formAberto, setFormAberto] = useState(false);
   const [gNome, setGNome] = useState("");
@@ -167,7 +174,7 @@ export function UsuariosEmpresaPage() {
             <input
               type="password"
               autoComplete="new-password"
-              minLength={8}
+              minLength={10}
               maxLength={128}
               value={gSenha}
               onChange={(e) => setGSenha(e.target.value)}
@@ -195,13 +202,6 @@ export function UsuariosEmpresaPage() {
       </div>
 
       {erro && <p className="error-text">{erro}</p>}
-      {editandoEmpresas && (
-        <EmpresasDoUsuarioPainel
-          usuarioId={editandoEmpresas.id}
-          nome={editandoEmpresas.nome}
-          onFechar={() => setEditandoEmpresas(null)}
-        />
-      )}
       {carregando ? (
         <p>Carregando...</p>
       ) : (
@@ -243,25 +243,22 @@ export function UsuariosEmpresaPage() {
                 <tr key={u.id}>
                   <td>{u.nome}</td>
                   <td>{u.email}</td>
-                  <td>{u.papel}</td>
+                  <td>{rotuloPapel(u.papel)}</td>
                   <td>{u.ativo ? "Ativo" : "Desativado"}</td>
                   {(["podeAprovarAjuste", "podeAceitarDivergencia"] as const).map((campo) => (
                     <td key={campo}>
                       <input
                         type="checkbox"
                         checked={u[campo] !== false}
-                        disabled={u.id === usuario.sub}
-                        title={u.id === usuario.sub ? "Você não altera as próprias permissões." : undefined}
+                        disabled={u.id === usuario?.sub}
+                        title={u.id === usuario?.sub ? "Você não altera as próprias permissões." : undefined}
                         onChange={(e) => void onAlterarPermissao(u, campo, e.target.checked)}
                       />
                     </td>
                   ))}
                   <td>{new Date(u.createdAt).toLocaleDateString("pt-BR")}</td>
                   <td>
-                    <button className="secondary" onClick={() => setEditandoEmpresas(u)}>
-                      Empresas
-                    </button>{" "}
-                    {u.id !== usuario.sub && (
+                    {u.id !== usuario?.sub && (
                       <button
                         className="secondary"
                         onClick={() => onAlterarStatus(u)}

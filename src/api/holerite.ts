@@ -95,11 +95,18 @@ export async function baixarHoleritePdf(
  * (mais simples e não duplica a regra "1 = pdf, mais de 1 = zip" que
  * já vive no controller).
  */
+export interface MotoristaFechamentoBloqueado {
+  motoristaId: string;
+  nome: string;
+  pendentes: number;
+}
+
 export async function baixarFechamentoPdf(
   inicio: string,
   fim: string,
   motoristaIds: string[] | null,
   opcoes: OpcoesHolerite,
+  pdfUnico = false,
 ) {
   const resposta = await api.get("/holerite-fechamento/pdf", {
     params: {
@@ -111,9 +118,17 @@ export async function baixarFechamentoPdf(
       direcaoEspera: String(opcoes.direcaoEspera),
       normalExtra: String(opcoes.normalExtra),
       adicionalNoturno: String(opcoes.adicionalNoturno),
+      ...(pdfUnico ? { pdfUnico: "true" } : {}),
     },
     responseType: "blob",
   });
+  let bloqueados: MotoristaFechamentoBloqueado[] = [];
+  try {
+    const bruto = resposta.headers["x-fechamento-bloqueados"];
+    if (bruto) bloqueados = JSON.parse(decodeURIComponent(String(bruto)));
+  } catch {
+    bloqueados = [];
+  }
   // Rodada 88 , corrigido erro de tipo: em versões mais novas do axios,
   // o valor de um header pode ser tipado como string | number | boolean |
   // AxiosHeaders | string[], não só string , `.includes` direto quebra a
@@ -138,4 +153,5 @@ export async function baixarFechamentoPdf(
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+  return bloqueados;
 }

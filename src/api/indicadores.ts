@@ -102,6 +102,19 @@ export function getIndicadoresPainel(
     .then((r) => r.data);
 }
 
+export interface PeriodoBancoHoras {
+  inicio: string;
+  fim: string;
+  semDados: boolean;
+}
+
+/** Rodada 490: do primeiro registro do banco de horas ate agora (sem o usuario escolher). */
+export function getPeriodoBancoHoras() {
+  return api
+    .get<PeriodoBancoHoras>("/indicadores/banco-horas/periodo")
+    .then((r) => r.data);
+}
+
 /** Parser mínimo de CSV (vírgula, aspas duplas, "" escapado, quebras dentro de aspas). */
 function lerCsv(texto: string): string[][] {
   const linhas: string[][] = [];

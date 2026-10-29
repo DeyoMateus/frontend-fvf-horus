@@ -63,10 +63,10 @@ const IND_ALERTAS_INFO: DefinicaoIndicador = {
 };
 const IND_RISCO_FRAUDE: DefinicaoIndicador = {
   chave: "riscoFraude",
-  rotulo: "Risco de fraude",
+  rotulo: "Divergências de registro",
   cor: "#7c3aed",
   descricao:
-    "Alertas de integridade do aparelho/GPS — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (ex.: localização falsificada/mock location, deslocamento fisicamente impossível, relógio do aparelho manipulado, odômetro regressivo).",
+    "Alertas de integridade do aparelho/GPS — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (ex.: localização inconsistente, deslocamento incompatível, divergência de relógio do aparelho, odômetro regressivo).",
 };
 const IND_HORAS_DIRECAO: DefinicaoIndicador = {
   chave: "horasDirecao",
@@ -128,9 +128,9 @@ const CATEGORIAS: Categoria[] = [
   },
   {
     chave: "fraude",
-    titulo: "Risco de fraude",
+    titulo: "Divergências de registro",
     descricao:
-      "Alertas de integridade/fraude (GPS impossível, relógio suspeito, odômetro regressivo etc.), por dia.",
+      "Alertas de integridade do registro (localização incompatível, divergência de relógio, odômetro regressivo etc.), por dia.",
     indicadores: [IND_RISCO_FRAUDE],
   },
 ];
@@ -706,6 +706,12 @@ export function ModalDetalheTendencia({
         )}
         {erro && <p style={{ fontSize: 13, color: "#b91c1c" }}>{erro}</p>}
 
+        {!carregando && !erro && dados && dados.tipo !== "trechos" && dados.truncado && (
+          <p style={{ fontSize: 13, color: "#92400e" }}>
+            Lista limitada a {dados.itens.length} itens; há mais itens nesse dia do que os exibidos.
+          </p>
+        )}
+
         {!carregando && !erro && dados && dados.itens.length === 0 && (
           <p style={{ fontSize: 13, color: "#000000" }}>
             Nenhum registro nesse dia para este indicador.
@@ -916,7 +922,7 @@ export function GraficoTendencia({
       {minimizado ? (
         <p style={{ fontSize: 13, color: "#000000" }}>
           Gráficos ocultos. Clique em "Mostrar gráficos" pra ver a evolução de
-          alertas, horas e risco de fraude ao longo do período.
+          alertas, horas e divergências de registro ao longo do período.
         </p>
       ) : (
         <>

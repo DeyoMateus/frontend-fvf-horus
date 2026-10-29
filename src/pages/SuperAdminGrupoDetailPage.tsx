@@ -2,8 +2,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   atualizarEmpresaSuperAdmin,
-  decidirAlteracaoIdentidade,
-  listarAlteracoesIdentidadePendentes,
   atualizarGrupo,
   atualizarStatusEmpresaSuperAdmin,
   atualizarDestinatariosWhatsapp,
@@ -14,7 +12,6 @@ import {
   obterGrupo,
 } from "../api/superAdmin";
 import type {
-  AlteracaoIdentidadePendente,
   GrupoDetalhe,
   PapelUsuario,
 } from "../api/types";
@@ -24,6 +21,7 @@ import { fusoIanaDoNavegador } from "../utils/fusoHorario";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 import { RegimeBancoHorasForm } from "../components/RegimeBancoHorasForm";
 import { ChavesLiberacaoPainel } from "../components/ChavesLiberacaoPainel";
+import { rotuloPapel } from "../utils/rotulos";
 
 type FormEmpresa = {
   razaoSocial: string;
@@ -102,46 +100,21 @@ export function SuperAdminGrupoDetailPage() {
   // INICIAL (mount, com `comCarregamentoTelaCheia = true`) passa por
   // essa tela cheia; toda atualização depois de salvar só troca os
   // dados no lugar, sem desmontar nada.
-  const [pendentes, setPendentes] = useState<AlteracaoIdentidadePendente[]>([]);
-
-  async function carregarPendentes() {
-    try {
-      setPendentes(await listarAlteracoesIdentidadePendentes());
-    } catch {
-      setPendentes([]);
-    }
-  }
-
-  async function decidirPendente(id: string, confirmar: boolean) {
-    setErroEdicao(null);
-    try {
-      await decidirAlteracaoIdentidade(id, confirmar);
-      await carregar();
-      await carregarPendentes();
-    } catch (err) {
-      const m = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      setErroEdicao(m ?? "Não foi possível registrar a decisão.");
-    }
-  }
-
   async function carregar(comCarregamentoTelaCheia = false) {
     if (!grupoId) return;
     if (comCarregamentoTelaCheia) setCarregando(true);
     try {
-      const g = await obterGrupo(grupoId);
-      setGrupo(g);
+      setGrupo(await obterGrupo(grupoId));
       setErro(null);
     } catch {
-      setErro("Não foi possível carregar esta empresa.");
+      setErro("Não foi possível carregar os dados desta empresa.");
     } finally {
-      setCarregando(false);
+      if (comCarregamentoTelaCheia) setCarregando(false);
     }
   }
 
   useEffect(() => {
     carregar(true);
-    void carregarPendentes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId]);
 
@@ -201,7 +174,7 @@ export function SuperAdminGrupoDetailPage() {
     setErroEdicao(null);
     setSalvando(true);
     try {
-      const resposta = await atualizarEmpresaSuperAdmin(empresaEditandoId, {
+      await atualizarEmpresaSuperAdmin(empresaEditandoId, {
         razaoSocial: formEmpresa.razaoSocial,
         cnpj: formEmpresa.cnpj,
         registroInpiAfd: formEmpresa.registroInpiAfd.trim()
@@ -211,11 +184,7 @@ export function SuperAdminGrupoDetailPage() {
         motivo: formEmpresa.motivo.trim() || undefined,
       });
       setEmpresaEditandoId(null);
-      if (resposta?.pendente) {
-        window.alert(resposta.mensagem);
-      }
       await carregar();
-      await carregarPendentes();
     } catch (err) {
       const m = (err as { response?: { data?: { message?: string | string[] } } })
         ?.response?.data?.message;
@@ -396,37 +365,6 @@ export function SuperAdminGrupoDetailPage() {
         {grupo.limiteMotoristas != null ? grupo.limiteMotoristas : "sem limite"}
       </p>
       {erroEdicao && <p className="error-text">{erroEdicao}</p>}
-      {pendentes.filter((p) => grupo?.empresas.some((e) => e.id === p.empresaId))
-        .length > 0 && (
-        <section>
-          <h3>Alterações de dados do empregador aguardando confirmação</h3>
-          <ul>
-            {pendentes
-              .filter((p) => grupo?.empresas.some((e) => e.id === p.empresaId))
-              .map((p) => (
-                <li key={p.id}>
-                  {p.empresa.razaoSocial} ({p.empresa.cnpj}),{" "}
-                  {Object.entries(p.alteracao)
-                    .map(([k, v]) => `${k} para ${v}`)
-                    .join("; ")}{" "}
-                  Motivo informado {p.motivo}{" "}
-                  <button type="button" onClick={() => decidirPendente(p.id, true)}>
-                    Confirmar
-                  </button>{" "}
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => decidirPendente(p.id, false)}
-                  >
-                    Recusar
-                  </button>
-                </li>
-              ))}
-          </ul>
-          <p>A confirmação precisa ser de um super admin diferente de quem pediu.</p>
-        </section>
-      )}
-
       <div className="card">
         <h3 style={{ marginTop: 0 }}>CNPJs do grupo</h3>
         <table>
@@ -714,7 +652,7 @@ export function SuperAdminGrupoDetailPage() {
               <input
                 type="password" maxLength={128}
                 autoComplete="new-password"
-                minLength={8}
+                minLength={10}
                 value={formNovoUsuario.senha}
                 onChange={(ev) =>
                   setFormNovoUsuario((f) => ({ ...f, senha: ev.target.value }))
@@ -825,7 +763,7 @@ export function SuperAdminGrupoDetailPage() {
                 <tr key={u.id}>
                   <td>{u.nome}</td>
                   <td>{u.email}</td>
-                  <td>{u.papel}</td>
+                  <td>{rotuloPapel(u.papel)}</td>
                   <td>{u.ativo ? "Ativo" : "Desativado"}</td>
                   <td>{new Date(u.createdAt).toLocaleDateString("pt-BR")}</td>
                   <td>

@@ -12,7 +12,7 @@ import type {
   StatusCargaViagem,
   TipoDocumentoCarga,
 } from "../api/documentosCarga";
-import { listMotoristas } from "../api/motoristas";
+import { listarTodosMotoristas } from "../api/motoristas";
 import type { Motorista } from "../api/types";
 import { ListaEmPopup } from "../components/ListaEmPopup";
 import { Paginador } from "../components/Paginador";
@@ -100,7 +100,7 @@ export function DocumentosCargaPage() {
   }
 
   useEffect(() => {
-    listMotoristas()
+    listarTodosMotoristas()
       .then((r) => setMotoristas(r.dados))
       .catch(() => setMotoristas([]));
   }, []);

@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { AxiosError } from "axios";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { Link, useNavigate } from "react-router-dom";
-import { createMotorista, listMotoristas } from "../api/motoristas";
+import { createMotorista, listarTodosMotoristas } from "../api/motoristas";
 import type { CreateMotoristaInput } from "../api/motoristas";
 import { listEmpresas } from "../api/empresas";
 import {
@@ -24,6 +24,7 @@ import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { usePrompt } from "../components/PromptProvider";
 import { ImportarContratosCard } from "../components/ImportarContratosCard";
+import { rotuloStatusMotorista } from "../utils/rotulos";
 
 export function MotoristasListPage() {
   const { usuario } = useAuth();
@@ -91,7 +92,7 @@ export function MotoristasListPage() {
         semInteracaoCarregado,
         empresasCarregadas,
       ] = await Promise.all([
-        listMotoristas(1, 200, busca, mostrarExcluidos),
+        listarTodosMotoristas(busca, mostrarExcluidos),
         listarSolicitacoesTroca(),
         listarDiasSemInteracao(),
         listEmpresas(),
@@ -613,7 +614,7 @@ export function MotoristasListPage() {
                       )}
                     </td>
                     <td>{m.cpf}</td>
-                    <td>{m.status}</td>
+                    <td>{rotuloStatusMotorista(m.status)}</td>
                     <td>
                       {m.veiculoVinculado?.placa ?? (
                         <span

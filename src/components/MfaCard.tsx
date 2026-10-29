@@ -24,10 +24,16 @@ export interface AcoesMfa {
 
 export function MfaCard({
   ativo,
+  validoAte,
+  expirado,
   onMudou,
   acoes,
 }: {
   ativo: boolean;
+  /** ISO da data em que a verificação expira (quando ativa). */
+  validoAte?: string | null;
+  /** Verificação expirou e precisa ser refeita. */
+  expirado?: boolean;
   onMudou: () => void;
   /** Rodada 384: padrão é o MFA do painel; o super admin passa as suas. */
   acoes?: AcoesMfa;
@@ -37,6 +43,8 @@ export function MfaCard({
   const [segredo, setSegredo] = useState("");
   const [uri, setUri] = useState("");
   const [codigo, setCodigo] = useState("");
+  // Rodada 493: por quantos dias o MFA vale; vencido, e preciso cadastrar de novo.
+  const [validadeDias, setValidadeDias] = useState(90);
   const [senha, setSenha] = useState("");
   const [reservas, setReservas] = useState<string[]>([]);
   const [erro, setErro] = useState<string | null>(null);
@@ -63,7 +71,7 @@ export function MfaCard({
     setErro(null);
     setOcupado(true);
     try {
-      const r = await a.confirmar(codigo.trim());
+      const r = await a.confirmar(codigo.trim(), validadeDias);
       setReservas(r.codigosReserva);
       setSegredo("");
       setUri("");
@@ -134,6 +142,20 @@ export function MfaCard({
             onChange={(e) => setCodigo(e.target.value)}
             required
           />
+          <label style={{ marginTop: 8, display: "block" }}>
+            3) Por quantos dias o MFA vale (de 1 a 365)
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={365}
+            value={validadeDias}
+            onChange={(e) => setValidadeDias(Math.min(365, Math.max(1, Number(e.target.value) || 1)))}
+            required
+          />
+          <p style={{ fontSize: 12, margin: "4px 0 0" }}>
+            Ao fim desse prazo o MFA é revogado e você precisa cadastrar de novo antes de acessar.
+          </p>
           {erro && <p className="error-text">{erro}</p>}
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
             <button type="submit" disabled={ocupado}>
@@ -178,8 +200,10 @@ export function MfaCard({
       ) : (
         <>
           <p style={{ fontSize: 14 }}>
-            {ativo
-              ? "Ativada. No login, além da senha, é pedido o código do aplicativo autenticador."
+            {expirado
+              ? "Expirada. A validade escolhida terminou e a verificação foi revogada: cadastre de novo para continuar usando o sistema."
+              : ativo
+              ? `Ativada. No login, além da senha, é pedido o código do aplicativo autenticador.${validoAte ? ` Válida até ${new Date(validoAte).toLocaleDateString("pt-BR")}.` : ""}`
               : "Desativada. Ative para exigir, além da senha, um código do seu celular no login."}
           </p>
           {erro && <p className="error-text">{erro}</p>}

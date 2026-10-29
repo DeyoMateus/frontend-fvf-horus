@@ -72,10 +72,3 @@ export async function obterUrlEvidenciaSolicitacao(evidenciaId: string) {
   );
   return window.URL.createObjectURL(new Blob([resposta.data]));
 }
-
-/** Remove (painel do RH) , some do R2 e do Postgres. */
-export function removerEvidenciaSolicitacao(evidenciaId: string) {
-  return api
-    .delete(`/solicitacoes-ajuste-ponto/evidencias/${evidenciaId}`)
-    .then((r) => r.data);
-}

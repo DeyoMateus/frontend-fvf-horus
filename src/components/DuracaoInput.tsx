@@ -21,9 +21,11 @@ interface Props {
   onChange: (min: number | undefined) => void;
   /** Permite campo vazio (opcional). */
   opcional?: boolean;
+  /** Rodada 483: nome do campo, para o formulario marcar em vermelho quando a API reprovar. */
+  name?: string;
 }
 
-export function DuracaoInput({ valorMin, onChange, opcional }: Props) {
+export function DuracaoInput({ valorMin, onChange, opcional, name }: Props) {
   const [texto, setTexto] = useState(
     valorMin === undefined ? "" : minParaHHMM(valorMin),
   );
@@ -38,6 +40,7 @@ export function DuracaoInput({ valorMin, onChange, opcional }: Props) {
 
   return (
     <input
+      name={name}
       type="text"
       inputMode="numeric"
       placeholder="HH:MM (ex.: 08:30)"

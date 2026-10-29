@@ -12,6 +12,8 @@ import type {
   PedidoAceiteIntegridade,
 } from "../api/registros";
 import { usePrompt } from "../components/PromptProvider";
+import { useConfirm } from "../components/ConfirmProvider";
+import { useToast } from "../components/ToastProvider";
 
 function dataHora(v: string | null | undefined): string {
   return v ? new Date(v).toLocaleString("pt-BR") : "-";
@@ -38,6 +40,8 @@ export function EventoIntegridadePage() {
   const { usuario } = useAuth();
   const { motoristaId, sequencial } = useParams();
   const prompt = usePrompt();
+  const confirmar = useConfirm();
+  const toast = useToast();
   const [analise, setAnalise] = useState<AnaliseEventoIntegridade | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -97,11 +101,11 @@ export function EventoIntegridadePage() {
           err as { response?: { data?: { codigo?: string; message?: string } } }
         )?.response?.data;
         if (dados?.codigo !== "ROMPIMENTO_DE_VIDRO_NECESSARIO") {
-          window.alert(dados?.message ?? "Não foi possível aceitar a divergência.");
+          toast.erro(dados?.message ?? "Não foi possível aceitar a divergência.");
           return;
         }
         // Rodada 406 (N67): sem segundo administrador, só com rompimento de vidro explícito.
-        if (!window.confirm(`${dados.message}\n\nConfirmar o rompimento de vidro?`)) return;
+        if (!(await confirmar(`${dados.message}\n\nConfirmar o rompimento de vidro?`, { perigo: true, textoConfirmar: "Romper o vidro" }))) return;
         try {
           resposta = await aceitarDivergenciaIntegridade(
             motoristaId,
@@ -113,11 +117,11 @@ export function EventoIntegridadePage() {
         } catch (err2) {
           const msg = (err2 as { response?: { data?: { message?: string } } })
             ?.response?.data?.message;
-          window.alert(msg ?? "Não foi possível aceitar a divergência.");
+          toast.erro(msg ?? "Não foi possível aceitar a divergência.");
           return;
         }
       }
-      if (resposta?.pendente) window.alert(resposta.mensagem);
+      if (resposta?.pendente) toast.info(resposta.mensagem);
       await carregar();
     } finally {
       setAceitando(false);
@@ -143,7 +147,7 @@ export function EventoIntegridadePage() {
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
-      window.alert(msg ?? "Não foi possível registrar a decisão.");
+      toast.erro(msg ?? "Não foi possível registrar a decisão.");
     }
   }
 

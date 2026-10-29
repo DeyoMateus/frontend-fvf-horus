@@ -282,10 +282,10 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "painel",
-    alvo: "texto:Risco de fraude",
-    titulo: "Risco de fraude",
+    alvo: "texto:Divergências de registro",
+    titulo: "Divergências de registro",
     texto:
-      "Mostra registros que parecem suspeitos, como um horário ou uma localização que não combinam. Serve para você olhar com mais cuidado, não é uma acusação.",
+      "Mostra registros com divergência de horário ou de localização. Serve para você conferir com o motorista; não é uma acusação.",
   },
   {
     modulo: "painel",

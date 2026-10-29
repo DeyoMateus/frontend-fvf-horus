@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { listMotoristas } from "../api/motoristas";
+import { listarTodosMotoristas } from "../api/motoristas";
 import { FechamentoModal } from "../components/FechamentoModal";
 import { BotaoAjuda } from "../components/BalaoAjuda";
 import { SolicitacoesAjustePage } from "./SolicitacoesAjustePage";
+import { BancoHorasResumoFechamento } from "../components/BancoHorasResumoFechamento";
 import { FiscalizacaoPage } from "./FiscalizacaoPage";
 import type { Motorista } from "../api/types";
 import { dataLocalIso } from '../utils/mascaras';
@@ -35,7 +36,7 @@ export function IndicadoresPage() {
   const [modalFechamentoAberto, setModalFechamentoAberto] = useState(false);
 
   useEffect(() => {
-    listMotoristas()
+    listarTodosMotoristas()
       .then((r) => setMotoristas(r.dados))
       .catch(() => {
         /* seletor fica só com "Todos" , não impede a tela de funcionar */
@@ -44,6 +45,9 @@ export function IndicadoresPage() {
 
   return (
     <div>
+      {/* Rodada 489: indicadores do banco de horas no topo do Fechamento. */}
+      <BancoHorasResumoFechamento />
+
       {/* Pedido do usuário: trazer "Solicitações de ajuste de ponto" pro
           topo da página (onde antes ficava "Fechamento") e deixar o
           Fechamento abaixo dela , a caixa de entrada do RH é o que

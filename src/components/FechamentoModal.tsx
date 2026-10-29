@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { baixarFechamentoPdf } from "../api/holerite";
+import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
+import {
+  baixarFechamentoPdf,
+  type MotoristaFechamentoBloqueado,
+} from "../api/holerite";
 import type { Motorista } from "../api/types";
 
 /**
@@ -27,10 +31,28 @@ export function FechamentoModal({
   const [direcaoEspera, setDirecaoEspera] = useState(true);
   const [normalExtra, setNormalExtra] = useState(true);
   const [adicionalNoturno, setAdicionalNoturno] = useState(true);
+  const [pdfUnico, setPdfUnico] = useState(false);
+  const [busca, setBusca] = useState("");
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [bloqueados, setBloqueados] = useState<MotoristaFechamentoBloqueado[]>(
+    [],
+  );
 
   const todosSelecionados = selecionados.size === 0;
+  // Busca por nome (sem acento/maiuscula) ou CPF (so digitos). A selecao dos que ficam
+  // fora do filtro e mantida.
+  const semAcento = (t: string) =>
+    t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const termo = semAcento(busca.trim());
+  const termoDigitos = somenteDigitos(busca);
+  const motoristasFiltrados = termo
+    ? motoristas.filter(
+        (m) =>
+          semAcento(m.nome).includes(termo) ||
+          (termoDigitos !== "" && somenteDigitos(m.cpf ?? "").includes(termoDigitos)),
+      )
+    : motoristas;
   // Rodada 82: o rótulo do botão avisa quando o download vai sair como
   // .zip (mais de um motorista) , o backend só combina num PDF só
   // quando dá exatamente 1 motorista (ver `FechamentoHoleriteController`).
@@ -49,18 +71,34 @@ export function FechamentoModal({
 
   async function onBaixar() {
     setErro(null);
+    setBloqueados([]);
     setGerando(true);
     try {
-      await baixarFechamentoPdf(
+      const naoFechados = await baixarFechamentoPdf(
         new Date(inicio).toISOString(),
         new Date(fim).toISOString(),
         todosSelecionados ? null : Array.from(selecionados),
         { direcaoEspera, normalExtra, adicionalNoturno },
+        pdfUnico,
       );
-    } catch {
-      setErro(
-        "Não foi possível gerar o fechamento agora (confira o período e tente de novo).",
-      );
+      setBloqueados(naoFechados);
+    } catch (e) {
+      // Rodada 453: 409 = ninguém pôde ser fechado (resposta vem como blob).
+      let mensagem =
+        "Não foi possível gerar o fechamento agora (confira o período e tente de novo).";
+      try {
+        const resp = (e as { response?: { status?: number; data?: Blob } })
+          .response;
+        if (resp?.status === 409 && resp.data) {
+          const corpo = JSON.parse(await resp.data.text()) as {
+            message?: string;
+          };
+          if (corpo.message) mensagem = corpo.message;
+        }
+      } catch {
+        /* mantém a mensagem padrão */
+      }
+      setErro(mensagem);
     } finally {
       setGerando(false);
     }
@@ -170,6 +208,14 @@ export function FechamentoModal({
             />{" "}
             Hora noturna
           </label>
+          <label title="Gera um único PDF da frota (resumo + seção de cada motorista) em vez de um .zip">
+            <input
+              type="checkbox"
+              checked={pdfUnico}
+              onChange={(e) => setPdfUnico(e.target.checked)}
+            />{" "}
+            PDF único da frota
+          </label>
         </div>
 
         <div style={{ marginBottom: 8, fontWeight: 600, fontSize: 13 }}>
@@ -179,6 +225,14 @@ export function FechamentoModal({
             : selecionados.size}{" "}
           selecionado(s))
         </div>
+        <input
+          type="search"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar motorista por nome ou CPF"
+          aria-label="Buscar motorista por nome ou CPF"
+          style={{ width: "100%", boxSizing: "border-box", marginBottom: 8 }}
+        />
         <div
           style={{
             border: "1px solid #e5e7eb",
@@ -194,7 +248,12 @@ export function FechamentoModal({
               Nenhum motorista ativo encontrado.
             </p>
           )}
-          {motoristas.map((m) => (
+          {motoristas.length > 0 && motoristasFiltrados.length === 0 && (
+            <p style={{ color: "#000000", fontSize: 13 }}>
+              Nenhum motorista encontrado para essa busca.
+            </p>
+          )}
+          {motoristasFiltrados.map((m) => (
             <label
               key={m.id}
               style={{ display: "block", padding: "2px 0", fontSize: 13 }}
@@ -205,11 +264,41 @@ export function FechamentoModal({
                 onChange={() => alternarMotorista(m.id)}
               />{" "}
               {m.nome}
+              {m.cpf ? (
+                <span style={{ color: "#6b7280" }}> · {aplicarMascaraCpf(m.cpf)}</span>
+              ) : null}
             </label>
           ))}
         </div>
 
         {erro && <p style={{ color: "#b91c1c", fontSize: 13 }}>{erro}</p>}
+        {bloqueados.length > 0 && (
+          <div
+            style={{
+              border: "1px solid #f59e0b",
+              borderRadius: 6,
+              padding: 8,
+              marginBottom: 12,
+              fontSize: 13,
+            }}
+          >
+            <strong>
+              {bloqueados.length} motorista(s) NÃO fechado(s) por divergência de
+              relógio sem tratamento:
+            </strong>
+            <ul style={{ margin: "4px 0 0 16px" }}>
+              {bloqueados.map((b) => (
+                <li key={b.motoristaId}>
+                  {b.nome}: {b.pendentes} ponto(s)
+                </li>
+              ))}
+            </ul>
+            <div style={{ marginTop: 4 }}>
+              Trate os alertas na ficha do motorista e gere o fechamento deles
+              de novo. Os demais foram fechados normalmente.
+            </div>
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button className="secondary" onClick={onFechar}>

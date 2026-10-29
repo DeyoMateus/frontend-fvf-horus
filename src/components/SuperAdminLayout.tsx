@@ -20,6 +20,7 @@ export function SuperAdminLayout() {
         <nav>
           <NavLink to="/super-admin/grupos">Empresas cadastradas</NavLink>
           <NavLink to="/super-admin/auditoria">Auditoria da plataforma</NavLink>
+          <NavLink to="/super-admin/seguranca">Segurança</NavLink>
         </nav>
         <div className="sidebar-rodape">
           <div>{superAdmin?.email}</div>

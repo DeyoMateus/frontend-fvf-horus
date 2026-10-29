@@ -5,15 +5,18 @@ import { useConfirm } from "../components/ConfirmProvider";
 import { usePrompt } from "../components/PromptProvider";
 import {
   atualizarStatusAjudante,
+  baixarEspelhoAjudantePdf,
   createAjudante,
   excluirAjudante,
+  getAlertasJornadaAbertaAjudantes,
+  type AlertaJornadaAbertaAjudante,
   listAjudantes,
   revogarDispositivoAjudante,
   vincularDispositivoAjudante,
 } from "../api/ajudantes";
 import { listEmpresas } from "../api/empresas";
 import { useAuth } from "../context/AuthContext";
-import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
+import { aplicarMascaraCpf, dataLocalIso, somenteDigitos } from "../utils/mascaras";
 import type { Ajudante, Empresa, StatusMotorista } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
@@ -27,6 +30,10 @@ import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
  * de descanso e fim de jornada.
  */
 export function AjudantesPage() {
+  const [alertasAbertos, setAlertasAbertos] = useState<AlertaJornadaAbertaAjudante[]>([]);
+  useEffect(() => {
+    getAlertasJornadaAbertaAjudantes().then(setAlertasAbertos).catch(() => setAlertasAbertos([]));
+  }, []);
   const confirm = useConfirm();
   const prompt = usePrompt();
   const { usuario } = useAuth();
@@ -42,6 +49,28 @@ export function AjudantesPage() {
   const [criando, setCriando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
 
+  // Rodada 491: periodo do espelho de ponto (PDF) do ajudante.
+  const [espInicio, setEspInicio] = useState(() => {
+    const d = new Date();
+    return dataLocalIso(new Date(d.getFullYear(), d.getMonth(), 1));
+  });
+  const [espFim, setEspFim] = useState(() => dataLocalIso(new Date()));
+  const [espelhoBaixando, setEspelhoBaixando] = useState<string | null>(null);
+  async function onEspelho(a: Ajudante) {
+    setEspelhoBaixando(a.id);
+    try {
+      await baixarEspelhoAjudantePdf(
+        a.id,
+        a.nome,
+        new Date(`${espInicio}T00:00:00`).toISOString(),
+        new Date(`${espFim}T23:59:59.999`).toISOString(),
+      );
+    } catch {
+      setErro("Não foi possível gerar o espelho de ponto agora (confira o período e tente de novo).");
+    } finally {
+      setEspelhoBaixando(null);
+    }
+  }
   const [busca, setBusca] = useState("");
   const [mostrarExcluidos, setMostrarExcluidos] = useState(false);
   const [novaChavePorAjudante, setNovaChavePorAjudante] = useState<
@@ -183,6 +212,25 @@ export function AjudantesPage() {
         descanso, fim de descanso e fim de jornada.
       </p>
 
+      {alertasAbertos.length > 0 && (
+        <div className="card" style={{ borderLeft: "4px solid #b45309" }}>
+          <h3 style={{ marginTop: 0 }}>Jornada aberta há muito tempo</h3>
+          <p style={{ fontSize: 13, marginTop: -8 }}>
+            Ajudantes que iniciaram a jornada e não registraram o fim dentro do limite da regra
+            da empresa (provável esquecimento).
+          </p>
+          <ul>
+            {alertasAbertos.map((a) => (
+              <li key={a.ajudanteId}>
+                {a.nome} ({a.empresa}): aberta há {Math.floor(a.minutosAbertos / 60)} h{" "}
+                {String(a.minutosAbertos % 60).padStart(2, "0")} min, desde{" "}
+                {new Date(a.inicio).toLocaleString("pt-BR")} (limite {Math.floor(a.limiteMin / 60)} h)
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Cadastrar ajudante</h3>
         <form onSubmit={onSubmit}>
@@ -265,6 +313,19 @@ export function AjudantesPage() {
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && (
           <>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 8 }}>
+              <label>
+                Espelho de ponto: início
+                <br />
+                <input type="date" value={espInicio} max={espFim} onChange={(e) => setEspInicio(e.target.value)} />
+              </label>
+              <label>
+                fim
+                <br />
+                <input type="date" value={espFim} min={espInicio} onChange={(e) => setEspFim(e.target.value)} />
+              </label>
+              <span style={{ fontSize: 12 }}>Use o botão "Espelho (PDF)" na linha do ajudante.</span>
+            </div>
             <ControlesListaPaginada
               ordem={paginacao.ordem}
               onAlternarOrdem={paginacao.alternarOrdem}
@@ -342,6 +403,13 @@ export function AjudantesPage() {
                         </span>
                       </td>
                       <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <button
+                          className="secondary"
+                          disabled={espelhoBaixando === a.id}
+                          onClick={() => void onEspelho(a)}
+                        >
+                          {espelhoBaixando === a.id ? "Gerando..." : "Espelho (PDF)"}
+                        </button>
                         {!a.excluidoEm && (
                           <>
                             {a.dispositivoVinculado ? (

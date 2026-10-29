@@ -19,6 +19,8 @@ export function setSuperAdminAccessToken(token: string | null) {
 
 export const superAdminApi = axios.create({
   baseURL: API_URL,
+  // Rodada 501 (N197): nenhuma chamada fica pendurada para sempre.
+  timeout: 120_000,
   withCredentials: true,
   headers: { [HEADER_ANTI_CSRF]: "1" },
 });

@@ -108,9 +108,14 @@ export interface RegraSindical {
   intervaloRefeicaoMinimoMin: number;
   intervaloEntreJornadasMin?: number;
   repousoSemanalMinimoH?: number | null;
+  dsrMinimoH?: number | null;
   viagemLongaDias?: number | null;
+  jornadaAbertaAlertaH?: number | null;
   compensacaoFeriadoDias?: number | null;
   percentualDomingoFeriadoSemCompensacao?: string | number | null;
+  percentualAdicionalInterjornada?: string | number | null;
+  incideReflexoDsrInterjornada?: boolean;
+  bancoGuarda?: "fictos" | "reais";
   percentualHoraEspera: string;
   percentualHoraEsperaRefeicao?: string | null;
   acordoColetivo?: boolean;
@@ -376,7 +381,8 @@ export type TipoAlertaJornada =
   // registro que gerou o alerta nunca é alterado/apagado (WORM).
   | "RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE"
   // Rodada 165 , varredura automática achou divergência na cadeia de hashes.
-  | "INTEGRIDADE_CADEIA_VIOLADA";
+  | "INTEGRIDADE_CADEIA_VIOLADA"
+  | "FALHA_AVALIACAO_ALERTAS";
 
 export type SeveridadeAlerta = "INFO" | "ATENCAO" | "CRITICO";
 
@@ -527,7 +533,7 @@ export interface ItemAlertaCard {
 
 export type DashboardDetalheCard =
   | { tipo: "motoristas"; itens: ItemMotoristaCard[] }
-  | { tipo: "alertas"; itens: ItemAlertaCard[] };
+  | { tipo: "alertas"; itens: ItemAlertaCard[]; truncado?: boolean };
 
 // Espelha ChaveIndicadorTendencia em backend/src/dashboard/dashboard.service.ts.
 export type ChaveIndicadorTendencia =
@@ -560,8 +566,8 @@ export interface ItemTrechoTendencia {
 // (dia + indicador clicado) , drill-through, mesmo espírito do
 // DashboardDetalheCard acima, só que por data em vez de estado atual.
 export type DashboardTendenciaDetalhe =
-  | { tipo: "registros"; itens: ItemRegistroTendencia[] }
-  | { tipo: "alertas"; itens: ItemAlertaCard[] }
+  | { tipo: "registros"; itens: ItemRegistroTendencia[]; truncado?: boolean }
+  | { tipo: "alertas"; itens: ItemAlertaCard[]; truncado?: boolean }
   | { tipo: "trechos"; itens: ItemTrechoTendencia[] };
 
 // ===== Usuários do grupo (Rodada 31) =====
@@ -583,6 +589,8 @@ export interface UsuarioEmpresaListado {
   podeAceitarDivergencia?: boolean;
   /** Rodada 375: MFA (TOTP) ativo e aviso de cadastro exigido pela empresa. */
   mfaAtivo?: boolean;
+  mfaValidoAte?: string | null;
+  mfaExpirado?: boolean;
   mfaCadastroPendente?: boolean;
   createdAt: string;
 }

@@ -43,7 +43,7 @@ export async function redefinirSenhaSuperAdmin(
 // Rodada 384: MFA (TOTP) do próprio super admin.
 export function obterEstadoMfaSuperAdmin() {
   return superAdminApi
-    .get<{ mfaAtivo: boolean; codigosReservaRestantes: number }>("/super-admin/auth/mfa/estado")
+    .get<{ mfaAtivo: boolean; codigosReservaRestantes: number; mfaValidoAte?: string | null; mfaExpirado?: boolean }>("/super-admin/auth/mfa/estado")
     .then((r) => r.data);
 }
 
@@ -53,9 +53,9 @@ export function iniciarMfaSuperAdmin() {
     .then((r) => r.data);
 }
 
-export function confirmarMfaSuperAdmin(codigo: string) {
+export function confirmarMfaSuperAdmin(codigo: string, validadeDias?: number) {
   return superAdminApi
-    .post<{ codigosReserva: string[] }>("/super-admin/auth/mfa/confirmar", { codigo })
+    .post<{ codigosReserva: string[] }>("/super-admin/auth/mfa/confirmar", { codigo, validadeDias })
     .then((r) => r.data);
 }
 

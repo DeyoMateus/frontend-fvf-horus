@@ -16,20 +16,36 @@ export function ExpandirCamposDeTexto() {
       el.style.height = `${el.scrollHeight + 2}px`;
     }
 
-    function ciclo() {
-      document.querySelectorAll<HTMLTextAreaElement>("textarea").forEach((el) => {
-        if (el.offsetParent === null && getComputedStyle(el).position !== "fixed") {
-          return; // escondido
-        }
-        const chave = `${el.value}|${el.clientWidth}`;
-        if (ultimo.get(el) === chave) return;
-        ultimo.set(el, chave);
-        ajustar(el);
-      });
-      quadro = requestAnimationFrame(ciclo);
+    function verificar(el: HTMLTextAreaElement) {
+      if (el.offsetParent === null && getComputedStyle(el).position !== "fixed") {
+        return; // escondido
+      }
+      const chave = `${el.value}|${el.clientWidth}`;
+      if (ultimo.get(el) === chave) return;
+      ultimo.set(el, chave);
+      ajustar(el);
     }
-    quadro = requestAnimationFrame(ciclo);
-    return () => cancelAnimationFrame(quadro);
+
+    // Rodada 512 (N200): antes era um requestAnimationFrame permanente (60 varreduras por
+    // segundo). Agora: resposta imediata ao digitar (evento input) e uma conferencia a cada
+    // 300 ms para valores trocados por codigo (ex.: limpar o campo apos salvar); pausa com a aba oculta.
+    function ciclo() {
+      if (!document.hidden) {
+        document.querySelectorAll<HTMLTextAreaElement>("textarea").forEach(verificar);
+      }
+      quadro = window.setTimeout(ciclo, 300);
+    }
+    function aoDigitar(e: Event) {
+      if (e.target instanceof HTMLTextAreaElement) verificar(e.target);
+    }
+    document.addEventListener("input", aoDigitar, true);
+    window.addEventListener("resize", ciclo);
+    quadro = window.setTimeout(ciclo, 0);
+    return () => {
+      window.clearTimeout(quadro);
+      document.removeEventListener("input", aoDigitar, true);
+      window.removeEventListener("resize", ciclo);
+    };
   }, []);
 
   return null;

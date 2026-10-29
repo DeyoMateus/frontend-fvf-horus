@@ -1,3 +1,4 @@
+import { validarSenhaNova } from '../utils/senha';
 import { FormEvent, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { redefinirSenha } from '../api/auth';
@@ -21,8 +22,9 @@ export function RedefinirSenhaPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setErro(null);
-    if (novaSenha.length < 8) {
-      setErro({ tipo: 'local', mensagem: 'A senha precisa ter pelo menos 8 caracteres.' });
+    const erroSenha = validarSenhaNova(novaSenha);
+    if (erroSenha) {
+      setErro({ tipo: 'local', mensagem: erroSenha });
       return;
     }
     if (novaSenha !== confirmacao) {
@@ -62,18 +64,18 @@ export function RedefinirSenhaPage() {
               type={mostrar ? 'text' : 'password'}
               maxLength={128}
               autoComplete="new-password"
-              minLength={8}
+              minLength={10}
               value={novaSenha}
               onChange={(e) => setNovaSenha(e.target.value)}
               required
             />
-            <p style={{ fontSize: 12, color: '#000', margin: '4px 0 12px' }}>Mínimo de 8 caracteres.</p>
+            <p style={{ fontSize: 12, color: '#000', margin: '4px 0 12px' }}>Mínimo de 10 caracteres, com letra e número.</p>
             <label>Confirmar nova senha</label>
             <input
               type={mostrar ? 'text' : 'password'}
               maxLength={128}
               autoComplete="new-password"
-              minLength={8}
+              minLength={10}
               value={confirmacao}
               onChange={(e) => setConfirmacao(e.target.value)}
               required

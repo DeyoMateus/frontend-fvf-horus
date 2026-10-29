@@ -1,3 +1,4 @@
+import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useAuth } from "../context/AuthContext";
 import { dataCalendarioBr, dataLocalIso } from "../utils/mascaras";
 import {
@@ -52,6 +53,7 @@ import {
   verificarIntegridade,
 } from "../api/registros";
 import type { ViagemConsolidada } from "../api/registros";
+import { rotuloStatusMotorista, rotuloSeveridade } from "../utils/rotulos";
 import {
   anexarEvidenciaTratamento,
   baixarEvidenciaTratamento,
@@ -91,6 +93,7 @@ import {
   ROTULO_STATUS_FOLGA,
 } from "../api/folgaConcedida";
 import { useConfirm } from "../components/ConfirmProvider";
+import { useToast } from "../components/ToastProvider";
 import { FolgasLista } from "../components/FolgasLista";
 import { listEmpresas } from "../api/empresas";
 import type { Empresa } from "../api/types";
@@ -199,6 +202,7 @@ export function MotoristaDetailPage() {
     [],
   );
   const confirmarAcao = useConfirm();
+  const toast = useToast();
   const [statusCarga, setStatusCarga] = useState<StatusAtualCarga | null>(null);
   const [documentosCarga, setDocumentosCarga] = useState<DocumentoCarga[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -651,7 +655,7 @@ export function MotoristaDetailPage() {
         sequencial,
         motivo.trim(),
       );
-      if (resposta?.pendente) window.alert(resposta.mensagem);
+      if (resposta?.pendente) toast.info(resposta.mensagem);
       setIntegridade(await verificarIntegridade(motoristaId));
     } finally {
       setAceitandoDivergencia(null);
@@ -948,10 +952,10 @@ export function MotoristaDetailPage() {
     if (!dataInicio && !dataFim) return undefined;
     return {
       inicio: dataInicio
-        ? new Date(`${dataInicio}T00:00:00`).toISOString()
+        ? inicioDoDiaLocalIso(dataInicio)
         : undefined,
       fim: dataFim
-        ? new Date(`${dataFim}T23:59:59.999`).toISOString()
+        ? fimDoDiaLocalIso(dataFim)
         : undefined,
     };
   }
@@ -969,13 +973,13 @@ export function MotoristaDetailPage() {
           {formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}
           {r.situacaoCalculo === "CORRIGIDO" && r.horaCorrigida && (
             <div style={{ fontSize: 11, color: "#92400e" }}>
-              Hora adulterada. Corrigida pelo gestor para{" "}
+              Divergência de relógio. Hora corrigida pelo gestor para{" "}
               {formatarRegistro(r.horaCorrigida, r.fusoOffsetMin)}
             </div>
           )}
           {r.situacaoCalculo === "FORA_DO_CALCULO" && (
             <div style={{ fontSize: 11, color: "#b91c1c" }}>
-              Hora adulterada. Fora dos cálculos até o gestor corrigir
+              Divergência de relógio. Fora dos cálculos até o gestor corrigir
             </div>
           )}
         </td>
@@ -1033,8 +1037,8 @@ export function MotoristaDetailPage() {
     try {
       const resultado = await calcularHolerite(
         motoristaId,
-        new Date(holeriteInicio).toISOString(),
-        new Date(holeriteFim).toISOString(),
+        inicioDoDiaLocalIso(holeriteInicio),
+        fimDoDiaLocalIso(holeriteFim),
         opcoesHolerite,
       );
       setHoleritePrevia(resultado);
@@ -1054,8 +1058,8 @@ export function MotoristaDetailPage() {
       await baixarHoleritePdf(
         motoristaId,
         motorista.nome,
-        new Date(holeriteInicio).toISOString(),
-        new Date(holeriteFim).toISOString(),
+        inicioDoDiaLocalIso(holeriteInicio),
+        fimDoDiaLocalIso(holeriteFim),
         opcoesHolerite,
       );
     } finally {
@@ -1270,16 +1274,21 @@ export function MotoristaDetailPage() {
       { titulo: "Excluir cadastro", perigo: true, textoConfirmar: "Excluir" },
     );
     if (confirmacao !== "EXCLUIR") return;
-    const motivo =
-      (await prompt("Motivo da exclusão (opcional):", {
+    const motivo = (
+      (await prompt("Motivo da exclusão (obrigatório):", {
         titulo: "Excluir cadastro",
-        placeholder: "Motivo (opcional)",
+        placeholder: "Motivo (mínimo 5 caracteres)",
         multilinha: true,
-      })) ?? undefined;
+      })) ?? ""
+    ).trim();
+    if (motivo.length < 5) {
+      setErroStatus("Informe o motivo da exclusão (mínimo 5 caracteres).");
+      return;
+    }
     setAlterandoStatus(true);
     setErroStatus(null);
     try {
-      await excluirMotorista(motoristaId, motivo || undefined);
+      await excluirMotorista(motoristaId, motivo);
       navigate("/motoristas");
     } catch {
       setErroStatus("Não foi possível excluir o cadastro.");
@@ -1388,7 +1397,7 @@ export function MotoristaDetailPage() {
                 fontWeight: 600,
               }}
             >
-              status {motorista.status}
+              status {rotuloStatusMotorista(motorista.status)}
             </span>{" "}
             · cadastrado na plataforma em{" "}
             <strong>
@@ -1845,13 +1854,13 @@ export function MotoristaDetailPage() {
           style={{ background: "#fef2f2", borderColor: "#fecaca" }}
         >
           <h3 style={{ marginTop: 0, color: "#b91c1c" }}>
-            ⚠ Aparelho suspeito
+            ⚠ Aparelho com sinais a conferir
           </h3>
           <p style={{ fontSize: 13, color: "#000000" }}>
             O app detectou sinais de comprometimento do aparelho
-            (root/jailbreak, hooking, ou &quot;mock location&quot; habilitado)
+            (modificação do sistema, ferramenta de instrumentação ou localização simulada habilitada)
             no momento de algum ponto batido. Isso não bloqueou o registro, é só
-            um sinal pra você investigar (o odômetro/GPS daquele ponto merece
+            um sinal para você conferir (o odômetro/GPS daquele ponto merece
             uma conferência extra).
           </p>
           <ul style={{ fontSize: 13 }}>
@@ -2575,7 +2584,7 @@ export function MotoristaDetailPage() {
                           fontWeight: 600,
                         }}
                       >
-                        {a.severidade}
+                        {rotuloSeveridade(a.severidade)}
                       </span>
                     </td>
                     <td>{renderizarHorarios(a.mensagem)}</td>
@@ -3007,11 +3016,31 @@ export function MotoristaDetailPage() {
           </div>
         </form>
 
+        {holeriteInicio && holeriteFim && (() => {
+          // Rodada 452: o período só fecha depois de tratar estes alertas.
+          const ini = new Date(holeriteInicio).getTime();
+          const fim = new Date(holeriteFim).getTime() + 86_400_000; // mesmo corte do backend (fim + 1 dia)
+          const pendentes = alertas.filter(
+            (a) =>
+              a.tipo === "PONTO_ACEITO_COM_FLAG" &&
+              !a.tratadoEm &&
+              new Date(a.janelaInicio).getTime() >= ini &&
+              new Date(a.janelaInicio).getTime() < fim,
+          ).length;
+          return pendentes > 0 ? (
+            <p className="error-text" style={{ marginTop: 12 }}>
+              {pendentes} ponto(s) com divergência de relógio ainda sem
+              tratamento neste período. Eles contam no cálculo, mas o período
+              só poderá ser fechado depois que o gestor tratar os alertas
+              (confirmar o horário ou corrigir a hora) na seção de alertas.
+            </p>
+          ) : null;
+        })()}
         {holeritePrevia &&
           (holeritePrevia.pontosSuspeitosPendentes ?? 0) > 0 && (
             <p className="error-text" style={{ marginTop: 12 }}>
-              {holeritePrevia.pontosSuspeitosPendentes} ponto(s) com relógio
-              adulterado ficaram FORA do cálculo até o gestor corrigir a hora
+              {holeritePrevia.pontosSuspeitosPendentes} ponto(s) com divergência
+              de relógio ficaram FORA do cálculo até o gestor corrigir a hora
               (tela de Alertas, "Lançar ajuste e liberar aparelho"). Este
               holerite está incompleto.
             </p>

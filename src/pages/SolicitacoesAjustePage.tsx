@@ -7,7 +7,6 @@ import {
   listSolicitacoesPendentes,
   obterUrlEvidenciaSolicitacao,
   rejeitarSolicitacao,
-  removerEvidenciaSolicitacao,
 } from "../api/solicitacoesAjuste";
 import type { SolicitacaoAjustePonto } from "../api/types";
 import { EvidenciasAnexo } from "../components/EvidenciasAnexo";
@@ -88,7 +87,7 @@ export function SolicitacoesAjustePage() {
   async function onAprovar(id: string) {
     if (
       !(await confirm(
-        "Aprovar este pedido? O horário informado pelo motorista vira o registro oficial e entra na apuração/holerite.",
+        "Aprovar este pedido? Será lançado um ajuste de ponto com o horário informado pelo motorista (o registro original não é alterado) e ele entra na apuração/holerite.",
         { textoConfirmar: "Aprovar" },
       ))
     ) {
@@ -328,10 +327,6 @@ export function SolicitacoesAjustePage() {
                         baixar={(evidenciaId, nomeArquivo) =>
                           baixarEvidenciaSolicitacao(evidenciaId, nomeArquivo)
                         }
-                        remover={async (evidenciaId) => {
-                          await removerEvidenciaSolicitacao(evidenciaId);
-                          await carregar();
-                        }}
                       />
                     </td>
                     <td>{new Date(s.createdAt).toLocaleString("pt-BR")}</td>
