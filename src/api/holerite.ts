@@ -1,4 +1,5 @@
 import { api } from "./client";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 export interface OpcoesHolerite {
   direcaoEspera: boolean;
@@ -69,16 +70,7 @@ export async function baixarHoleritePdf(
     params: paramsHolerite(inicio, fim, opcoes),
     responseType: "blob",
   });
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "application/pdf" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `holerite-${nomeMotorista.replace(/\s+/g, "-")}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "application/pdf" }), `holerite-${nomeMotorista.replace(/\s+/g, "-")}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`);
 }
 
 /**
@@ -136,22 +128,16 @@ export async function baixarFechamentoPdf(
   // `.includes` (undefined vira "undefined", nunca contém "zip", então o
   // comportamento de fallback pro PDF continua o mesmo).
   const ehZip = String(resposta.headers["content-type"] ?? "").includes("zip");
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], {
-      type: ehZip ? "application/zip" : "application/pdf",
-    }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
   const sufixoPeriodo = `${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}`;
   const nomeArquivo =
     motoristaIds && motoristaIds.length === 1
       ? `holerite-${sufixoPeriodo}.pdf`
       : `fechamento-frota-${sufixoPeriodo}.${ehZip ? "zip" : "pdf"}`;
-  link.download = nomeArquivo;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(
+    new Blob([resposta.data], {
+      type: ehZip ? "application/zip" : "application/pdf",
+    }),
+    nomeArquivo,
+  );
   return bloqueados;
 }

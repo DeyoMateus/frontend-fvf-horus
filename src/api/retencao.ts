@@ -11,6 +11,8 @@ export interface RetencaoMotoristaInput {
   dataDesligamento?: string | null;
   bloqueado?: boolean;
   processo?: string;
+  /** Obrigatória (mín. 10 caracteres) ao mudar o desligamento ou remover o bloqueio. */
+  justificativa?: string;
 }
 
 export interface LinhaRelatorioRetencao {

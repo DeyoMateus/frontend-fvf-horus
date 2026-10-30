@@ -592,6 +592,9 @@ export interface UsuarioEmpresaListado {
   mfaValidoAte?: string | null;
   mfaExpirado?: boolean;
   mfaCadastroPendente?: boolean;
+  /** Rodada 537 (N136): CPF do usuario; vem so em /me. */
+  cpf?: string | null;
+  cpfPendente?: boolean;
   createdAt: string;
 }
 
@@ -678,15 +681,6 @@ export interface UpdateEmpresaInput {
   motivo?: string;
 }
 
-export interface AlteracaoIdentidadePendente {
-  id: string;
-  empresaId: string;
-  alteracao: Record<string, string>;
-  motivo: string;
-  solicitadoPorSuperAdminId: string;
-  createdAt: string;
-  empresa: { razaoSocial: string; cnpj: string };
-}
 
 export interface UpdateUsuarioSuperAdminInput {
   nome?: string;
@@ -698,6 +692,8 @@ export interface CreateEmpresaMaeInput {
   cnpjEmpresa: string;
   razaoSocialEmpresa: string;
   nomeAdmin: string;
+  /** Rodada 537 (N136): CPF do admin, obrigatorio (11 digitos). */
+  cpfAdmin: string;
   emailAdmin: string;
   senhaAdmin: string;
   registroInpiAfd?: string;
@@ -707,6 +703,8 @@ export interface CreateEmpresaMaeInput {
 // existente virou exclusividade do super admin.
 export interface CreateUsuarioGrupoInput {
   nome: string;
+  /** Rodada 537 (N136): obrigatorio (11 digitos). */
+  cpf: string;
   email: string;
   senha: string;
   papel: PapelUsuario;
@@ -717,7 +715,11 @@ export interface CreateUsuarioGrupoInput {
 
 export interface UpdatePerfilProprioInput {
   nome?: string;
+  /** Rodada 537 (N136): informado uma vez; 11 digitos. */
+  cpf?: string;
   email?: string;
+  /** Obrigatória só quando o e-mail muda. */
+  senhaAtual?: string;
   telefoneWhatsapp?: string;
   /** Só ADMIN; null limpa. */
   telefoneGerenciamentoRisco?: string | null;

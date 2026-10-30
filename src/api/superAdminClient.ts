@@ -8,7 +8,7 @@ import axios, { AxiosError } from "axios";
 // aqui é outro (`fvf_horus_super_admin_refresh`, path
 // `/super-admin/auth`), setado pelo backend , ver
 // backend/src/common/cookies/refresh-cookie.util.ts.
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+import { API_URL } from "./apiUrl";
 const HEADER_ANTI_CSRF = "x-fvf-horus-client";
 
 let superAdminAccessToken: string | null = null;
@@ -75,6 +75,14 @@ superAdminApi.interceptors.response.use(
         original.headers.Authorization = `Bearer ${novoAccessToken}`;
         return superAdminApi(original);
       }
+    }
+    // Rodada 555 (N197): prazo do MFA vencido leva ao cadastro de seguranca (como no painel de grupo).
+    if (
+      error.response?.status === 403 &&
+      (error.response.data as { codigo?: string } | undefined)?.codigo === "MFA_EXPIRADO" &&
+      !window.location.pathname.startsWith("/super-admin/seguranca")
+    ) {
+      window.location.assign("/super-admin/seguranca");
     }
     return Promise.reject(error);
   },

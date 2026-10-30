@@ -6,12 +6,15 @@ import { SuperAdminAuditoriaPage } from "./SuperAdminAuditoriaPage";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
+import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
+import { cpfValido } from "../utils/cpf";
 
 const FORM_PADRAO: CreateEmpresaMaeInput = {
   razaoSocialGrupo: "",
   cnpjEmpresa: "",
   razaoSocialEmpresa: "",
   nomeAdmin: "",
+  cpfAdmin: "",
   emailAdmin: "",
   senhaAdmin: "",
   registroInpiAfd: "",
@@ -54,6 +57,10 @@ export function SuperAdminDashboardPage() {
     e.preventDefault();
     setErroForm(null);
     setSucessoForm(null);
+    if (!cpfValido(form.cpfAdmin)) {
+      setErroForm("CPF do admin inválido. Confira os números.");
+      return;
+    }
     setSalvando(true);
     try {
       await criarEmpresaMae({
@@ -148,6 +155,22 @@ export function SuperAdminDashboardPage() {
                 maxLength={60}
                 required
               />
+            </div>
+            <div>
+              <label>CPF do admin inicial</label>
+              <input
+                inputMode="numeric"
+                autoComplete="off"
+                value={aplicarMascaraCpf(form.cpfAdmin)}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, cpfAdmin: somenteDigitos(e.target.value).slice(0, 11) }))
+                }
+                maxLength={14}
+                required
+              />
+              {form.cpfAdmin.length === 11 && !cpfValido(form.cpfAdmin) && (
+                <small style={{ color: "#b00020" }}>CPF inválido.</small>
+              )}
             </div>
             <div>
               <label>E-mail do admin inicial</label>

@@ -1,3 +1,5 @@
+import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
+import { cpfValido } from "../utils/cpf";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -33,6 +35,8 @@ type FormEmpresa = {
 type FormUsuario = { nome: string; email: string };
 type FormNovoUsuario = {
   nome: string;
+  /** Rodada 537 (N136): 11 digitos, obrigatorio. */
+  cpf: string;
   email: string;
   senha: string;
   papel: PapelUsuario;
@@ -41,6 +45,7 @@ type FormNovoUsuario = {
 
 const NOVO_USUARIO_PADRAO: FormNovoUsuario = {
   nome: "",
+  cpf: "",
   email: "",
   senha: "",
   papel: "GESTOR",
@@ -239,10 +244,15 @@ export function SuperAdminGrupoDetailPage() {
     e.preventDefault();
     if (!grupoId) return;
     setErroEdicao(null);
+    if (!cpfValido(formNovoUsuario.cpf)) {
+      setErroEdicao("CPF inválido. Confira os números.");
+      return;
+    }
     setSalvando(true);
     try {
       await criarUsuarioGrupo(grupoId, {
         nome: formNovoUsuario.nome,
+        cpf: formNovoUsuario.cpf,
         email: formNovoUsuario.email,
         senha: formNovoUsuario.senha,
         papel: formNovoUsuario.papel,
@@ -632,6 +642,19 @@ export function SuperAdminGrupoDetailPage() {
                   setFormNovoUsuario((f) => ({ ...f, nome: ev.target.value }))
                 }
                 maxLength={60}
+                required
+              />
+            </div>
+            <div>
+              <label>CPF</label>
+              <input
+                inputMode="numeric"
+                autoComplete="off"
+                value={aplicarMascaraCpf(formNovoUsuario.cpf)}
+                onChange={(ev) =>
+                  setFormNovoUsuario((f) => ({ ...f, cpf: somenteDigitos(ev.target.value).slice(0, 11) }))
+                }
+                maxLength={14}
                 required
               />
             </div>

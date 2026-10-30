@@ -1,5 +1,6 @@
 import { api } from "./client";
 import type { SolicitacaoAjustePonto } from "./types";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 /** "Caixa de entrada" do RH: todas as pendentes de qualquer motorista do grupo. */
 export function listSolicitacoesPendentes() {
@@ -54,14 +55,7 @@ export async function baixarEvidenciaSolicitacao(
     `/solicitacoes-ajuste-ponto/evidencias/${evidenciaId}`,
     { responseType: "blob" },
   );
-  const url = window.URL.createObjectURL(new Blob([resposta.data]));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nomeArquivo;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data]), nomeArquivo);
 }
 
 /** Mesma ideia de `obterUrlEvidenciaTratamento`, pro fluxo de solicitações de ajuste. */

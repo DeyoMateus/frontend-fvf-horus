@@ -221,6 +221,11 @@ export function RankingFolgas({ dados }: { dados: FolgaDashboard }) {
           <div style={{ fontSize: 12 }}>
             Quem está há mais tempo sem folga aparece primeiro.
           </div>
+          <div style={{ fontSize: 12, opacity: 0.8 }}>
+            Apoio ao planejamento das folgas, calculado com os registros e as regras
+            cadastradas. Confira cada caso antes de decidir; a lista não aponta, por si
+            só, descumprimento de norma.
+          </div>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           <button

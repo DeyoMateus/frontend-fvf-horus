@@ -1,4 +1,5 @@
 import { api } from "./client";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 // Espelha FechamentoFiscalController (Rodada 66) , extração em lote
 // dos Espelhos de Ponto Eletrônico (REP-P, assinados digitalmente com
@@ -18,14 +19,5 @@ export async function baixarEspelhosRepPFiscalizacaoPdf(
     },
     responseType: "blob",
   });
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "application/pdf" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `fiscalizacao-espelhos-rep-p-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "application/pdf" }), `fiscalizacao-espelhos-rep-p-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`);
 }

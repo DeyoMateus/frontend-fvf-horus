@@ -159,9 +159,19 @@ function RetencaoConteudo() {
   async function salvarDesligamento(motoristaId: string, atual?: string | null) {
     const nova = datas[motoristaId];
     if (nova === undefined || nova === (atual ?? "").slice(0, 10)) return;
+    const justificativa = await prompt(
+      "Justificativa para alterar a data de desligamento (fica registrada na auditoria):",
+      {
+        titulo: "Alterar desligamento",
+        textoConfirmar: "Salvar",
+        validar: (v) => (v.trim().length < 10 ? "Informe ao menos 10 caracteres." : null),
+      },
+    );
+    if (justificativa === null || justificativa.trim().length < 10) return;
     try {
       await atualizarRetencaoMotorista(motoristaId, {
         dataDesligamento: nova === "" ? null : nova,
+        justificativa: justificativa.trim(),
       });
       await carregar();
     } catch (err) {
@@ -195,8 +205,14 @@ function RetencaoConteudo() {
       `Liberar o bloqueio de retenção de ${nome}? Os dados voltam a seguir o prazo normal.`,
     );
     if (!ok) return;
+    const justificativa = await prompt("Justificativa para liberar o bloqueio (fica registrada na auditoria):", {
+      titulo: "Liberar bloqueio",
+      textoConfirmar: "Liberar",
+      validar: (v) => (v.trim().length < 10 ? "Informe ao menos 10 caracteres." : null),
+    });
+    if (justificativa === null || justificativa.trim().length < 10) return;
     try {
-      await atualizarRetencaoMotorista(motoristaId, { bloqueado: false });
+      await atualizarRetencaoMotorista(motoristaId, { bloqueado: false, justificativa: justificativa.trim() });
       await carregar();
     } catch (err) {
       setErro(mensagemErro(err));

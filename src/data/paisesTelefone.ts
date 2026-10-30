@@ -40,19 +40,6 @@ export const PAISES_TELEFONE: PaisTelefone[] = [
 export const PAIS_PADRAO = PAISES_TELEFONE[0]; // Brasil
 
 /**
- * URL de uma imagem de bandeira (flagcdn.com) a partir da sigla do
- * país , usada no painel web em vez do emoji de bandeira porque o
- * Windows não tem os glifos de bandeira nas fontes do sistema: em
- * vez de desenhar a bandeira, o Chrome/Edge no Windows cai pro
- * fallback de mostrar as duas letras da sigla soltas, o que também
- * distorcia o tamanho do botão do país. Uma imagem real resolve os
- * dois problemas de uma vez.
- */
-export function urlBandeira(sigla: string): string {
-  return `https://flagcdn.com/24x18/${sigla.toLowerCase()}.png`;
-}
-
-/**
  * Tenta identificar o país e o número local a partir de um valor E.164
  * já salvo (ex.: "+5511999998888" → { pais: Brasil, numeroLocal:
  * "11999998888" }) , usado pra preencher o formulário na edição.

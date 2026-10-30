@@ -149,3 +149,15 @@ export async function atualizarChaveLiberacaoSuperAdmin(
   );
   return data as { alterada: boolean; chaves: import("./types").ChaveLiberacaoEstado[] };
 }
+
+// Rodada 537 (N136): CPF do proprio super admin (vai no AFD como responsavel).
+export async function obterMeuPerfilSuperAdmin() {
+  const { data } = await superAdminApi.get<{ id: string; nome: string; email: string; cpf: string | null; cpfPendente: boolean }>(
+    "/super-admin/me",
+  );
+  return data;
+}
+
+export async function informarMeuCpfSuperAdmin(cpf: string): Promise<void> {
+  await superAdminApi.patch("/super-admin/me/cpf", { cpf });
+}

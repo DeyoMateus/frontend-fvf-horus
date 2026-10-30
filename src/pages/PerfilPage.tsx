@@ -69,6 +69,8 @@ export function PerfilPage() {
   const [sucessoGr, setSucessoGr] = useState<string | null>(null);
   const { sair } = useAuth();
   const [senhaAtual, setSenhaAtual] = useState("");
+  // Rodada 530 (N141): senha atual exigida so quando o e-mail muda.
+  const [senhaParaEmail, setSenhaParaEmail] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
@@ -125,8 +127,10 @@ export function PerfilPage() {
       const atualizado = await atualizarMeuPerfil({
         nome: nome.trim(),
         email: email.trim(),
+        senhaAtual: perfil && email.trim().toLowerCase() !== perfil.email ? senhaParaEmail : undefined,
         telefoneWhatsapp: telefoneWhatsapp.trim() || undefined,
       });
+      setSenhaParaEmail("");
       setPerfil(atualizado);
       setSucesso("Perfil atualizado com sucesso.");
     } catch (err: any) {
@@ -264,6 +268,21 @@ export function PerfilPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+          {perfil && email.trim().toLowerCase() !== perfil.email && (
+            <>
+              <label style={{ marginTop: 8, display: "block" }}>
+                Senha atual (necessária para trocar o e-mail)
+              </label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                maxLength={128}
+                value={senhaParaEmail}
+                onChange={(e) => setSenhaParaEmail(e.target.value)}
+                required
+              />
+            </>
+          )}
           <p style={{ fontSize: 12, color: "#000000", marginTop: 2 }}>
             Ao trocar o e-mail, use o novo e-mail no próximo login (a sessão
             atual continua válida até você sair).
@@ -296,6 +315,21 @@ export function PerfilPage() {
 
         <form onSubmit={onTrocarSenha} style={{ marginTop: 20 }}>
           <h4 style={{ marginBottom: 4 }}>Alterar senha</h4>
+          {new URLSearchParams(window.location.search).get("senha") === "provisoria" && (
+            <p
+              role="alert"
+              style={{
+                background: "#fef3c7",
+                border: "1px solid #f59e0b",
+                borderRadius: 6,
+                padding: "8px 12px",
+                fontSize: 14,
+              }}
+            >
+              Sua senha foi definida por outra pessoa. Crie uma senha só sua para continuar usando o
+              painel.
+            </p>
+          )}
           <label>Senha atual</label>
           <input
             type="password"

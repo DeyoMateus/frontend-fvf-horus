@@ -35,6 +35,7 @@ import {
 import {
   atualizarVeiculo,
   listarTrocasVeiculo,
+  conferirTrocasVeiculo,
   statusVeiculo,
 } from "../api/veiculos";
 import type {
@@ -252,34 +253,15 @@ export function MotoristaDetailPage() {
   const [trocasVeiculo, setTrocasVeiculo] = useState<TrocaVeiculoAuditoria[]>(
     [],
   );
-  // Trocas de veículo já conferidas por este gestor neste navegador (ids
-  // do log de auditoria, que é imutável). Troca nova volta a aparecer.
-  const chaveTrocasConferidas = `horus:trocasVeiculoConferidas:${motoristaId}`;
-  const [trocasConferidas, setTrocasConferidas] = useState<string[]>(() => {
-    try {
-      const bruto = localStorage.getItem(
-        `horus:trocasVeiculoConferidas:${motoristaId}`,
-      );
-      const lista = bruto ? JSON.parse(bruto) : [];
-      return Array.isArray(lista) ? lista : [];
-    } catch {
-      return [];
-    }
-  });
+  // Rodada 577 (N199): a conferência fica no servidor (vale para todos os gestores);
+  // troca nova volta a aparecer.
   const onMarcarTrocasConferidas = () => {
-    const ids = Array.from(
-      new Set([...trocasConferidas, ...trocasVeiculo.map((t) => t.id)]),
-    );
-    setTrocasConferidas(ids);
-    try {
-      localStorage.setItem(chaveTrocasConferidas, JSON.stringify(ids));
-    } catch {
-      // sem armazenamento: some só até recarregar a página
-    }
+    void conferirTrocasVeiculo(motoristaId)
+      .then(() => listarTrocasVeiculo(motoristaId))
+      .then(setTrocasVeiculo)
+      .catch(() => undefined);
   };
-  const trocasPendentes = trocasVeiculo.filter(
-    (t) => !trocasConferidas.includes(t.id),
-  );
+  const trocasPendentes = trocasVeiculo.filter((t) => !t.conferida);
   const [placaForm, setPlacaForm] = useState("");
   const [idRastreadorForm, setIdRastreadorForm] = useState("");
   const [tecnologiaForm, setTecnologiaForm] = useState("");
@@ -585,11 +567,13 @@ export function MotoristaDetailPage() {
 
   async function onVincular(e: FormEvent) {
     e.preventDefault();
+    if (!import.meta.env.DEV && !novaDeviceUuid.trim()) return;
     setVinculando(true);
     try {
       const resp = await vincularDispositivo(
         motoristaId,
-        novaDeviceUuid || gerarUuid(),
+        // Rodada 577 (N199): UUID em branco gera um aparelho de teste só em desenvolvimento.
+        novaDeviceUuid.trim() || (import.meta.env.DEV ? gerarUuid() : ""),
       );
       setDeviceApiKeyGerada(resp.deviceApiKey);
       setNovaDeviceUuid("");
@@ -1554,10 +1538,13 @@ export function MotoristaDetailPage() {
         <h4>Vincular novo aparelho</h4>
         <form onSubmit={onVincular}>
           <label>
-            UUID do aparelho (deixe em branco para gerar um de teste)
+            {import.meta.env.DEV
+              ? "UUID do aparelho (em branco só para testes: o sistema gera um UUID que não pertence a nenhum celular)"
+              : "UUID do aparelho (mostrado no app do motorista)"}
           </label>
           <input
             maxLength={36}
+            required={!import.meta.env.DEV}
             value={novaDeviceUuid}
             onChange={(e) => setNovaDeviceUuid(e.target.value)}
           />

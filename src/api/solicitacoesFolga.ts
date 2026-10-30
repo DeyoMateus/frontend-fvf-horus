@@ -38,12 +38,6 @@ export function listarHistoricoPedidosFolga(page = 1, pageSize = 10) {
     .then((r) => r.data);
 }
 
-export function listarPedidosFolgaDoMotorista(motoristaId: string) {
-  return api
-    .get<SolicitacaoFolga[]>(`/motoristas/${motoristaId}/solicitacoes-folga`)
-    .then((r) => r.data);
-}
-
 export function aprovarPedidoFolga(id: string, motivoDecisao?: string) {
   return api
     .patch<SolicitacaoFolga>(`/solicitacoes-folga/${id}/aprovar`, {

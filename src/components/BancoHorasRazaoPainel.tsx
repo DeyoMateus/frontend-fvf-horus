@@ -164,7 +164,19 @@ export function BancoHorasRazaoPainel({
       )}
 
       <form
-        onSubmit={(e: FormEvent) => { e.preventDefault(); void executar(() => creditarPeriodoRazao(motoristaId, cInicio, cFim)); }}
+        onSubmit={(e: FormEvent) => { e.preventDefault(); void executar(async () => {
+              const r = (await creditarPeriodoRazao(motoristaId, cInicio, cFim)) as {
+                dias?: Array<{ dia: string; resultado: string }>;
+              };
+              const divergentes = (r?.dias ?? []).filter((d) => d.resultado === "DIVERGENTE");
+              if (divergentes.length > 0) {
+                setErro(
+                  `Atenção: ${divergentes.length} dia(s) já lançado(s) estão com valor diferente da apuração de hoje (${divergentes
+                    .map((d) => d.dia.split("-").reverse().join("/"))
+                    .join(", ")}). O razão não é alterado sozinho: use "Correção" se a apuração nova estiver certa.`,
+                );
+              }
+            }); }}
         style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 12 }}
       >
         <div><label>Creditar horas apuradas de</label><input type="date" value={cInicio} onChange={(e) => setCInicio(e.target.value)} /></div>

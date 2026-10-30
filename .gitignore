@@ -1,6 +1,9 @@
 node_modules
 dist
 .env
+*.tsbuildinfo
+vite.config.ts.timestamp-*
+vitest.config.ts.timestamp-*
 
 # Pedido do usuário: nunca versionar documentação interna sigilosa ,
 # regras de negócio, planejamento, dados de seed, pendências, manuais

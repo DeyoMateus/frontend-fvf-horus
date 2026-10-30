@@ -1,5 +1,6 @@
 import { api } from "./client";
 import type { TipoEvento, TratamentoPonto } from "./types";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 // Espelha TratamentosPontoController: rotas /motoristas/:id/tratamentos-ponto.
 export function listTratamentos(motoristaId: string) {
@@ -81,14 +82,7 @@ export async function baixarEvidenciaTratamento(
       responseType: "blob",
     },
   );
-  const url = window.URL.createObjectURL(new Blob([resposta.data]));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nomeArquivo;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data]), nomeArquivo);
 }
 
 /**

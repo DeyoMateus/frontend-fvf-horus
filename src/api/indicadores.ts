@@ -1,4 +1,5 @@
 import { api } from "./client";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 // Espelha IndicadoresController/IndicadoresService (Rodada 36).
 // Restrição explícita do usuário: SOMENTE horas/contagens, nunca valor
@@ -167,14 +168,7 @@ const ROTULOS_CSV_INDICADORES: Record<string, string> = {
 };
 
 function baixarBlob(blob: Blob, nome: string) {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nome;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(blob, nome);
 }
 
 /**

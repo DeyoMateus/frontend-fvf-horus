@@ -1,4 +1,5 @@
 import { api } from "./client";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 export type TipoDocumentoCarga = "CTE" | "MDFE";
 export type StatusCargaViagem = "CARREGADO" | "VAZIO";
@@ -134,14 +135,5 @@ export async function baixarXmlDocumentoCarga(
   const resposta = await api.get(`/documentos-carga/${documentoId}/xml`, {
     responseType: "blob",
   });
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "application/xml" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nomeArquivo;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "application/xml" }), nomeArquivo);
 }

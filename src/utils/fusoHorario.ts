@@ -21,7 +21,26 @@ export function offsetDoNavegador(instante: Date = new Date()): number {
 }
 
 /** Fuso IANA (dentre os do cadastro) equivalente ao deste computador. */
+const FUSO_CADASTRO: Record<string, string> = {
+  'America/Sao_Paulo': 'America/Sao_Paulo',
+  'America/Noronha': 'America/Noronha',
+  'America/Cuiaba': 'America/Cuiaba',
+  'America/Campo_Grande': 'America/Cuiaba',
+  'America/Manaus': 'America/Cuiaba',
+  'America/Porto_Velho': 'America/Cuiaba',
+  'America/Boa_Vista': 'America/Cuiaba',
+  'America/Rio_Branco': 'America/Rio_Branco',
+  'America/Eirunepe': 'America/Rio_Branco',
+};
+
 export function fusoIanaDoNavegador(): string {
+  // N197: o nome real do fuso do computador vale mais que a aproximação pelo deslocamento.
+  try {
+    const nome = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (nome && FUSO_CADASTRO[nome]) return FUSO_CADASTRO[nome];
+  } catch {
+    // cai na aproximação abaixo
+  }
   const off = offsetDoNavegador();
   if (off === -120) return "America/Noronha";
   if (off === -240) return "America/Cuiaba";

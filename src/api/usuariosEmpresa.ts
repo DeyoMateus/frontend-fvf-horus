@@ -17,6 +17,10 @@ export function atualizarStatusUsuarioEmpresa(id: string, ativo: boolean) {
     .then((r) => r.data);
 }
 
+export function excluirGestor(id: string) {
+  return api.delete(`/usuarios-empresa/${id}`).then((r) => r.data);
+}
+
 // Rodada 385: o ADMIN liga/desliga "aprovar ajuste" e "aceitar divergência" de outro usuário.
 export function atualizarPermissoesUsuario(
   id: string,
@@ -96,6 +100,7 @@ export function alterarMinhaSenha(senhaAtual: string, novaSenha: string) {
 
 export function criarGestor(input: {
   nome: string;
+  cpf: string;
   email: string;
   senha: string;
   telefoneWhatsapp?: string;

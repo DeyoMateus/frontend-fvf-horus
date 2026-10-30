@@ -29,6 +29,8 @@ export interface TrocaVeiculoAuditoria {
     idRastreador: string | null;
   } | null;
   createdAt: string;
+  /** Rodada 577 (N199): conferida por algum gestor (guardado no servidor). */
+  conferida?: boolean;
 }
 
 // Espelha VeiculosController: rotas /motoristas/:id/veiculo (painel).
@@ -53,5 +55,12 @@ export function atualizarVeiculo(
 export function listarTrocasVeiculo(motoristaId: string) {
   return api
     .get<TrocaVeiculoAuditoria[]>(`/motoristas/${motoristaId}/veiculo/trocas`)
+    .then((r) => r.data);
+}
+
+/** Marca as trocas atuais como conferidas para todos os gestores. */
+export function conferirTrocasVeiculo(motoristaId: string) {
+  return api
+    .post(`/motoristas/${motoristaId}/veiculo/trocas/conferir`)
     .then((r) => r.data);
 }

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { ParametroInativo } from "../components/ParametroInativo";
 import { listEmpresas, vincularRegraSindical } from "../api/empresas";
 import {
   createRegraSindical,
@@ -512,7 +513,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>
                   Prazo de expiração do banco de horas (meses, opcional)
-                </label>
+                <ParametroInativo campo="bancoHorasPrazoExpiracaoMeses" /></label>
                 <input
                   name="bancoHorasPrazoExpiracaoMeses"
                   type="number"
@@ -542,7 +543,7 @@ export function RegrasSindicaisPage() {
               </div>
 
               <div>
-                <label>Intervalo de refeição, mínimo</label>
+                <label>Intervalo de refeição, mínimo<ParametroInativo campo="intervaloRefeicaoMinimoMin" /></label>
                 <DuracaoInput
                   name="intervaloRefeicaoMinimoMin"
                   valorMin={form.intervaloRefeicaoMinimoMin ?? 60}
@@ -556,7 +557,7 @@ export function RegrasSindicaisPage() {
               </div>
 
               <div>
-                <label>Descanso mínimo entre jornadas (mínimo 11:00)</label>
+                <label>Descanso mínimo entre jornadas (mínimo 11:00)<ParametroInativo campo="intervaloEntreJornadasMin" /></label>
                 <DuracaoInput
                   name="intervaloEntreJornadasMin"
                   valorMin={form.intervaloEntreJornadasMin ?? 660}
@@ -774,7 +775,7 @@ export function RegrasSindicaisPage() {
                 <label>
                   Adicional de espera previsto em CCT (informativo, não entra no
                   cálculo)
-                </label>
+                <ParametroInativo campo="percentualHoraEspera" /></label>
                 <input
                   name="percentualHoraEspera"
                   type="number"
@@ -844,7 +845,7 @@ export function RegrasSindicaisPage() {
                 <h4 style={{ margin: "8px 0 0" }}>Respaldo na convenção</h4>
               </div>
               <div>
-                <label>Vigência da convenção, início</label>
+                <label>Vigência da convenção, início<ParametroInativo campo="cctVigenciaInicio" /></label>
                 <input
                   name="cctVigenciaInicio"
                   type="date"
@@ -858,7 +859,7 @@ export function RegrasSindicaisPage() {
                 />
               </div>
               <div>
-                <label>Vigência da convenção, fim</label>
+                <label>Vigência da convenção, fim<ParametroInativo campo="cctVigenciaFim" /></label>
                 <input
                   name="cctVigenciaFim"
                   type="date"
@@ -874,7 +875,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>
                   Referência do documento (registro no MTE, cláusula)
-                </label>
+                <ParametroInativo campo="cctDocumentoRef" /></label>
                 <input
                   name="cctDocumentoRef"
                   type="text"
@@ -905,6 +906,7 @@ export function RegrasSindicaisPage() {
                   />
                   Declaro que os valores desta regra que diferem do padrão legal
                   têm respaldo no documento acima
+                  <ParametroInativo campo="declaracaoRespaldoCct" />
                 </label>
                 {(Number(form.duracaoMinutoNoturnoMin ?? 60) !== 52.5 ||
                   (form.janelaNoturnaInicioMin ?? 1320) !== 1320 ||
@@ -946,7 +948,7 @@ export function RegrasSindicaisPage() {
                 </small>
               </div>
               <div>
-                <label>Tipo de banco de horas</label>
+                <label>Tipo de banco de horas<ParametroInativo campo="bancoHorasTipo" /></label>
                 <select
                   name="bancoHorasTipo"
                   value={form.bancoHorasTipo ?? "SEM_BANCO"}
@@ -968,7 +970,7 @@ export function RegrasSindicaisPage() {
                 </select>
               </div>
               <div>
-                <label>Fator de conversão do crédito</label>
+                <label>Fator de conversão do crédito<ParametroInativo campo="bancoHorasFator" /></label>
                 <input
                   name="bancoHorasFator"
                   type="number"
@@ -986,7 +988,7 @@ export function RegrasSindicaisPage() {
                 />
               </div>
               <div>
-                <label>Tratamento do trabalho em feriado</label>
+                <label>Tratamento do trabalho em feriado<ParametroInativo campo="feriadoTratamento" /></label>
                 <select
                   name="feriadoTratamento"
                   value={form.feriadoTratamento ?? ""}
@@ -1010,7 +1012,7 @@ export function RegrasSindicaisPage() {
                 </select>
               </div>
               <div>
-                <label>Calendário de feriados usado</label>
+                <label>Calendário de feriados usado<ParametroInativo campo="feriadoFonte" /></label>
                 <select
                   name="feriadoFonte"
                   value={form.feriadoFonte ?? "BASE_DA_EMPRESA"}
@@ -1030,7 +1032,7 @@ export function RegrasSindicaisPage() {
               <div>
                 <label>
                   Folga em domingo a cada quantas semanas (opcional)
-                </label>
+                <ParametroInativo campo="folgaDomingoACadaSemanas" /></label>
                 <input
                   name="folgaDomingoACadaSemanas"
                   type="number"
@@ -1058,7 +1060,7 @@ export function RegrasSindicaisPage() {
                 </p>
               </div>
               <div>
-                <label>Data do marco</label>
+                <label>Data do marco<ParametroInativo campo="marcoAdi5322Data" /></label>
                 <input
                   name="marcoAdi5322Data"
                   type="date"
@@ -1072,7 +1074,7 @@ export function RegrasSindicaisPage() {
                 />
               </div>
               <div>
-                <label>Referência da decisão (ata, publicação)</label>
+                <label>Referência da decisão (ata, publicação)<ParametroInativo campo="marcoAdi5322Referencia" /></label>
                 <input
                   name="marcoAdi5322Referencia"
                   type="text"

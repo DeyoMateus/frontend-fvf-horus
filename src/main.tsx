@@ -6,6 +6,7 @@ import { App } from './App';
 import { ErroBoundary } from './components/ErroBoundary';
 import './index.css';
 import { iniciarRecuperacaoDeAba } from './utils/recuperacaoDeAba';
+import { limparEvento } from './utils/sentryLimpeza';
 
 // Rodada 292: monitoramento de erros do painel (só liga com VITE_SENTRY_DSN).
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -13,15 +14,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     dsn: import.meta.env.VITE_SENTRY_DSN,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
     tracesSampleRate: 0,
-    beforeSend(evento) {
-      if (evento.request) {
-        delete evento.request.cookies;
-        delete evento.request.headers;
-        delete evento.request.data;
-      }
-      evento.user = undefined;
-      return evento;
-    },
+    beforeSend: (evento) => limparEvento(evento),
   });
 }
 

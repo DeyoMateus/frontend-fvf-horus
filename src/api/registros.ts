@@ -1,5 +1,6 @@
 import { api } from "./client";
 import type { RegistroJornada, VerificacaoIntegridade } from "./types";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 // Espelha RegistrosJornadaController: rotas de leitura usadas pelo
 // painel (o POST de criação é feito pelo app do motorista, não aqui).
@@ -163,16 +164,7 @@ export async function baixarPlanilhaJornada(
     },
   );
 
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "text/csv;charset=utf-8" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `planilha-jornada-${motoristaId}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "text/csv;charset=utf-8" }), `planilha-jornada-${motoristaId}.csv`);
 }
 
 /** Baixa o comprovante em PDF do período e dispara o download no navegador. */
@@ -192,16 +184,7 @@ export async function baixarComprovante(
     },
   );
 
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "application/pdf" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `comprovante-${motoristaId}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "application/pdf" }), `comprovante-${motoristaId}.pdf`);
 }
 
 /**
@@ -228,16 +211,7 @@ export async function baixarEspelhoRepP(
     },
   );
 
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "application/pdf" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `espelho-rep-p-${motoristaId}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "application/pdf" }), `espelho-rep-p-${motoristaId}.pdf`);
 }
 
 /** Baixa o AEJ no leiaute oficial (Anexo VI da Portaria 671/2021, texto ISO 8859-1). */
@@ -252,14 +226,5 @@ export async function baixarAej(
     `/registros-jornada/motorista/${motoristaId}/aej`,
     { params, responseType: "blob" },
   );
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `AEJ-${motoristaId}.txt`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }), `AEJ-${motoristaId}.txt`);
 }

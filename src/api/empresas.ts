@@ -1,5 +1,6 @@
 import { api } from "./client";
 import type { Empresa } from "./types";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 // Espelha EmpresasController: rotas /empresas.
 // Um grupo pode ter mais de um CNPJ (Empresa) sob o mesmo login , esta
@@ -66,17 +67,11 @@ export async function baixarAfd(
     params: { empresaId, inicio, fim },
     responseType: "blob",
   });
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "text/plain" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
   // O backend já decide o nome oficial do arquivo (AFD<INPI><CNPJ>REP_P.txt),
   // mas o header Content-Disposition não é lido aqui por simplicidade ,
   // um nome genérico com o período já é suficiente pro usuário entregar.
-  link.download = `afd-${empresaId}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.txt`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(
+    new Blob([resposta.data], { type: "text/plain" }),
+    `afd-${empresaId}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.txt`,
+  );
 }

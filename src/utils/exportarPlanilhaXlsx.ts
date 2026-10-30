@@ -8,6 +8,7 @@
  * usuário clica em baixar, para não pesar o bundle inicial do painel.
  */
 import type { Workbook, Worksheet, Cell } from "exceljs";
+import { baixarArquivo } from "./baixarArquivo";
 
 export const COR_TEXTO = "FF111827";
 export const COR_SUAVE = "FF6B7280";
@@ -263,12 +264,5 @@ export async function baixarPlanilhaXlsx(
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nomeArquivoXlsx(opcoes.nomeArquivo);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(blob, nomeArquivoXlsx(opcoes.nomeArquivo));
 }

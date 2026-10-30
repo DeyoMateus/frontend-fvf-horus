@@ -1,3 +1,4 @@
+import { baixarArquivo } from "./baixarArquivo";
 /**
  * Exportação client-side (planilha Excel / impressão) dos dados já carregados num
  * popup de detalhe (drill-down de indicador/card do painel) , pedido do
@@ -37,17 +38,6 @@ function tituloDoArquivo(nomeArquivo: string): string {
     .replace(/\s+/g, " ")
     .trim();
   return base ? base.charAt(0).toUpperCase() + base.slice(1) : "Relatório";
-}
-
-function baixarArquivo(blob: Blob, nome: string) {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nome;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
 }
 
 function baixarCsvSimples(

@@ -1,9 +1,12 @@
+import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
+import { cpfValido } from "../utils/cpf";
 import { FormEvent, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
   atualizarPermissoesUsuario,
   atualizarStatusUsuarioEmpresa,
   criarGestor,
+  excluirGestor,
   listUsuariosEmpresa,
 } from "../api/usuariosEmpresa";
 import { useAuth } from "../context/AuthContext";
@@ -63,6 +66,7 @@ function UsuariosEmpresaConteudo() {
   const gestoresAtuais = usuarios.filter((u) => u.papel === "GESTOR").length;
   const [formAberto, setFormAberto] = useState(false);
   const [gNome, setGNome] = useState("");
+  const [gCpf, setGCpf] = useState("");
   const [gEmail, setGEmail] = useState("");
   const [gSenha, setGSenha] = useState("");
   const [gTel, setGTel] = useState("");
@@ -72,15 +76,21 @@ function UsuariosEmpresaConteudo() {
   async function onCriarGestor(e: FormEvent) {
     e.preventDefault();
     setGErro(null);
+    if (!cpfValido(gCpf)) {
+      setGErro("CPF inválido. Confira os números.");
+      return;
+    }
     setGSalvando(true);
     try {
       await criarGestor({
         nome: gNome.trim(),
+        cpf: gCpf,
         email: gEmail.trim(),
         senha: gSenha,
         telefoneWhatsapp: gTel.trim() || undefined,
       });
       setGNome("");
+      setGCpf("");
       setGEmail("");
       setGSenha("");
       setGTel("");
@@ -108,6 +118,22 @@ function UsuariosEmpresaConteudo() {
     await carregar();
   }
 
+  async function onExcluirGestor(u: UsuarioEmpresaListado) {
+    if (
+      !(await confirm(
+        `Excluir o gestor ${u.nome} (${u.email})? O acesso é encerrado e a vaga é liberada. O histórico do que ele fez continua guardado. Não dá para desfazer.`,
+      ))
+    )
+      return;
+    try {
+      await excluirGestor(u.id);
+      setErro(null);
+      await carregar();
+    } catch (e: any) {
+      setErro(e?.response?.data?.message ?? "Não foi possível excluir o gestor.");
+    }
+  }
+
   async function onAlterarPermissao(
     u: UsuarioEmpresaListado,
     campo: "podeAprovarAjuste" | "podeAceitarDivergencia",
@@ -130,8 +156,9 @@ function UsuariosEmpresaConteudo() {
     <div>
       <h2>Usuários</h2>
       <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Gestores e admins com acesso ao painel do seu grupo. Um usuário nunca é
-        apagado. "Desativar" só bloqueia o login dele, o histórico de tudo que
+        Gestores e admins com acesso ao painel do seu grupo. O histórico
+        nunca é apagado: "Desativar" só bloqueia o login dele (e a vaga continua
+        ocupada); "Excluir" (só gestores) encerra o acesso e libera a vaga. O histórico de tudo que
         ele já fez (ajustes, aprovações, feriados cadastrados) continua intacto.
         Você pode cadastrar até 2 gestores para sua empresa. As caixas "Aprova
         ajuste" e "Aceita divergência" definem quem pode aprovar pedidos de
@@ -144,7 +171,7 @@ function UsuariosEmpresaConteudo() {
         {gestoresAtuais >= 2 ? (
           <p style={{ fontSize: 13 }}>
             O limite de 2 gestores foi atingido. Para cadastrar outro, é preciso
-            excluir um dos atuais com o suporte técnico.
+            excluir um dos atuais (botão "Excluir" na lista abaixo).
           </p>
         ) : !formAberto ? (
           <button type="button" onClick={() => setFormAberto(true)}>
@@ -158,6 +185,15 @@ function UsuariosEmpresaConteudo() {
               onChange={(e) => setGNome(e.target.value)}
               minLength={2}
               maxLength={60}
+              required
+            />
+            <label style={{ marginTop: 8, display: "block" }}>CPF</label>
+            <input
+              inputMode="numeric"
+              autoComplete="off"
+              value={aplicarMascaraCpf(gCpf)}
+              onChange={(e) => setGCpf(somenteDigitos(e.target.value).slice(0, 11))}
+              maxLength={14}
               required
             />
             <label style={{ marginTop: 8, display: "block" }}>E-mail</label>
@@ -264,6 +300,15 @@ function UsuariosEmpresaConteudo() {
                         onClick={() => onAlterarStatus(u)}
                       >
                         {u.ativo ? "Desativar" : "Reativar"}
+                      </button>
+                    )}
+                    {u.id !== usuario?.sub && u.papel === "GESTOR" && (
+                      <button
+                        className="secondary"
+                        style={{ marginLeft: 6 }}
+                        onClick={() => void onExcluirGestor(u)}
+                      >
+                        Excluir
                       </button>
                     )}
                   </td>

@@ -10,7 +10,7 @@ import axios, { AxiosError } from "axios";
 // um XSS nesta aplicação (hoje não existe nenhum conhecido) não
 // consegue mais roubar uma sessão de 7 dias, só o access token de 15
 // min que já estiver em memória no momento do ataque.
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+import { API_URL } from "./apiUrl";
 
 // Header que identifica a chamada como vinda deste próprio frontend ,
 // mitigação de CSRF pros endpoints que dependem do cookie (ver o
@@ -139,6 +139,14 @@ api.interceptors.response.use(
       !window.location.pathname.startsWith("/perfil")
     ) {
       window.location.assign("/perfil");
+    }
+    // Rodada 577 (N164): senha definida por outra pessoa; só a troca de senha fica liberada.
+    if (
+      error.response?.status === 403 &&
+      (error.response.data as { codigo?: string } | undefined)?.codigo === "SENHA_PROVISORIA" &&
+      !window.location.pathname.startsWith("/perfil")
+    ) {
+      window.location.assign("/perfil?senha=provisoria");
     }
     return Promise.reject(error);
   },

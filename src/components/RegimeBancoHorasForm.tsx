@@ -52,16 +52,27 @@ export function RegimeBancoHorasForm({
   async function salvar(e: FormEvent) {
     e.preventDefault();
     setErro(null);
+    // Rodada 556 (N201): entrada invalida nao vira "1" em silencio; mostra o erro.
+    const fatorNum = Number(fator.replace(",", "."));
+    if (!Number.isFinite(fatorNum) || fatorNum < 1 || fatorNum > 3) {
+      setErro("O fator de conversão deve ser um número entre 1 e 3.");
+      return;
+    }
+    const tetoNum = tetoHoras.trim() ? Number(tetoHoras.replace(",", ".")) : null;
+    if (tetoNum !== null && (!Number.isFinite(tetoNum) || tetoNum <= 0)) {
+      setErro("O teto do saldo deve ser um número de horas maior que zero (ou fique em branco).");
+      return;
+    }
     setSalvando(true);
     try {
-      const teto = tetoHoras.trim() ? Math.round(Number(tetoHoras.replace(",", ".")) * 60) : undefined;
+      const teto = tetoNum !== null ? Math.round(tetoNum * 60) : undefined;
       await atualizarRegimeBancoHorasSuperAdmin(empresaId, {
         regime,
         domingoFeriado: domingo,
         documento: documento.trim() || undefined,
         vigenciaInicio: vigencia || undefined,
         tetoMin: teto,
-        fator: Number(fator.replace(",", ".")) || 1,
+        fator: fatorNum,
         razaoAtivo,
         motivo: motivo.trim(),
       });

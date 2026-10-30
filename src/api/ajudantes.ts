@@ -1,5 +1,6 @@
 import { api } from "./client";
 import type { Ajudante, PaginaAjudantes, StatusMotorista } from "./types";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 // Espelha AjudantesController: rotas /ajudantes (Rodada 66). Mesmo
 // raciocínio de listMotoristas , grupoId nunca é enviado, vem do token.
@@ -78,16 +79,7 @@ export async function baixarEspelhoAjudantePdf(
     params: { inicio, fim },
     responseType: "blob",
   });
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "application/pdf" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `espelho-ajudante-${nome.replace(/\s+/g, "-")}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "application/pdf" }), `espelho-ajudante-${nome.replace(/\s+/g, "-")}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`);
 }
 
 export interface AlertaJornadaAbertaAjudante {

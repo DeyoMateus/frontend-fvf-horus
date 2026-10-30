@@ -1,4 +1,5 @@
 import { api } from "./client";
+import { baixarArquivo } from "../utils/baixarArquivo";
 
 // Espelha DossieCobrancaController (Rodada 66) , extração do Dossiê de
 // Cobrança (tempo de espera em carga/descarga acima do limiar de 5h,
@@ -39,14 +40,5 @@ export async function baixarDossieCobrancaPdf(
     params: { inicio, fim, motoristaId: motoristaId || undefined },
     responseType: "blob",
   });
-  const url = window.URL.createObjectURL(
-    new Blob([resposta.data], { type: "application/pdf" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `dossie-cobranca-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  baixarArquivo(new Blob([resposta.data], { type: "application/pdf" }), `dossie-cobranca-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.pdf`);
 }
