@@ -214,7 +214,7 @@ export async function baixarEspelhoRepP(
   baixarArquivo(new Blob([resposta.data], { type: "application/pdf" }), `espelho-rep-p-${motoristaId}.pdf`);
 }
 
-/** Baixa o AEJ no leiaute oficial (Anexo VI da Portaria 671/2021, texto ISO 8859-1). */
+/** Baixa o AEJ no leiaute oficial (leiaute vigente do AEJ publicado pelo MTE, texto ISO 8859-1). */
 export async function baixarAej(
   motoristaId: string,
   periodo?: { inicio?: string; fim?: string },
@@ -227,4 +227,52 @@ export async function baixarAej(
     { params, responseType: "blob" },
   );
   baixarArquivo(new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }), `AEJ-${motoristaId}.txt`);
+}
+
+function base64ParaBlob(b64: string, tipo: string) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: tipo });
+}
+
+/**
+ * Rodada 613: baixa o AEJ e a assinatura CAdES destacada (.p7s) da FVF, gerados juntos para a assinatura
+ * bater com o arquivo. Devolve o aviso quando o certificado for de teste (sem validade legal).
+ */
+export async function baixarAejAssinado(
+  motoristaId: string,
+  periodo?: { inicio?: string; fim?: string },
+): Promise<string | null> {
+  const params: Record<string, string> = {};
+  if (periodo?.inicio) params.inicio = periodo.inicio;
+  if (periodo?.fim) params.fim = periodo.fim;
+  const { data } = await api.get<{
+    nomeArquivo: string;
+    conteudoBase64: string;
+    nomeAssinatura: string;
+    assinaturaBase64: string;
+    aviso: string | null;
+  }>(`/registros-jornada/motorista/${motoristaId}/aej-assinado`, { params });
+  baixarArquivo(base64ParaBlob(data.conteudoBase64, "text/plain;charset=iso-8859-1"), data.nomeArquivo);
+  baixarArquivo(base64ParaBlob(data.assinaturaBase64, "application/pkcs7-signature"), data.nomeAssinatura);
+  return data.aviso;
+}
+
+/** Rodada 589: relatório complementar de direção e espera (o AEJ oficial não tem esses registros). */
+export async function baixarDirecaoEsperaCsv(
+  motoristaId: string,
+  periodo?: { inicio?: string; fim?: string },
+) {
+  const params: Record<string, string> = {};
+  if (periodo?.inicio) params.inicio = periodo.inicio;
+  if (periodo?.fim) params.fim = periodo.fim;
+  const resposta = await api.get(
+    `/registros-jornada/motorista/${motoristaId}/direcao-espera-csv`,
+    { params, responseType: "blob" },
+  );
+  baixarArquivo(
+    new Blob([resposta.data], { type: "text/csv;charset=utf-8" }),
+    `direcao-espera-${motoristaId}.csv`,
+  );
 }

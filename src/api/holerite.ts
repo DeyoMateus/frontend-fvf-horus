@@ -141,3 +141,40 @@ export async function baixarFechamentoPdf(
   );
   return bloqueados;
 }
+
+/**
+ * Rodada 589: horas apuradas por evento (direção, espera, normais, extras, noturno, interjornada)
+ * em CSV para a folha de pagamento do cliente. Mesmos filtros e bloqueios do PDF do fechamento.
+ */
+export async function baixarEventosFolhaCsv(
+  inicio: string,
+  fim: string,
+  motoristaIds: string[] | null,
+  opcoes: OpcoesHolerite,
+): Promise<MotoristaFechamentoBloqueado[]> {
+  const resposta = await api.get("/holerite-fechamento/eventos-csv", {
+    params: {
+      inicio,
+      fim,
+      ...(motoristaIds && motoristaIds.length > 0
+        ? { motoristaIds: motoristaIds.join(",") }
+        : {}),
+      direcaoEspera: String(opcoes.direcaoEspera),
+      normalExtra: String(opcoes.normalExtra),
+      adicionalNoturno: String(opcoes.adicionalNoturno),
+    },
+    responseType: "blob",
+  });
+  let bloqueados: MotoristaFechamentoBloqueado[] = [];
+  try {
+    const bruto = resposta.headers["x-fechamento-bloqueados"];
+    if (bruto) bloqueados = JSON.parse(decodeURIComponent(String(bruto)));
+  } catch {
+    bloqueados = [];
+  }
+  baixarArquivo(
+    new Blob([resposta.data], { type: "text/csv;charset=utf-8" }),
+    `eventos-folha-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.csv`,
+  );
+  return bloqueados;
+}

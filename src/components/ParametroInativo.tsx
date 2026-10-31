@@ -16,6 +16,7 @@ export const CAMPOS_PARAMETRO_INATIVO: Record<string, string> = {
   declaracaoRespaldoCct: "Respaldo da convenção: guardado, não altera a apuração atual.",
   bancoHorasTipo: "Ainda não altera a apuração atual.",
   bancoHorasFator: "Ainda não altera a apuração atual.",
+  interjornadaNoBancoPermitida: "Guardado e auditado: a interjornada suprimida segue paga fora do banco de horas.",
   feriadoTratamento: "Ainda não altera a apuração atual.",
   feriadoFonte: "Ainda não altera a apuração atual.",
   folgaDomingoACadaSemanas: "Ainda não altera a apuração atual.",

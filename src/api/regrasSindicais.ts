@@ -22,12 +22,29 @@ export function updateRegraSindical(
   id: string,
   input: Partial<RegraSindicalInput>,
   confirmarRetroatividade = false,
+  vigenciaInicio?: string,
 ) {
   return api
     .patch<RegraSindical>(`/regras-sindicais/${id}`, {
       ...input,
       ...(confirmarRetroatividade ? { confirmarRetroatividade: true } : {}),
+      ...(vigenciaInicio ? { vigenciaInicio } : {}),
     })
+    .then((r) => r.data);
+}
+
+export interface VersaoRegraSindical {
+  id: string;
+  versao: number;
+  vigenciaInicio: string;
+  autorId: string | null;
+  createdAt: string;
+}
+
+/** Rodada 588: historico de versoes da regra. */
+export function listarVersoesRegraSindical(id: string) {
+  return api
+    .get<VersaoRegraSindical[]>(`/regras-sindicais/${id}/versoes`)
     .then((r) => r.data);
 }
 

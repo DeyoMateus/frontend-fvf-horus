@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
+import RodapeLegal from "./RodapeLegal";
 import { BolinhaPendencia } from "./BolinhaPendencia";
 import { usePendenciasDoMenu } from "./pendenciasMenu";
 import { PoliticaGate } from "./PoliticaGate";
@@ -236,6 +237,7 @@ function LayoutInterno() {
             </div>
           )}
           <Outlet />
+          <RodapeLegal />
         </div>
       </main>
     </div>

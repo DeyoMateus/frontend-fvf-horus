@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { tratarDiaSemInteracao } from "../api/autorrelatoFolga";
+import {
+  listarPendenciasJustificativa,
+  solicitarJustificativaDia,
+  tratarDiaSemInteracao,
+} from "../api/autorrelatoFolga";
+import type { PendenciaJustificativaDia } from "../api/autorrelatoFolga";
 import type { TipoTratamentoDiaSemInteracao } from "../api/autorrelatoFolga";
 
 type Escolha = TipoTratamentoDiaSemInteracao | "SEM_SINAL";
@@ -65,6 +70,48 @@ export function TratarDiaSemInteracaoModal({
   const [observacao, setObservacao] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [pendencia, setPendencia] = useState<PendenciaJustificativaDia | null>(
+    null,
+  );
+  const [solicitando, setSolicitando] = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+    listarPendenciasJustificativa(motoristaId)
+      .then((lista) => {
+        if (!ativo) return;
+        setPendencia(
+          lista.find((p) => p.data.slice(0, 10) === dia.slice(0, 10)) ?? null,
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, [motoristaId, dia]);
+
+  const prazoAberto =
+    !!pendencia &&
+    !pendencia.justificadaEm &&
+    new Date(pendencia.prazoEm).getTime() > Date.now();
+  const faltaBloqueada = escolha === "FALTA" && (!pendencia || prazoAberto);
+
+  async function onSolicitar() {
+    setSolicitando(true);
+    setErro(null);
+    try {
+      setPendencia(await solicitarJustificativaDia(motoristaId, dia.slice(0, 10)));
+    } catch (err) {
+      const msg = (err as { response?: { data?: { message?: string | string[] } } })
+        ?.response?.data?.message;
+      setErro(
+        (Array.isArray(msg) ? msg.join(" ") : msg) ||
+          "Não foi possível solicitar a justificativa.",
+      );
+    } finally {
+      setSolicitando(false);
+    }
+  }
 
   async function onConfirmar(e: FormEvent) {
     e.preventDefault();
@@ -77,6 +124,12 @@ export function TratarDiaSemInteracaoModal({
         `/motoristas/${motoristaId}?secao=lancar-jornada&data=${dia.slice(0, 10)}`,
       );
       onFechar();
+      return;
+    }
+    if (faltaBloqueada) {
+      setErro(
+        "Para lançar falta, peça a justificativa ao motorista e aguarde o fim do prazo.",
+      );
       return;
     }
     if (observacao.trim().length < 10) {
@@ -177,13 +230,49 @@ export function TratarDiaSemInteracaoModal({
           </>
         )}
 
+        {escolha === "FALTA" && (
+          <div style={{ textAlign: "left", fontSize: 13, marginTop: 8 }}>
+            {!pendencia && (
+              <>
+                <p>
+                  Antes de lançar a falta, o motorista precisa ser avisado e ter
+                  3 dias corridos para justificar.
+                </p>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={solicitando}
+                  onClick={() => void onSolicitar()}
+                >
+                  {solicitando ? "Enviando..." : "Pedir justificativa ao motorista"}
+                </button>
+              </>
+            )}
+            {pendencia && !pendencia.justificadaEm && (
+              <p>
+                Justificativa pedida. Prazo até{" "}
+                {new Date(pendencia.prazoEm).toLocaleString("pt-BR")}.
+                {prazoAberto
+                  ? " Aguarde o fim do prazo para lançar a falta."
+                  : " O prazo terminou sem resposta."}
+              </p>
+            )}
+            {pendencia?.justificadaEm && (
+              <p>
+                O motorista respondeu: “{pendencia.justificativa}”. Avalie antes
+                de lançar.
+              </p>
+            )}
+          </div>
+        )}
+
         {erro && <p className="error-text">{erro}</p>}
 
         <div className="confirm-modal-acoes">
           <button type="button" className="secondary" onClick={onFechar}>
             Cancelar
           </button>
-          <button type="submit" disabled={enviando || !escolha}>
+          <button type="submit" disabled={enviando || !escolha || faltaBloqueada}>
             {escolha === "SEM_SINAL"
               ? "Ir para o tratamento de ponto"
               : enviando

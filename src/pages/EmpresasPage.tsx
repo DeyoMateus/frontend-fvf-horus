@@ -8,6 +8,7 @@ import {
 import { useConfirm } from "../components/ConfirmProvider";
 import { useAuth } from "../context/AuthContext";
 import { EstabelecimentoCard } from "../components/EstabelecimentoCard";
+import { HorariosContratuaisCard } from "../components/HorariosContratuaisCard";
 import type { Empresa } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
@@ -273,6 +274,10 @@ export function EmpresasPage() {
 
       {usuario?.papel === "ADMIN" && empresas.length > 0 && (
         <EstabelecimentoCard empresas={empresas} onSalvo={() => void carregar()} />
+      )}
+
+      {usuario?.papel === "ADMIN" && empresas.length > 0 && (
+        <HorariosContratuaisCard empresas={empresas} />
       )}
     </div>
   );

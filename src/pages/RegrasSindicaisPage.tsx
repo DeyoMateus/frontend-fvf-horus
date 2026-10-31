@@ -6,6 +6,8 @@ import {
   desativarRegraSindical,
   listRegrasSindicais,
   updateRegraSindical,
+  listarVersoesRegraSindical,
+  type VersaoRegraSindical,
 } from "../api/regrasSindicais";
 import type { RegraSindicalInput } from "../api/regrasSindicais";
 import { useAuth } from "../context/AuthContext";
@@ -22,6 +24,7 @@ import type {
   TratamentoFeriado,
 } from "../api/types";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
+import { avisoVigenciaCct } from "../utils/vigenciaCct";
 
 const REGRA_PADRAO: RegraSindicalInput = {
   nome: "",
@@ -73,6 +76,9 @@ export function RegrasSindicaisPage() {
 
   const [form, setForm] = useState<RegraSindicalInput>(REGRA_PADRAO);
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  // Rodada 588: data de inicio de vigencia da alteracao (vazio = hoje) e historico de versoes.
+  const [vigenciaEdicao, setVigenciaEdicao] = useState("");
+  const [versoes, setVersoes] = useState<VersaoRegraSindical[] | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
   // Rodada 483: campos reprovados pela API (ficam em vermelho no formulario).
@@ -137,6 +143,7 @@ export function RegrasSindicaisPage() {
           ? Number(regra.percentualAdicionalInterjornada)
           : 50,
       incideReflexoDsrInterjornada: regra.incideReflexoDsrInterjornada ?? true,
+      interjornadaNoBancoPermitida: regra.interjornadaNoBancoPermitida ?? false,
       bancoGuarda: regra.bancoGuarda ?? "fictos",
       percentualHoraEspera: regra.percentualHoraEspera,
       acordoColetivo: regra.acordoColetivo ?? false,
@@ -164,6 +171,8 @@ export function RegrasSindicaisPage() {
 
   function onCancelarEdicao() {
     setEditandoId(null);
+    setVigenciaEdicao("");
+    setVersoes(null);
     setForm(REGRA_PADRAO);
     setCamposComErro([]);
     setTentouSalvar(false);
@@ -177,7 +186,7 @@ export function RegrasSindicaisPage() {
     try {
       if (editandoId) {
         try {
-          await updateRegraSindical(editandoId, form);
+          await updateRegraSindical(editandoId, form, false, vigenciaEdicao || undefined);
         } catch (err) {
           const d = (
             err as { response?: { status?: number; data?: { codigo?: string; message?: string } } }
@@ -185,7 +194,7 @@ export function RegrasSindicaisPage() {
           if (d?.status === 409 && d.data?.codigo === "REGRA_RETROATIVA") {
             const ok = await confirm(d.data.message ?? "Confirmar alteração da regra?");
             if (!ok) return;
-            await updateRegraSindical(editandoId, form, true);
+            await updateRegraSindical(editandoId, form, true, vigenciaEdicao || undefined);
           } else {
             throw err;
           }
@@ -766,8 +775,34 @@ export function RegrasSindicaisPage() {
                   Interjornada suprimida reflete no DSR
                 </label>
                 <small>
-                  Marcado por padrão (natureza salarial). Desmarque só se a CCT
-                  disser o contrário. Sujeito a parecer.
+                  Marcado por padrão (natureza salarial, com os reflexos de hora
+                  extra). Desmarque só se a CCT disser o contrário. Sujeito a
+                  parecer.
+                </small>
+              </div>
+
+              <div>
+                <label>
+                  <input
+                    name="interjornadaNoBancoPermitida"
+                    type="checkbox"
+                    checked={form.interjornadaNoBancoPermitida ?? false}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        interjornadaNoBancoPermitida: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Convenção coletiva permite compensar a interjornada pelo banco
+                  de horas
+                  <ParametroInativo campo="interjornadaNoBancoPermitida" />
+                </label>
+                <small>
+                  Desmarcado por padrão: a interjornada suprimida é paga em
+                  dinheiro, em evento próprio, fora do banco. Marque só com
+                  acordo ou convenção coletiva registrada (informe o número do
+                  Mediador acima) que preveja a compensação.
                 </small>
               </div>
 
@@ -1106,6 +1141,51 @@ export function RegrasSindicaisPage() {
                   .join("\n")}
               </style>
             )}
+            {editandoId && (
+              <div style={{ marginTop: 12 }}>
+                <label>
+                  Data de início de vigência desta alteração
+                  <input
+                    type="date"
+                    value={vigenciaEdicao}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setVigenciaEdicao(e.target.value)}
+                  />
+                </label>
+                <p style={{ fontSize: 12, color: "#6b7280", margin: "4px 0" }}>
+                  Em branco = vale a partir de hoje. Data passada é retroativa e pede confirmação;
+                  períodos já fechados não mudam (diferença vai como ajuste complementar na folha).
+                  Data futura ainda não é suportada.
+                </p>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={async () => setVersoes(await listarVersoesRegraSindical(editandoId))}
+                >
+                  Ver histórico de versões
+                </button>
+                {versoes && (
+                  <table style={{ marginTop: 8 }}>
+                    <thead>
+                      <tr>
+                        <th>Versão</th>
+                        <th>Vigência desde</th>
+                        <th>Registrada em</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {versoes.map((v) => (
+                        <tr key={v.id}>
+                          <td>{v.versao}</td>
+                          <td>{dataCurta(v.vigenciaInicio)}</td>
+                          <td>{new Date(v.createdAt).toLocaleString("pt-BR")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
             {erroForm && <p className="error-text">{erroForm}</p>}
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <button type="submit" disabled={salvando}>
@@ -1162,7 +1242,24 @@ export function RegrasSindicaisPage() {
                   </td>
                   <td>{r.percentualAdicionalNoturno}%</td>
                   <td>{r.bancoHorasAtivo ? "Ativo" : "Desligado"}</td>
-                  <td>{r.ativo ? "Ativa" : "Desativada"}</td>
+                  <td>
+                    {r.ativo ? "Ativa" : "Desativada"}
+                    {(() => {
+                      const aviso = avisoVigenciaCct(r.cctVigenciaFim);
+                      return aviso ? (
+                        <div
+                          role="alert"
+                          style={{
+                            fontSize: 12,
+                            marginTop: 4,
+                            color: aviso.nivel === "VENCIDA" ? "#b91c1c" : "#b45309",
+                          }}
+                        >
+                          {aviso.texto}
+                        </div>
+                      ) : null;
+                    })()}
+                  </td>
                   <td style={{ fontSize: 12 }}>
                     {(r.empresas ?? []).map((e) => e.razaoSocial).join(", ") ||
                       ","}
@@ -1240,7 +1337,7 @@ export function RegrasSindicaisPage() {
               </li>
               <li>
                 Descanso entre jornadas (interjornada): mínimo de 11h (CLT art.
-                66 / Lei 13.103). Vale sempre, sem exceção. Se o motorista
+                66 / Lei 13.103). Se o descanso for menor, o tempo que faltou é pago como hora extra (OJ 355), em evento próprio e fora do banco de horas; só um acordo ou convenção coletiva registrada pode prever outra forma. Se o motorista
                 encerrou por engano e reabriu, o RH trata o alerta e registra
                 que foi a mesma jornada (a decisão fica na trilha de auditoria).
               </li>

@@ -1,6 +1,8 @@
 import { api } from "./client";
 
 // Rodada 378: espelha DadosContratoController (Portaria 671, art. 84).
+export type OrigemJornadaDiaria = "CONTRATO" | "CCT" | "ACT" | "REFERENCIA_LEGAL";
+
 export interface HorarioContratual {
   id: string;
   codigo: string;
@@ -9,6 +11,10 @@ export interface HorarioContratual {
   saidaMin: number | null;
   intervaloMin: number;
   cargaSemanalMin: number;
+  /** Jornada diária contratual em minutos (AEJ registro 04); nula quando não informada. */
+  jornadaDiariaMin?: number | null;
+  jornadaDiariaOrigem?: OrigemJornadaDiaria | null;
+  padraoEmpresa?: boolean;
   ativo: boolean;
 }
 
@@ -35,11 +41,30 @@ export function criarHorarioContratual(
     saidaMin?: number;
     intervaloMin?: number;
     cargaSemanalMin: number;
+    jornadaDiariaMin?: number;
+    jornadaDiariaOrigem?: OrigemJornadaDiaria;
+    padraoEmpresa?: boolean;
   },
 ) {
   return api
     .post<HorarioContratual>(`/dados-contrato/empresas/${empresaId}/horarios`, input)
     .then((r) => r.data);
+}
+
+export interface HorarioContratualEdicao {
+  tipoJornada?: string;
+  entradaMin?: number | null;
+  saidaMin?: number | null;
+  intervaloMin?: number;
+  cargaSemanalMin?: number;
+  jornadaDiariaMin?: number | null;
+  jornadaDiariaOrigem?: OrigemJornadaDiaria | null;
+  padraoEmpresa?: boolean;
+  ativo?: boolean;
+}
+
+export function atualizarHorarioContratual(id: string, input: HorarioContratualEdicao) {
+  return api.patch<HorarioContratual>(`/dados-contrato/horarios/${id}`, input).then((r) => r.data);
 }
 
 export function atualizarContratoMotorista(motoristaId: string, input: ContratoMotoristaInput) {

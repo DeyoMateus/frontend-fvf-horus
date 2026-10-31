@@ -548,7 +548,7 @@ function PalcoFicha() {
       </div>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Holerite (folha de ponto)</h3>
+        <h3 style={{ marginTop: 0 }}>Relatório de horas apuradas (folha de ponto)</h3>
         <label>Data inicial</label>
         <input type="date" value="2026-10-01" readOnly tabIndex={-1} />
         <label style={{ marginTop: 8, display: "block" }}>Data final</label>

@@ -116,6 +116,7 @@ export interface RegraSindical {
   percentualAdicionalInterjornada?: string | number | null;
   incideReflexoDsrInterjornada?: boolean;
   bancoGuarda?: "fictos" | "reais";
+  interjornadaNoBancoPermitida?: boolean;
   percentualHoraEspera: string;
   percentualHoraEsperaRefeicao?: string | null;
   acordoColetivo?: boolean;

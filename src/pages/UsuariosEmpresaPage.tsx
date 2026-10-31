@@ -121,7 +121,7 @@ function UsuariosEmpresaConteudo() {
   async function onExcluirGestor(u: UsuarioEmpresaListado) {
     if (
       !(await confirm(
-        `Excluir o gestor ${u.nome} (${u.email})? O acesso é encerrado e a vaga é liberada. O histórico do que ele fez continua guardado. Não dá para desfazer.`,
+        `Excluir o gestor ${u.nome} (${u.email})? O acesso é encerrado e a vaga é liberada. O histórico do que ele fez continua guardado, mas o cadastro (nome, e-mail, telefone e CPF) é anonimizado. Não dá para desfazer.`,
       ))
     )
       return;

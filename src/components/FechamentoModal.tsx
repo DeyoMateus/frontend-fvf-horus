@@ -2,6 +2,7 @@ import { useState } from "react";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import {
   baixarFechamentoPdf,
+  baixarEventosFolhaCsv,
   type MotoristaFechamentoBloqueado,
 } from "../api/holerite";
 import type { Motorista } from "../api/types";
@@ -67,6 +68,36 @@ export function FechamentoModal({
       else novo.add(id);
       return novo;
     });
+  }
+
+  async function onBaixarEventosCsv() {
+    setErro(null);
+    setBloqueados([]);
+    setGerando(true);
+    try {
+      const naoFechados = await baixarEventosFolhaCsv(
+        new Date(inicio).toISOString(),
+        new Date(fim).toISOString(),
+        todosSelecionados ? null : Array.from(selecionados),
+        { direcaoEspera, normalExtra, adicionalNoturno },
+      );
+      setBloqueados(naoFechados);
+    } catch (e) {
+      let mensagem =
+        "Não foi possível gerar o arquivo agora (confira o período e tente de novo).";
+      try {
+        const resp = (e as { response?: { status?: number; data?: Blob } }).response;
+        if (resp?.status === 409 && resp.data) {
+          const corpo = JSON.parse(await resp.data.text()) as { message?: string };
+          if (corpo.message) mensagem = corpo.message;
+        }
+      } catch {
+        /* mantém a mensagem padrão */
+      }
+      setErro(mensagem);
+    } finally {
+      setGerando(false);
+    }
   }
 
   async function onBaixar() {
@@ -303,6 +334,14 @@ export function FechamentoModal({
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button className="secondary" onClick={onFechar}>
             Cancelar
+          </button>
+          <button
+            className="secondary"
+            onClick={onBaixarEventosCsv}
+            disabled={gerando}
+            title="Horas por evento (direção, espera, normais, extras, adicional noturno, interjornada) para importar na folha de pagamento da empresa. Só horas, sem valores em reais."
+          >
+            Baixar eventos para a folha (CSV)
           </button>
           <button onClick={onBaixar} disabled={gerando}>
             {gerando

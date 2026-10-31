@@ -50,3 +50,31 @@ export function tratarDiaSemInteracao(
     .post(`/motoristas/${motoristaId}/dias-sem-interacao/tratar`, input)
     .then((r) => r.data);
 }
+
+export interface PendenciaJustificativaDia {
+  id: string;
+  motoristaId: string;
+  data: string;
+  prazoEm: string;
+  justificativa: string | null;
+  justificadaEm: string | null;
+  createdAt: string;
+}
+
+/** Pede ao motorista que justifique um dia sem interação (prazo de 3 dias corridos). */
+export function solicitarJustificativaDia(motoristaId: string, data: string) {
+  return api
+    .post<PendenciaJustificativaDia>(
+      `/motoristas/${motoristaId}/dias-sem-interacao/solicitar-justificativa`,
+      { data },
+    )
+    .then((r) => r.data);
+}
+
+export function listarPendenciasJustificativa(motoristaId: string) {
+  return api
+    .get<
+      PendenciaJustificativaDia[]
+    >(`/motoristas/${motoristaId}/dias-sem-interacao/pendencias`)
+    .then((r) => r.data);
+}

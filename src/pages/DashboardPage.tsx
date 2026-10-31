@@ -89,7 +89,7 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   DOCUMENTACAO_ACUMULADA: "Tempo aguardando documentação acumulado",
   DOCUMENTACAO_PROXIMA_LIMITE: "Aguardando documentação perto do limite",
   DOCUMENTACAO_LIMITE_ATINGIDO: "Limite de aguardando documentação atingido",
-  OCIOSIDADE_DIRECAO_SUSPEITA: 'Ociosidade suspeita em "Em direção"',
+  OCIOSIDADE_DIRECAO_SUSPEITA: 'Ociosidade a conferir em "Em direção"',
   VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS:
     "Velocidade incompatível entre registros",
   RELOGIO_DISPOSITIVO_SUSPEITO: "Divergência de relógio do aparelho",
@@ -98,7 +98,7 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   HORA_NAO_VERIFICADA_APOS_REINICIO: "Hora do ponto não verificada após reinício",
   SEQUENCIA_JORNADA_MUITO_RAPIDA: "Sequência de batidas muito rápida",
   ODOMETRO_REGRESSIVO: "Odômetro regressivo",
-  INTEGRIDADE_DISPOSITIVO_SUSPEITA: "Integridade do aparelho suspeita",
+  INTEGRIDADE_DISPOSITIVO_SUSPEITA: "Integridade do aparelho a conferir",
   PONTO_REGISTRADO_EM_DIA_DE_FOLGA: "Ponto batido em dia de folga concedida",
   ENTREGA_FORA_DA_CERCA_VIRTUAL: "Entrega fora da cerca virtual (500m)",
   TEMPO_INDEFINIDO_PROXIMO_LIMITE: "Tempo indefinido (sem etapa escolhida)",

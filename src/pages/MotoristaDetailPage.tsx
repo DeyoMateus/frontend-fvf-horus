@@ -46,6 +46,8 @@ import type {
 import {
   aceitarDivergenciaIntegridade,
   baixarAej,
+  baixarAejAssinado,
+  baixarDirecaoEsperaCsv,
   baixarPlanilhaJornada,
   baixarComprovante,
   baixarEspelhoRepP,
@@ -239,6 +241,9 @@ export function MotoristaDetailPage() {
 
   const [baixandoComprovante, setBaixandoComprovante] = useState(false);
   const [baixandoAej, setBaixandoAej] = useState(false);
+  const [baixandoAejAssinado, setBaixandoAejAssinado] = useState(false);
+  const [avisoAejAssinado, setAvisoAejAssinado] = useState<string | null>(null);
+  const [baixandoDirecaoEspera, setBaixandoDirecaoEspera] = useState(false);
   const [baixandoPlanilha, setBaixandoPlanilha] = useState(false);
   const [baixandoEspelhoRepP, setBaixandoEspelhoRepP] = useState(false);
   const [novaDeviceUuid, setNovaDeviceUuid] = useState("");
@@ -345,6 +350,29 @@ export function MotoristaDetailPage() {
       await baixarAej(motoristaId, periodoDosRegistros());
     } finally {
       setBaixandoAej(false);
+    }
+  }
+
+  async function onBaixarAejAssinado() {
+    setBaixandoAejAssinado(true);
+    setAvisoAejAssinado(null);
+    try {
+      const aviso = await baixarAejAssinado(motoristaId, periodoDosRegistros());
+      setAvisoAejAssinado(aviso);
+    } catch (ex) {
+      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
+      setAvisoAejAssinado(dados?.message ?? "Não foi possível gerar o AEJ assinado.");
+    } finally {
+      setBaixandoAejAssinado(false);
+    }
+  }
+
+  async function onBaixarDirecaoEspera() {
+    setBaixandoDirecaoEspera(true);
+    try {
+      await baixarDirecaoEsperaCsv(motoristaId, periodoDosRegistros());
+    } finally {
+      setBaixandoDirecaoEspera(false);
     }
   }
 
@@ -1028,7 +1056,7 @@ export function MotoristaDetailPage() {
       setHoleritePrevia(resultado);
     } catch {
       setErroHolerite(
-        "Não foi possível calcular o holerite (confira o período escolhido).",
+        "Não foi possível calcular o relatório de horas (confira o período escolhido).",
       );
     } finally {
       setGerandoHolerite(false);
@@ -1472,7 +1500,6 @@ export function MotoristaDetailPage() {
       {motorista && (
         <DadosContratoCard
           motorista={motorista}
-          podeCriarHorario={usuario?.papel === "ADMIN"}
           onSalvo={() => void carregarTudo()}
         />
       )}
@@ -1911,9 +1938,24 @@ export function MotoristaDetailPage() {
             <button
               onClick={onBaixarAej}
               disabled={baixandoAej}
-              title="Arquivo Eletrônico de Jornada no leiaute do Anexo VI da Portaria 671/2021 (sem a assinatura digital, que depende do certificado ICP-Brasil)"
+              title="Arquivo Eletrônico de Jornada no leiaute vigente do AEJ publicado pelo MTE (sem a assinatura digital, que depende do certificado ICP-Brasil)"
             >
               {baixandoAej ? "Gerando..." : "Baixar AEJ (oficial)"}
+            </button>
+            <button
+              onClick={onBaixarAejAssinado}
+              disabled={baixandoAejAssinado}
+              title="Baixa o AEJ e a assinatura digital CAdES destacada (.p7s) da FVF. Com certificado de teste, a assinatura não tem validade legal."
+            >
+              {baixandoAejAssinado ? "Assinando..." : "Baixar AEJ assinado (.p7s)"}
+            </button>
+            {avisoAejAssinado && <p style={{ fontSize: 13 }}>{avisoAejAssinado}</p>}
+            <button
+              onClick={onBaixarDirecaoEspera}
+              disabled={baixandoDirecaoEspera}
+              title="Tempos de direção e de espera em CSV. O AEJ oficial não tem registro para eles; este relatório complementa o AEJ com os mesmos horários."
+            >
+              {baixandoDirecaoEspera ? "Gerando..." : "Baixar direção e espera (CSV)"}
             </button>
             <button
               onClick={onBaixarPlanilha}
@@ -2928,7 +2970,7 @@ export function MotoristaDetailPage() {
       </div>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Holerite (folha de ponto)</h3>
+        <h3 style={{ marginTop: 0 }}>Relatório de horas apuradas (folha de ponto)</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
           Junta o ledger real de pontos do motorista com os tratamentos
           (fechamentos) lançados pelo gestor no período, pra empresa conseguir
