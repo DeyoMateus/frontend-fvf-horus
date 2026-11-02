@@ -9,7 +9,7 @@ import type { SolicitacaoFolga } from "../api/solicitacoesFolga";
 import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
 import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
-import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./pendenciasMenu";
+import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./penMenu";
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
 
@@ -205,7 +205,10 @@ export function NotificationBell() {
 
   useEffect(() => {
     void buscarPedidosTitular();
-    const id = setInterval(() => void buscarPedidosTitular(), INTERVALO_POLL_MS);
+    const id = setInterval(
+      () => void buscarPedidosTitular(),
+      INTERVALO_POLL_MS,
+    );
     return () => clearInterval(id);
   }, []);
 
@@ -283,8 +286,9 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", aoClicarFora);
   }, [aberto]);
 
-  const quantidadeCritico =
-    alertas.filter((a) => a.severidade === "CRITICO").length;
+  const quantidadeCritico = alertas.filter(
+    (a) => a.severidade === "CRITICO",
+  ).length;
   const diasRadar = semInteracao.reduce(
     (soma, m) => soma + m.diasSemInteracao.length,
     0,
@@ -303,7 +307,8 @@ export function NotificationBell() {
       mapa["/dashboard"] = {
         total: alertas.length,
         resumo: alertas.map(
-          (a) => `${nomeDe((a as { motorista?: { nome: string } }).motorista)}: alerta de jornada`,
+          (a) =>
+            `${nomeDe((a as { motorista?: { nome: string } }).motorista)}: alerta de jornada`,
         ),
       };
     }
@@ -327,7 +332,9 @@ export function NotificationBell() {
     if (pedidosTitular.length > 0) {
       mapa["/lgpd"] = {
         total: pedidosTitular.length,
-        resumo: pedidosTitular.map((p) => `${nomeDe(p.motorista)}: pedido de privacidade`),
+        resumo: pedidosTitular.map(
+          (p) => `${nomeDe(p.motorista)}: pedido de privacidade`,
+        ),
       };
     }
     if (semInteracao.length > 0) {
@@ -340,7 +347,13 @@ export function NotificationBell() {
       };
     }
     publicarPendenciasDoMenu(mapa);
-  }, [alertas, solicitacoesPendentes, pedidosFolga, pedidosTitular, semInteracao]);
+  }, [
+    alertas,
+    solicitacoesPendentes,
+    pedidosFolga,
+    pedidosTitular,
+    semInteracao,
+  ]);
 
   const agora = Date.now();
   const pulsando =
@@ -416,8 +429,10 @@ export function NotificationBell() {
             pedidosFolga.length === 0 &&
             pedidosTitular.length === 0 &&
             diasRadar === 0 && (
-            <div className="notif-dropdown-vazio">Nenhum alerta pendente.</div>
-          )}
+              <div className="notif-dropdown-vazio">
+                Nenhum alerta pendente.
+              </div>
+            )}
 
           <div className="notif-dropdown-lista">
             {solicitacoesPendentes.length > 0 && (
@@ -492,8 +507,11 @@ export function NotificationBell() {
                   {diasRadar === 1
                     ? "1 dia sem interação (sem ponto e sem folga)"
                     : `${diasRadar} dias sem interação (sem ponto e sem folga)`}{" "}
-                  em {semInteracao.length === 1 ? "1 motorista" : `${semInteracao.length} motoristas`}:{" "}
-                  {semInteracao.map((m) => m.nome).join(", ")}.
+                  em{" "}
+                  {semInteracao.length === 1
+                    ? "1 motorista"
+                    : `${semInteracao.length} motoristas`}
+                  : {semInteracao.map((m) => m.nome).join(", ")}.
                 </div>
                 <div style={{ marginTop: 4 }}>
                   <Link
@@ -518,11 +536,18 @@ export function NotificationBell() {
                     {new Date(alerta.createdAt).toLocaleString("pt-BR")}
                   </span>
                 </div>
-                <div className="notif-item-mensagem">{renderizarHorarios(alerta.mensagem)}</div>
+                <div className="notif-item-mensagem">
+                  {renderizarHorarios(alerta.mensagem)}
+                </div>
                 {alerta.motorista && (
                   <div style={{ marginTop: 4 }}>
                     <Link
-                      to={alerta.tipo === "FOLGA_VENCIDA" || alerta.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${alerta.motorista.id}?secao=alertas-jornada`}
+                      to={
+                        alerta.tipo === "FOLGA_VENCIDA" ||
+                        alerta.tipo === "FOLGA_URGENTE"
+                          ? "/pedidos-folga?secao=ranking"
+                          : `/motoristas/${alerta.motorista.id}?secao=alertas-jornada`
+                      }
                       onClick={() => setAberto(false)}
                       style={{ fontSize: 12 }}
                     >

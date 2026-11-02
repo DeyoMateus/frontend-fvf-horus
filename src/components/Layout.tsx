@@ -5,8 +5,8 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
 import RodapeLegal from "./RodapeLegal";
-import { BolinhaPendencia } from "./BolinhaPendencia";
-import { usePendenciasDoMenu } from "./pendenciasMenu";
+import { BolinhaPendencia } from "./BolinhaPen";
+import { usePendenciasDoMenu } from "./penMenu";
 import { PoliticaGate } from "./PoliticaGate";
 import { TourProvider, useTour } from "../tour/TourProvider";
 import { rotuloPapel } from "../utils/rotulos";
@@ -48,7 +48,12 @@ const ITENS_NAV: {
   // Rodada 109 , gestão do time do próprio grupo, exclusiva do ADMIN
   // (ver UsuariosEmpresaPage.tsx e UsuariosEmpresaController).
   { to: "/usuarios", label: "Usuários", abreviacao: "US", somenteAdmin: true },
-  { to: "/retencao", label: "Retenção de dados", abreviacao: "RE", somenteAdmin: true },
+  {
+    to: "/retencao",
+    label: "Retenção de dados",
+    abreviacao: "RE",
+    somenteAdmin: true,
+  },
 ];
 
 // Rodada 42 , abaixo dessa largura a barra lateral expandida (220px)
@@ -204,14 +209,14 @@ function LayoutInterno() {
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
             </NavLink>
-          <button
-            className="secondary"
-            onClick={sair}
-            title="Sair"
-            data-tour="sair"
-          >
-            {efetivamenteColapsada ? "⏻" : "Sair"}
-          </button>
+            <button
+              className="secondary"
+              onClick={sair}
+              title="Sair"
+              data-tour="sair"
+            >
+              {efetivamenteColapsada ? "⏻" : "Sair"}
+            </button>
           </div>
         </div>
       </aside>
