@@ -116,9 +116,7 @@ export function AuditoriaPage() {
           atoresSel.length > 0 ? atoresSel.map((a) => a.actorId) : undefined,
         acoes: acoesSelecionadas.length > 0 ? acoesSelecionadas : undefined,
         dataInicio: dataInicio ? inicioDoDiaLocalIso(dataInicio) : undefined,
-        dataFim: dataFim
-          ? fimDoDiaLocalIso(dataFim)
-          : undefined,
+        dataFim: dataFim ? fimDoDiaLocalIso(dataFim) : undefined,
         ordem,
       });
       setRegistros(resultado.dados);
@@ -163,7 +161,7 @@ export function AuditoriaPage() {
     // disparava de novo logo em seguida quando `page` finalmente mudava
     // pra 1 , duas requisições, uma delas pra página errada. Se já
     // estamos na página 1, `setPage(1)` não muda nada (o efeito não
-    // dispara sozinho), então chama `carregar()` direto só nesse caso.
+    // dispara sozinho), então chama `carregar` direto só nesse caso.
     if (page === 1) {
       carregar();
     } else {
@@ -274,7 +272,9 @@ export function AuditoriaPage() {
                 padding: 6,
               }}
             >
-              {buscandoAtor && <p style={{ margin: 4, fontSize: 13 }}>Buscando...</p>}
+              {buscandoAtor && (
+                <p style={{ margin: 4, fontSize: 13 }}>Buscando...</p>
+              )}
               {!buscandoAtor && sugestoes.length === 0 && (
                 <p style={{ margin: 4, fontSize: 13 }}>Ninguém encontrado.</p>
               )}
@@ -283,7 +283,13 @@ export function AuditoriaPage() {
                 return (
                   <label
                     key={a.actorId}
-                    style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "4px 2px", fontSize: 13 }}
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "flex-start",
+                      padding: "4px 2px",
+                      fontSize: 13,
+                    }}
                   >
                     <input
                       type="checkbox"
@@ -308,7 +314,14 @@ export function AuditoriaPage() {
             </div>
           )}
           {atoresSel.length > 0 && (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 6,
+                flexWrap: "wrap",
+                marginTop: 4,
+              }}
+            >
               {atoresSel.map((a) => (
                 <button
                   key={a.actorId}
@@ -317,7 +330,9 @@ export function AuditoriaPage() {
                   title="Remover do filtro"
                   onClick={() => {
                     setPage(1);
-                    setAtoresSel((prev) => prev.filter((x) => x.actorId !== a.actorId));
+                    setAtoresSel((prev) =>
+                      prev.filter((x) => x.actorId !== a.actorId),
+                    );
                   }}
                   style={{ fontSize: 12, padding: "2px 8px" }}
                 >

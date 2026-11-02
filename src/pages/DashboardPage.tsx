@@ -23,7 +23,7 @@ import type {
   DashboardTendenciaDia,
   TipoAlertaJornada,
 } from "../api/types";
-import { dataLocalIso } from '../utils/mascaras';
+import { dataLocalIso } from "../utils/mascaras";
 
 const INTERVALO_ATUALIZACAO_MS = 30_000; // "tempo real" o suficiente pra um painel de gestão , não precisa de websocket pra isto
 
@@ -93,9 +93,11 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   VELOCIDADE_IMPOSSIVEL_ENTRE_REGISTROS:
     "Velocidade incompatível entre registros",
   RELOGIO_DISPOSITIVO_SUSPEITO: "Divergência de relógio do aparelho",
-  RELOGIO_PONTO_RECUSADO: "Divergência de relógio do aparelho (ponto não registrado, registro antigo)",
+  RELOGIO_PONTO_RECUSADO:
+    "Divergência de relógio do aparelho (ponto não registrado, registro antigo)",
   PONTO_ACEITO_COM_FLAG: "Ponto registrado com divergência de relógio",
-  HORA_NAO_VERIFICADA_APOS_REINICIO: "Hora do ponto não verificada após reinício",
+  HORA_NAO_VERIFICADA_APOS_REINICIO:
+    "Hora do ponto não verificada após reinício",
   SEQUENCIA_JORNADA_MUITO_RAPIDA: "Sequência de batidas muito rápida",
   ODOMETRO_REGRESSIVO: "Odômetro regressivo",
   INTEGRIDADE_DISPOSITIVO_SUSPEITA: "Integridade do aparelho a conferir",
@@ -258,7 +260,10 @@ function PainelDetalheCard({
   let linhasExportacao: string[][] = [];
   if (dados?.tipo === "motoristas") {
     cabecalhosExportacao = ["Motorista", "Detalhe"];
-    linhasExportacao = dados.itens.map((m) => [m.nome, renderizarHorarios(m.detalhe ?? "")]);
+    linhasExportacao = dados.itens.map((m) => [
+      m.nome,
+      renderizarHorarios(m.detalhe ?? ""),
+    ]);
   } else if (dados?.tipo === "alertas") {
     cabecalhosExportacao = ["Motorista", "Alerta", "Quando"];
     linhasExportacao = dados.itens.map((a) => [
@@ -347,11 +352,15 @@ function PainelDetalheCard({
         )}
         {erro && <p style={{ fontSize: 13, color: "#b91c1c" }}>{erro}</p>}
 
-        {!carregando && !erro && dados?.tipo === "alertas" && dados.truncado && (
-          <p style={{ fontSize: 13, color: "#92400e" }}>
-            Lista limitada aos {dados.itens.length} mais recentes; há mais itens do que os exibidos.
-          </p>
-        )}
+        {!carregando &&
+          !erro &&
+          dados?.tipo === "alertas" &&
+          dados.truncado && (
+            <p style={{ fontSize: 13, color: "#92400e" }}>
+              Lista limitada aos {dados.itens.length} mais recentes; há mais
+              itens do que os exibidos.
+            </p>
+          )}
 
         {!carregando && !erro && dados && dados.itens.length === 0 && (
           <p style={{ fontSize: 13, color: "#000000" }}>
@@ -421,7 +430,12 @@ function PainelDetalheCard({
                   <tr key={a.alertaId}>
                     <td>
                       <Link
-                        to={a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE" ? "/pedidos-folga?secao=ranking" : `/motoristas/${a.motoristaId}?secao=alertas-jornada`}
+                        to={
+                          a.tipo === "FOLGA_VENCIDA" ||
+                          a.tipo === "FOLGA_URGENTE"
+                            ? "/pedidos-folga?secao=ranking"
+                            : `/motoristas/${a.motoristaId}?secao=alertas-jornada`
+                        }
                         onClick={onFechar}
                       >
                         {a.nome}
@@ -576,7 +590,7 @@ export function DashboardPage() {
           alignItems: "baseline",
         }}
       >
-        <h2>Painel da operação</h2>
+        <h2>Painel de operações</h2>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
           <span style={{ fontSize: 12, color: "#000000" }}>
             Atualizado às{" "}
@@ -656,7 +670,10 @@ export function DashboardPage() {
           valor={motoristas.aguardandoDocumentacao}
           cor={motoristas.aguardandoDocumentacao > 0 ? "#7c3aed" : undefined}
           onClick={() =>
-            abrir("aguardando-documentacao", "Motoristas aguardando documentação")
+            abrir(
+              "aguardando-documentacao",
+              "Motoristas aguardando documentação",
+            )
           }
         />
         <CartaoMetrica
@@ -730,7 +747,10 @@ export function DashboardPage() {
             TIPOS_FRAUDE.includes(a.tipo),
           )}
           onClick={() =>
-            abrir("risco-fraude-7d", "Alertas de divergência de registro (7 dias)")
+            abrir(
+              "risco-fraude-7d",
+              "Alertas de divergência de registro (7 dias)",
+            )
           }
           descricao="Alertas de integridade do aparelho/GPS dos últimos 7 dias — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (localização falsificada, relógio manipulado, odômetro regressivo etc.)."
         />
