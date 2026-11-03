@@ -6,7 +6,7 @@ import { useSyncExternalStore } from "react";
  * rota e o menu lateral mostra uma bolinha na aba que tem pendência
  */
 export type PendenciaDaAba = {
-  /** Total de itens pendentes na aba
+  /** Total de itens pendentes na aba. */
   total: number;
   /** Linhas curtas para o resumo ao passar o cursor na bolinha. */
   resumo: string[];

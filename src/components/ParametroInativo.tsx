@@ -5,7 +5,6 @@
  * sai dos dois lugares.
  */
 export const CAMPOS_PARAMETRO_INATIVO: Record<string, string> = {
-  intervaloRefeicaoMinimoMin: "Ainda não altera a apuração atual.",
   intervaloEntreJornadasMin: "Hoje só alimenta a apuração por jornada em sombra; não muda o resultado oficial.",
   bancoHorasPrazoExpiracaoMeses: "Ainda não altera a apuração atual.",
   percentualHoraEspera: "Informativo: benefício da convenção, não entra no cálculo.",

@@ -128,6 +128,8 @@ export function RegrasSindicaisPage() {
         regra.bancoHorasPrazoExpiracaoMeses ?? undefined,
       bancoHorasLimiteAlertaMin: regra.bancoHorasLimiteAlertaMin ?? undefined,
       intervaloRefeicaoMinimoMin: regra.intervaloRefeicaoMinimoMin,
+      refeicaoFracionamentoPermitido: regra.refeicaoFracionamentoPermitido ?? false,
+      refeicaoFracionamentoClausula: regra.refeicaoFracionamentoClausula ?? undefined,
       intervaloEntreJornadasMin: regra.intervaloEntreJornadasMin ?? 660,
       repousoSemanalMinimoH: regra.repousoSemanalMinimoH ?? null,
       dsrMinimoH: regra.dsrMinimoH ?? null,
@@ -563,6 +565,51 @@ export function RegrasSindicaisPage() {
                     }))
                   }
                 />
+              </div>
+
+              <div>
+                <label>
+                  <input
+                    name="refeicaoFracionamentoPermitido"
+                    type="checkbox"
+                    checked={form.refeicaoFracionamentoPermitido ?? false}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        refeicaoFracionamentoPermitido: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Convenção coletiva permite fracionar a refeição
+                </label>
+                <small>
+                  Desmarcado por padrão: a refeição conta em um único período. Marque só com acordo ou convenção
+                  coletiva registrada (informe o número do Mediador acima). Marcado, a soma dos períodos de refeição
+                  da jornada vale para o mínimo (ex.: 2 períodos de 30 min); só contam os períodos de pelo menos 30 minutos. Refeição menor que 1 hora também exige
+                  acordo ou convenção, e nunca pode ser menor que 30 minutos.
+                </small>
+                {form.refeicaoFracionamentoPermitido && (
+                  <div>
+                    <label>Cláusula da convenção que autoriza o fracionamento e suas condições</label>
+                    <textarea
+                      name="refeicaoFracionamentoClausula"
+                      rows={3}
+                      maxLength={600}
+                      placeholder="Ex.: Cláusula 12ª — fica autorizado fracionar a refeição em 2 períodos de no mínimo 30 minutos cada."
+                      value={form.refeicaoFracionamentoClausula ?? ""}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          refeicaoFracionamentoClausula: e.target.value || undefined,
+                        }))
+                      }
+                    />
+                    <small>
+                      A convenção ou acordo precisa citar e autorizar expressamente o fracionamento, com as condições.
+                      Texto genérico como "conforme a lei" não basta numa fiscalização.
+                    </small>
+                  </div>
+                )}
               </div>
 
               <div>

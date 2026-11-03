@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   MODULOS_DO_TOUR,
@@ -129,6 +129,14 @@ function acharBotaoVerDetalhes(): HTMLButtonElement | null {
 export function TourProvider({ children }: { children: ReactNode }) {
   const { usuario } = useAuth();
   const navigate = useNavigate();
+  // Rodada 617: rota que o React JA desenhou. `window.location.pathname` muda na hora do navigate(),
+  // antes de a nova pagina existir no DOM; o tour achava o alvo na pagina antiga (ou nao achava nada)
+  // e se perdia. Esta rota so muda depois do commit da nova pagina.
+  const localizacao = useLocation();
+  const rotaDesenhada = useRef(localizacao.pathname);
+  useLayoutEffect(() => {
+    rotaDesenhada.current = localizacao.pathname;
+  }, [localizacao.pathname]);
   const chave = usuario ? `${PREFIXO_CHAVE}${usuario.sub}` : null;
 
   const chaveModulos = usuario ? `${PREFIXO_MODULOS}${usuario.sub}` : null;
@@ -272,11 +280,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
       elementosAlvo.current = null;
 
       if (passo.detalheMotorista) {
-        if (!ROTA_FICHA.test(window.location.pathname)) {
-          if (window.location.pathname !== "/motoristas") navigate("/motoristas");
+        if (!ROTA_FICHA.test(rotaDesenhada.current)) {
+          if (rotaDesenhada.current !== "/motoristas") navigate("/motoristas");
           const botao = await esperarAte(
             () =>
-              window.location.pathname === "/motoristas"
+              rotaDesenhada.current === "/motoristas"
                 ? acharBotaoVerDetalhes()
                 : null,
             4000,
@@ -301,25 +309,29 @@ export function TourProvider({ children }: { children: ReactNode }) {
           }
           botao.click();
           await esperarAte(
-            () => ROTA_FICHA.test(window.location.pathname),
+            () => ROTA_FICHA.test(rotaDesenhada.current),
             3000,
             foiCancelado,
           );
         }
-      } else if (passo.rota && window.location.pathname !== passo.rota) {
+      } else if (passo.rota && rotaDesenhada.current !== passo.rota) {
         navigate(passo.rota);
         await esperarAte(
-          () => window.location.pathname === passo.rota,
-          2000,
+          () => rotaDesenhada.current === passo.rota,
+          3000,
           foiCancelado,
         );
+        // Rodada 617: deixa a pagina nova assentar (primeiros quadros) antes de procurar o alvo.
+        await dormir(120);
       }
       if (cancelado) return;
 
       if (passo.alvo) {
+        // Rodada 617: 3,5 s eram pouco para telas que carregam dados do servidor logo depois de abrir
+        // (ex.: o painel). Se ainda assim nao achar, o acompanhamento abaixo continua procurando.
         const els = await esperarAte(
           () => localizarAlvo(passo.alvo!),
-          3500,
+          passo.rota ? 8000 : 3500,
           foiCancelado,
         );
         if (cancelado) return;
@@ -366,11 +378,28 @@ export function TourProvider({ children }: { children: ReactNode }) {
     // layout se o alvo for impossível de enquadrar.
     let ultimaRolagem = 0;
     let tentativas = 0;
+    let ultimaBusca = 0;
     function atualizar() {
       let els = elementosAlvo.current;
       if (els && els.some((e) => !e.isConnected) && alvoExpr) {
         els = localizarAlvo(alvoExpr);
         elementosAlvo.current = els;
+        tentativas = 0;
+      }
+      // Rodada 617: alvo ainda nao encontrado (a tela carregou depois do tempo de espera, ou foi
+      // trocada): continua procurando, no maximo 4 vezes por segundo. Antes o tour nunca mais tentava,
+      // ficava com o balao no centro sem destaque, e so achava o campo se fosse reaberto.
+      if ((!els || els.length === 0) && alvoExpr) {
+        const agoraBusca = performance.now();
+        if (agoraBusca - ultimaBusca > 250) {
+          ultimaBusca = agoraBusca;
+          const achou = localizarAlvo(alvoExpr);
+          if (achou && achou.length > 0) {
+            els = achou;
+            elementosAlvo.current = achou;
+            tentativas = 0;
+          }
+        }
       }
       const novo = els ? retanguloDe(els) : null;
       if (els && novo && tentativas < 25) {
@@ -559,6 +588,7 @@ function CamadaDoTour(props: {
   const bolhaRef = useRef<HTMLDivElement>(null);
   const [altura, setAltura] = useState(240);
   const botaoProximoRef = useRef<HTMLButtonElement>(null);
+  const ladoMemoria = useRef<{ passo: PassoDoTour | null; lado: Lado }>({ passo: null, lado: "centro" });
 
   useLayoutEffect(() => {
     if (bolhaRef.current) setAltura(bolhaRef.current.offsetHeight);
@@ -582,6 +612,11 @@ function CamadaDoTour(props: {
       }
     : null;
 
+  // Rodada 617: o lado do balao nao muda enquanto o lado atual ainda cabe. Antes, qualquer variacao de
+  // poucos pixels no alvo (pagina ainda carregando) trocava o balao de baixo para cima e a seta virava.
+  if (ladoMemoria.current.passo !== passo) ladoMemoria.current = { passo, lado: "centro" };
+  const ladoAnterior = ladoMemoria.current.lado;
+
   let lado: Lado = "centro";
   let topo = Math.max(12, (vh - altura) / 2);
   let esquerda = Math.max(12, (vw - largura) / 2);
@@ -596,24 +631,37 @@ function CamadaDoTour(props: {
     const limitarX = (x: number) => Math.min(Math.max(12, x), vw - largura - 12);
     const limitarY = (y: number) => Math.min(Math.max(12, y), vh - altura - 12);
 
-    if (cabeAbaixo) {
+    const cabe: Record<Exclude<Lado, "centro">, boolean> = {
+      baixo: cabeAbaixo,
+      cima: cabeAcima,
+      direita: cabeDireita,
+      esquerda: cabeEsquerda,
+    };
+    const ordem: Array<Exclude<Lado, "centro">> = ["baixo", "cima", "direita", "esquerda"];
+    const escolhido =
+      ladoAnterior !== "centro" && cabe[ladoAnterior]
+        ? ladoAnterior
+        : ordem.find((l) => cabe[l]);
+
+    if (escolhido === "baixo") {
       lado = "baixo";
       topo = destaque.top + destaque.height + FOLGA;
       esquerda = limitarX(centroX - largura / 2);
-    } else if (cabeAcima) {
+    } else if (escolhido === "cima") {
       lado = "cima";
       topo = destaque.top - FOLGA - altura;
       esquerda = limitarX(centroX - largura / 2);
-    } else if (cabeDireita) {
+    } else if (escolhido === "direita") {
       lado = "direita";
       esquerda = destaque.left + destaque.width + FOLGA;
       topo = limitarY(centroY - altura / 2);
-    } else if (cabeEsquerda) {
+    } else if (escolhido === "esquerda") {
       lado = "esquerda";
       esquerda = destaque.left - FOLGA - largura;
       topo = limitarY(centroY - altura / 2);
     }
   }
+  ladoMemoria.current.lado = lado;
   if (lado === "centro" && destaque) {
     // Alvo muito grande ou sem espaço , balão fixo no rodapé, sem seta.
     topo = Math.max(12, vh - altura - 20);

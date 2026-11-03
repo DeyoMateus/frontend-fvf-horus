@@ -106,6 +106,8 @@ export interface RegraSindical {
   bancoHorasPrazoExpiracaoMeses?: number | null;
   bancoHorasLimiteAlertaMin?: number | null;
   intervaloRefeicaoMinimoMin: number;
+  refeicaoFracionamentoPermitido?: boolean;
+  refeicaoFracionamentoClausula?: string | null;
   intervaloEntreJornadasMin?: number;
   repousoSemanalMinimoH?: number | null;
   dsrMinimoH?: number | null;
