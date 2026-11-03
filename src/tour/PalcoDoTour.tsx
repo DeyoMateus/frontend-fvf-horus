@@ -575,7 +575,7 @@ function PalcoFolgas() {
           <li>Folgas vencidas, motoristas que passaram do limite de dias de trabalho sem folgar.</li>
           <li>Folgas marcadas, folgas concedidas para dias futuros.</li>
           <li>Pedidos em aberto, pedidos que aguardam a decisão do RH.</li>
-          <li>Pedidos negados e folgas não realizadas, dos últimos 90 dias.</li>
+          <li>Pedidos negados e folgas não realizadas, no período escolhido (30, 60, 90 dias ou datas livres).</li>
         </ul>
       </div>
       <div className="card">

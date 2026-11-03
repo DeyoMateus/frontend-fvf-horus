@@ -102,15 +102,22 @@ export interface FolgaDashboard {
   vencidas: ItemFolgaDashboard[];
   marcadas: ItemFolgaDashboard[];
   pedidosEmAberto: PedidoAbertoDashboard[];
-  /** Negados nos últimos 90 dias. */
+  /** Negados no período escolhido (padrão: últimos 90 dias). */
   pedidosNegados: PedidoNegadoDashboard[];
-  /** Folgas em que o motorista trabalhou, últimos 90 dias. */
+  /** Folgas em que o motorista trabalhou, no período escolhido (padrão: 90 dias). */
   naoRealizadas: FolgaNaoRealizadaDashboard[];
 }
 
 /** Rodada 274: indicadores do dashboard de folgas. */
-export function getFolgaDashboard() {
+/** Periodo do historico (negados e folgas nao realizadas): ultimos N dias ou datas livres. */
+export type PeriodoFolgaDashboard =
+  | { dias: number }
+  | { inicio: string; fim: string };
+
+export function getFolgaDashboard(periodo?: PeriodoFolgaDashboard) {
   return api
-    .get<FolgaDashboard>("/solicitacoes-folga/dashboard")
+    .get<FolgaDashboard>("/solicitacoes-folga/dashboard", {
+      params: periodo,
+    })
     .then((r) => r.data);
 }

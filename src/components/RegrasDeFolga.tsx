@@ -54,6 +54,7 @@ export function RegrasDeFolga({
   const [regras, setRegras] = useState<RegraFolga[]>([]);
   const [form, setForm] = useState<Formulario | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [msgVinculo, setMsgVinculo] = useState<{ ok: boolean; texto: string } | null>(null);
 
   const carregar = useCallback(async () => {
     try {
@@ -128,13 +129,25 @@ export function RegrasDeFolga({
   }
 
   async function vincular(empresaId: string, regraId: string) {
+    const empresa = empresas.find((x) => x.id === empresaId);
+    setMsgVinculo(null);
     try {
       await vincularRegraFolga(empresaId, regraId || null);
-      toast.sucesso(regraId ? "Regra vinculada ao CNPJ." : "Regra desvinculada.");
-      await carregar();
+      // Confere no servidor: so mostra "vinculada" se a lista recarregada confirmar.
+      const atualizadas = await listarRegrasFolga();
+      setRegras(atualizadas);
+      const confirmada = atualizadas.find((r) => r.empresas.some((x) => x.id === empresaId));
+      if (regraId && confirmada?.id !== regraId) {
+        setMsgVinculo({ ok: false, texto: `Não foi possível confirmar o vínculo no CNPJ ${empresa?.razaoSocial ?? ""}. Tente de novo.` });
+      } else if (regraId) {
+        setMsgVinculo({ ok: true, texto: `Regra "${confirmada?.nome}" vinculada ao CNPJ ${empresa?.razaoSocial ?? ""}.` });
+      } else {
+        setMsgVinculo({ ok: true, texto: `CNPJ ${empresa?.razaoSocial ?? ""} ficou sem regra de folga.` });
+      }
       aoAlterar();
-    } catch {
-      toast.erro("Não foi possível alterar o vínculo.");
+    } catch (err) {
+      await carregar();
+      setMsgVinculo({ ok: false, texto: mensagemDoErro(err, "Não foi possível alterar o vínculo.") });
     }
   }
 
@@ -326,12 +339,21 @@ export function RegrasDeFolga({
       <strong style={{ display: "block", marginTop: 16 }}>
         Regra de cada CNPJ
       </strong>
+      {msgVinculo && (
+        <p
+          role="status"
+          style={{ fontSize: 13, margin: "6px 0", color: msgVinculo.ok ? "#15803d" : "#b91c1c" }}
+        >
+          {msgVinculo.texto}
+        </p>
+      )}
       <table>
         <thead>
           <tr>
             <th>Empresa</th>
             <th>CNPJ</th>
             <th>Regra vinculada</th>
+            <th>Situação</th>
             <th></th>
           </tr>
         </thead>
@@ -356,6 +378,15 @@ export function RegrasDeFolga({
                     </option>
                   ))}
                 </select>
+              </td>
+              <td style={{ fontSize: 12 }}>
+                {regraAtual ? (
+                  <span style={{ color: "#15803d", fontWeight: 600 }}>
+                    Vinculada: {regraAtual.nome}
+                  </span>
+                ) : (
+                  <span style={{ color: "#b45309" }}>Sem regra (fora dos alertas de folga)</span>
+                )}
               </td>
               <td>
                 {regraAtual && (

@@ -268,7 +268,7 @@ export function TratarDiaSemInteracaoModal({
 
         {erro && <p className="error-text">{erro}</p>}
 
-        <div className="confirm-modal-acoes">
+        <div className="confirm-modal-acoes" style={{ marginTop: 20, paddingTop: 4 }}>
           <button type="button" className="secondary" onClick={onFechar}>
             Cancelar
           </button>

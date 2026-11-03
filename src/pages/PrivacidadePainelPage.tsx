@@ -3,12 +3,9 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   listarSolicitacoesTitular,
   obterCiencias,
-  obterEncarregados,
-  salvarEncarregado,
 } from "../api/privacidade";
 import type {
   CienciasPainel,
-  EmpresaEncarregado,
   ListaSolicitacoesTitular,
   SolicitacaoTitularPainel,
   StatusSolicitacaoTitular,
@@ -23,7 +20,7 @@ import {
 } from "../components/TratarPedidoTitularModal";
 import { useAuth } from "../context/AuthContext";
 
-type Aba = "PEDIDOS" | "CIENCIAS" | "ENCARREGADO";
+type Aba = "PEDIDOS" | "CIENCIAS";
 
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString("pt-BR") : "-";
@@ -44,14 +41,13 @@ export function PrivacidadePainelPage() {
       <p style={{ fontSize: 13, color: "#000000" }}>
         Pedidos que os motoristas fazem sobre os próprios dados pessoais (a lei
         dá 15 dias para responder), ciência da política de privacidade por
-        motorista e cadastro do encarregado pelo tratamento de dados (DPO).
+        motorista. Os pedidos chegam ao gestor e ao admin da empresa, que respondem pelos dados do grupo.
       </p>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {(
           [
             ["PEDIDOS", "Pedidos dos titulares"],
             ["CIENCIAS", "Ciência da política"],
-            ["ENCARREGADO", "Encarregado (DPO)"],
           ] as [Aba, string][]
         ).map(([chave, rotulo]) => (
           <button
@@ -67,7 +63,6 @@ export function PrivacidadePainelPage() {
 
       {aba === "PEDIDOS" && <AbaPedidos />}
       {aba === "CIENCIAS" && <AbaCiencias />}
-      {aba === "ENCARREGADO" && <AbaEncarregado ehAdmin={ehAdmin} />}
     </div>
   );
 }
@@ -513,70 +508,6 @@ function AbaCiencias() {
           />
         )}
       </div>
-    </div>
-  );
-}
-
-function AbaEncarregado({ ehAdmin }: { ehAdmin: boolean }) {
-  const [empresas, setEmpresas] = useState<EmpresaEncarregado[]>([]);
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    obterEncarregados()
-      .then((e) => {
-        setEmpresas(e);
-        const primeira = e.find((x) => x.encarregadoNome);
-        if (primeira) {
-          setNome(primeira.encarregadoNome ?? "");
-          setEmail(primeira.encarregadoEmail ?? "");
-          setTelefone(primeira.encarregadoTelefone ?? "");
-        }
-      })
-      .catch(() => setMsg("Não foi possível carregar o encarregado."));
-  }, []);
-
-  async function salvar(e: FormEvent) {
-    e.preventDefault();
-    try {
-      await salvarEncarregado({ nome, email, telefone: telefone || undefined });
-      setMsg(
-        nome || email || telefone
-          ? "Encarregado salvo para todos os CNPJs do grupo."
-          : "Sem encarregado: os pedidos ficam com o gestor.",
-      );
-    } catch {
-      setMsg("Não foi possível salvar. Confira nome, e-mail e telefone (+55...).");
-    }
-  }
-
-  return (
-    <div className="card">
-      <h3 style={{ marginTop: 0 }}>Encarregado pelo tratamento de dados (DPO)</h3>
-      <p style={{ fontSize: 13 }}>
-        <strong>Opcional e interno.</strong> Este contato é só para uso do RH e da
-        gestão: ele não aparece para os motoristas nem na página pública de
-        privacidade. Os pedidos dos motoristas chegam ao gestor (sininho e aba
-        "Pedidos dos titulares"). Vale para os {empresas.length} CNPJ(s) do grupo.
-      </p>
-      {msg && <p style={{ fontSize: 13 }}>{msg}</p>}
-      {ehAdmin ? (
-        <form onSubmit={salvar}>
-          <label>Nome</label>
-          <input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
-          <label>E-mail</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={160} />
-          <label>Telefone (+5511999998888)</label>
-          <input value={telefone} onChange={(e) => setTelefone(e.target.value)} maxLength={16} />
-          <button type="submit">
-            {nome || email || telefone ? "Salvar" : "Salvar sem encarregado"}
-          </button>
-        </form>
-      ) : (
-        <p>Somente o ADMIN pode alterar. Atual: {nome || "não informado"}</p>
-      )}
     </div>
   );
 }

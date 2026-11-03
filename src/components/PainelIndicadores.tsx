@@ -1254,12 +1254,11 @@ export function PainelIndicadores() {
                 </button>
               </div>
             </div>
-            {painel.motoristas.length > limitePorMotorista && (
-              <p style={{ color: "#000000", fontSize: 13, marginTop: -6 }}>
-                Mostrando {limitePorMotorista} de {painel.motoristas.length}{" "}
-                motoristas; o relatório completo traz todos.
-              </p>
-            )}
+            <p style={{ color: "#000000", fontSize: 13, marginTop: -6 }}>
+              {painel.motoristas.length > limitePorMotorista
+                ? `Mostrando ${limitePorMotorista} de ${painel.motoristas.length} motoristas; o relatório completo traz todos.`
+                : `${painel.motoristas.length} ${painel.motoristas.length === 1 ? "motorista" : "motoristas"} no período.`}
+            </p>
             {painel.motoristas.length === 0 ? (
               <p style={{ color: "#000000" }}>
                 Nenhum motorista com dados no período.

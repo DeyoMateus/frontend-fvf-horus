@@ -30,7 +30,7 @@ export const MODULOS_DO_TOUR: ModuloDoTour[] = [
   { id: "regras", titulo: "Regras sindicais", descricao: "Convenção coletiva, horas extras, adicional noturno e banco de horas." },
   { id: "empresas", titulo: "Empresas", descricao: "Os CNPJs que fazem parte do seu grupo." },
   { id: "auditoria", titulo: "Auditoria", descricao: "Histórico de tudo o que foi feito no sistema." },
-  { id: "lgpd", titulo: "Privacidade (LGPD)", descricao: "Pedidos dos titulares, contato interno do encarregado e termos aceitos." },
+  { id: "lgpd", titulo: "Privacidade (LGPD)", descricao: "Pedidos dos titulares e termos aceitos." },
   { id: "usuarios", titulo: "Usuários", descricao: "Quem tem acesso ao painel do grupo.", somenteAdmin: true },
   { id: "configuracao", titulo: "Configuração", descricao: "Seus dados, política de privacidade, gerenciamento de risco e limites de espera." },
 ];
@@ -141,7 +141,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: nav("/lgpd"),
     titulo: "Privacidade (LGPD)",
     texto:
-      "Central de privacidade. Aqui você atende os pedidos dos titulares dos dados, cadastra o contato interno do encarregado pelo tratamento de dados e acompanha quem já aceitou a política e os termos.",
+      "Central de privacidade. Aqui você atende os pedidos dos titulares dos dados, acompanha quem já aceitou a política e os termos.",
   },
   {
     modulo: "menu",
@@ -670,7 +670,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:O que cada indicador mostra",
     titulo: "Indicadores de folga",
     texto:
-      "No topo da tela da sua empresa ficam os cartões de folga, e este quadro explica cada um. Clique em um cartão para ver a lista completa de motoristas ou pedidos por trás do número.",
+      "No topo da tela da sua empresa ficam os cartões de folga, e este quadro explica cada um. Os pedidos negados e as folgas não realizadas seguem o período que você escolher (30, 60, 90 dias ou datas livres). Clique em um cartão para ver a lista completa de motoristas ou pedidos por trás do número.",
   },
   {
     modulo: "folgas",
@@ -953,13 +953,6 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     titulo: "Ciência e termos",
     texto:
       "Acompanhe quais motoristas já aceitaram a política de privacidade, o termo de dados pessoais e o termo de uso da localização.",
-  },
-  {
-    modulo: "lgpd",
-    alvo: "titulo:Encarregado pelo tratamento de dados",
-    titulo: "Encarregado (DPO)",
-    texto:
-      "Cadastre o nome, o e-mail e o telefone da pessoa responsável pelos dados pessoais. Este contato é interno, de uso do RH e da gestão, e não aparece para os motoristas nem na página pública de privacidade.",
   },
 
   // ===== Usuários =====

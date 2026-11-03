@@ -126,16 +126,19 @@ export function PedidosFolgaPage() {
           </li>
           <li>
             <strong>Pedidos negados:</strong> pedidos negados pelo RH ou
-            automaticamente por falta de resposta, nos últimos 90 dias.
+            automaticamente por falta de resposta, no período escolhido no filtro de período logo abaixo (padrão: 90 dias).
           </li>
           <li>
             <strong>Folgas não realizadas:</strong> dias de folga marcados em que
-            o motorista acabou trabalhando, nos últimos 90 dias. Ficam
+            o motorista acabou trabalhando, no período escolhido no filtro de período logo abaixo (padrão: 90 dias). Ficam
             registrados para o RH.
           </li>
         </ul>
         <p style={{ fontSize: 12, color: "#000", margin: "8px 0 0" }}>
-          Clique em qualquer indicador logo abaixo para ver a lista completa de
+          O período dos pedidos negados e das folgas não realizadas pode ser
+          trocado pelos atalhos de 30, 60 e 90 dias ou por datas livres (até 366
+          dias); os demais indicadores mostram sempre a situação de hoje. Clique
+          em qualquer indicador logo abaixo para ver a lista completa de
           motoristas ou pedidos.
         </p>
       </div>

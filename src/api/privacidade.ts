@@ -51,15 +51,6 @@ export type ListaSolicitacoesTitular = {
   resumo: { abertas: number; emAnalise: number; vencidas: number };
 };
 
-export type EmpresaEncarregado = {
-  id: string;
-  razaoSocial: string;
-  cnpj: string;
-  encarregadoNome: string | null;
-  encarregadoEmail: string | null;
-  encarregadoTelefone: string | null;
-};
-
 export type CienciasPainel = {
   versao: string;
   motoristas: {
@@ -121,11 +112,6 @@ export const responderSolicitacaoTitular = (
 export const obterCiencias = () =>
   api.get<CienciasPainel>("/privacidade/painel/ciencias").then((r) => r.data);
 
-export const obterEncarregados = () =>
-  api
-    .get<EmpresaEncarregado[]>("/privacidade/painel/encarregado")
-    .then((r) => r.data);
-
 export type SolicitacaoPendenteSino = {
   id: string;
   tipo: string;
@@ -137,15 +123,6 @@ export type SolicitacaoPendenteSino = {
 export const listarSolicitacoesTitularPendentes = () =>
   api
     .get<SolicitacaoPendenteSino[]>("/privacidade/painel/solicitacoes-pendentes")
-    .then((r) => r.data);
-
-export const salvarEncarregado = (input: {
-  nome?: string;
-  email?: string;
-  telefone?: string;
-}) =>
-  api
-    .put<EmpresaEncarregado[]>("/privacidade/painel/encarregado", input)
     .then((r) => r.data);
 
 // Rodada 281: Política de Privacidade para o usuário do painel (primeiro acesso).

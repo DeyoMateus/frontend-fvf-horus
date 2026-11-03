@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getFolgaDashboard } from "../api/folgaDashboard";
+import type { PeriodoFolgaDashboard } from "../api/folgaDashboard";
+import { dataLocalIso } from "../utils/mascaras";
 import type {
   FolgaDashboard,
   ItemFolgaDashboard,
@@ -17,6 +19,11 @@ import { RankingFolgas } from "./RankingFolgas";
 import { RegrasDeFolga } from "./RegrasDeFolga";
 
 const INTERVALO_ATUALIZACAO_MS = 30_000; // igual ao painel principal
+
+// Atalhos do período dos pedidos negados e das folgas não realizadas.
+const ATALHOS_PERIODO = [30, 60, 90];
+const DIAS_PADRAO = 90;
+const DIAS_MAXIMOS = 366;
 
 type Indicador =
   | "deFolga"
@@ -51,8 +58,8 @@ const ROTULO: Record<Indicador, string> = {
   vencidas: "Folgas vencidas",
   marcadas: "Folgas marcadas",
   pedidos: "Pedidos de folga em aberto",
-  negados: "Pedidos de folga negados (últimos 90 dias)",
-  naoRealizadas: "Folgas não realizadas: motorista trabalhou (últimos 90 dias)",
+  negados: "Pedidos de folga negados (no período)",
+  naoRealizadas: "Folgas não realizadas: motorista trabalhou (no período)",
 };
 
 function linhaMotorista(rotulo: string, m: ItemFolgaDashboard): string[] {
@@ -475,15 +482,52 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
   const [dados, setDados] = useState<FolgaDashboard | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aberto, setAberto] = useState<Indicador | null>(null);
+  // Período do histórico: atalho (30/60/90 dias) ou datas livres.
+  const [periodo, setPeriodo] = useState<PeriodoFolgaDashboard>({ dias: DIAS_PADRAO });
+  const [deData, setDeData] = useState("");
+  const [ateData, setAteData] = useState("");
+  const [erroPeriodo, setErroPeriodo] = useState<string | null>(null);
+
+  const textoPeriodo =
+    "dias" in periodo
+      ? `últimos ${periodo.dias} dias`
+      : `${fmtDia(periodo.inicio)} a ${fmtDia(periodo.fim)}`;
+
+  function aplicarDatas() {
+    if (!deData || !ateData) {
+      setErroPeriodo("Informe a data inicial e a final.");
+      return;
+    }
+    if (ateData < deData) {
+      setErroPeriodo("A data final não pode ser antes da inicial.");
+      return;
+    }
+    const dias = (Date.parse(ateData) - Date.parse(deData)) / 86_400_000 + 1;
+    if (dias > DIAS_MAXIMOS) {
+      setErroPeriodo(`O período pode ter no máximo ${DIAS_MAXIMOS} dias.`);
+      return;
+    }
+    setErroPeriodo(null);
+    setPeriodo({ inicio: deData, fim: ateData });
+  }
+
+  function escolherAtalho(dias: number) {
+    setErroPeriodo(null);
+    const hoje = new Date();
+    const inicio = new Date(hoje.getTime() - (dias - 1) * 86_400_000);
+    setDeData(dataLocalIso(inicio));
+    setAteData(dataLocalIso(hoje));
+    setPeriodo({ dias });
+  }
 
   const carregar = useCallback(async () => {
     try {
-      setDados(await getFolgaDashboard());
+      setDados(await getFolgaDashboard(periodo));
       setErro(null);
     } catch {
       setErro("Não foi possível carregar o dashboard de folgas.");
     }
-  }, []);
+  }, [periodo]);
 
   useEffect(() => {
     void carregar();
@@ -541,8 +585,8 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
           ["Urgentes (sem folga na janela de busca)", String(dados.totais.urgentes)],
           ["Folgas marcadas", String(dados.totais.marcadas)],
           ["Pedidos em aberto", String(dados.totais.pedidosEmAberto)],
-          ["Pedidos negados (90 dias)", String(dados.totais.pedidosNegados)],
-          ["Folgas não realizadas (90 dias)", String(dados.totais.naoRealizadas)],
+          [`Pedidos negados (${textoPeriodo})`, String(dados.totais.pedidosNegados)],
+          [`Folgas não realizadas (${textoPeriodo})`, String(dados.totais.naoRealizadas)],
           ["Em dia", String(dados.totais.emDia)],
           ["Sem regra vinculada ao CNPJ", String(dados.totais.semConfiguracao)],
         ],
@@ -577,6 +621,47 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
         >
           Baixar tudo (Excel)
         </button>
+      </div>
+
+      <div
+        className="card"
+        style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", margin: "12px 0", padding: "8px 12px" }}
+        data-tour="folgas-periodo"
+      >
+        <div style={{ fontSize: 13 }}>
+          <strong>Período dos pedidos negados e das folgas não realizadas</strong>
+          <div style={{ color: "#000", fontSize: 12 }}>Mostrando: {textoPeriodo}</div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {ATALHOS_PERIODO.map((d) => (
+            <button
+              key={d}
+              type="button"
+              className={"dias" in periodo && periodo.dias === d ? undefined : "secondary"}
+              style={{ padding: "4px 10px", fontSize: 12 }}
+              onClick={() => escolherAtalho(d)}
+            >
+              {d} dias
+            </button>
+          ))}
+        </div>
+        <label style={{ fontSize: 12 }}>
+          De
+          <input type="date" value={deData} onChange={(e) => setDeData(e.target.value)} />
+        </label>
+        <label style={{ fontSize: 12 }}>
+          Até
+          <input type="date" value={ateData} onChange={(e) => setAteData(e.target.value)} />
+        </label>
+        <button
+          type="button"
+          className="secondary"
+          style={{ padding: "4px 10px", fontSize: 12 }}
+          onClick={aplicarDatas}
+        >
+          Aplicar período
+        </button>
+        {erroPeriodo && <span className="error-text" style={{ fontSize: 12 }}>{erroPeriodo}</span>}
       </div>
 
       <div
@@ -626,7 +711,7 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
           titulo="Pedidos negados"
           valor={t.pedidosNegados}
           cor={t.pedidosNegados > 0 ? "#b91c1c" : undefined}
-          subtitulo="últimos 90 dias"
+          subtitulo={textoPeriodo}
           onClick={() => setAberto("negados")}
           descricao="Pedidos de folga negados pelo RH ou automaticamente por falta de resposta"
         />
@@ -634,7 +719,7 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
           titulo="Folgas não realizadas"
           valor={t.naoRealizadas}
           cor={t.naoRealizadas > 0 ? "#b91c1c" : undefined}
-          subtitulo="motorista trabalhou (90 dias)"
+          subtitulo={`motorista trabalhou (${textoPeriodo})`}
           onClick={() => setAberto("naoRealizadas")}
           descricao="Folgas marcadas em que o motorista trabalhou; ficam registradas para o RH"
         />

@@ -992,7 +992,7 @@ textarea {
 .sidebar-acoes {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .sidebar-colapsada .sidebar-acoes {
   flex-direction: column;
@@ -1000,14 +1000,20 @@ textarea {
 .sidebar-acoes .botao-perfil.botao-perfil-icone,
 .sidebar-acoes button.secondary {
   box-sizing: border-box;
-  width: 56px;
-  height: 36px;
+  /* Botoes quadrados e pequenos (engrenagem e sair) para o rodape caber sem rolagem. */
+  width: 28px;
+  height: 28px;
   padding: 0;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  line-height: 1;
+}
+.sidebar-acoes .botao-perfil.botao-perfil-icone svg {
+  width: 15px;
+  height: 15px;
 }
 
 /* Rodada 335: bolinha de pendência no fim do botão da aba do menu lateral. */
