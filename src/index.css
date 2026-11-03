@@ -40,7 +40,7 @@ body {
 
 .sidebar-colapsada .sidebar {
   width: 64px;
-  padding: 20px 8px;
+  padding: 20px 4px;
   align-items: center;
 }
 
@@ -145,7 +145,7 @@ body {
 }
 
 .sidebar-colapsada .sidebar-rodape {
-  padding-top: 16px;
+  padding-top: 7px;
   text-align: center;
 }
 
