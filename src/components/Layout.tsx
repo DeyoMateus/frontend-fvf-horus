@@ -10,6 +10,7 @@ import { usePendenciasDoMenu } from "./penMenu";
 import { PoliticaGate } from "./PoliticaGate";
 import { TourProvider, useTour } from "../tour/TourProvider";
 import { rotuloPapel } from "../utils/rotulos";
+import { SlotAbasContext } from "./AbasTopo";
 
 const CHAVE_SIDEBAR_COLAPSADA = "fvfhorus.sidebarColapsada";
 
@@ -118,6 +119,7 @@ function LayoutInterno() {
   const pendenciasDoMenu = usePendenciasDoMenu();
 
   // Empresa mae do grupo (nome + CNPJ) em destaque sob o nome da ferramenta.
+  const [slotAbas, setSlotAbas] = useState<HTMLElement | null>(null);
   const [grupo, setGrupo] = useState<DadosGrupo | null>(null);
   useEffect(() => {
     let ativo = true;
@@ -224,6 +226,7 @@ function LayoutInterno() {
       <main className="content">
         <div className="content-inner">
           <div className="content-topo">
+            <div className="content-topo-abas" ref={setSlotAbas} />
             <NotificationBell />
           </div>
           {mfaPendente && (
@@ -242,7 +245,9 @@ function LayoutInterno() {
               <NavLink to="/perfil">Ativar agora em Meu perfil</NavLink>.
             </div>
           )}
-          <Outlet />
+          <SlotAbasContext.Provider value={slotAbas}>
+            <Outlet />
+          </SlotAbasContext.Provider>
           <RodapeLegal />
         </div>
       </main>

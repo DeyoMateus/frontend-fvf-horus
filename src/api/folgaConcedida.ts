@@ -16,6 +16,8 @@ export interface FolgaConcedida {
   motoristaId: string;
   data: string;
   motivo: string | null;
+  /** Rodada 625: compensa um feriado trabalhado (AEJ: folga compensatória de feriado). */
+  compensaFeriado?: boolean;
   concedidaPorUsuarioId: string;
   concedidaPorUsuario?: { id: string; nome: string };
   createdAt: string;
@@ -24,6 +26,8 @@ export interface FolgaConcedida {
 export interface CreateFolgaConcedidaInput {
   data: string;
   motivo?: string;
+  /** Rodada 625: a folga compensa um feriado trabalhado. */
+  compensaFeriado?: boolean;
   /** Rodada 387: CCT/ACT que autoriza folga depois de mais de 6 dias seguidos de trabalho. */
   justificativaExcessoDias?: string;
 }

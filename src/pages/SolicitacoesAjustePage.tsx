@@ -1,3 +1,4 @@
+import { DicaAoPassar } from "../components/DicaAoPassar";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -40,7 +41,11 @@ const COR_STATUS: Record<string, string> = {
  * corrigido não comprova onde o motorista estava naquele momento , cabe
  * ao RH avaliar a justificativa e as evidências antes de aprovar.
  */
-export function SolicitacoesAjustePage() {
+export function SolicitacoesAjustePage({
+  modo = "ambos",
+}: {
+  modo?: "pendentes" | "historico" | "ambos";
+} = {}) {
   const confirm = useConfirm();
   const toast = useToast();
   const [searchParams] = useSearchParams();
@@ -246,12 +251,16 @@ export function SolicitacoesAjustePage() {
 
   return (
     <div>
-      <h2 ref={secaoPendentesRef}>Solicitações de ajuste de ponto</h2>
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Pedidos de correção enviados pelos próprios motoristas pelo app. Um
-        horário corrigido não comprova onde o motorista estava naquele momento.
-        Avalie a justificativa e as evidências antes de decidir.
-      </p>
+      {modo !== "historico" && (
+      <>
+      <h2 ref={secaoPendentesRef}>
+        Solicitações de ajuste de ponto
+        <DicaAoPassar label="Sobre as solicitações de ajuste de ponto">
+          Pedidos de correção enviados pelos próprios motoristas pelo app. Um
+          horário corrigido não comprova onde o motorista estava naquele
+          momento. Avalie a justificativa e as evidências antes de decidir.
+        </DicaAoPassar>
+      </h2>
 
       <div className="card">
         {carregando && <p>Carregando...</p>}
@@ -403,12 +412,17 @@ export function SolicitacoesAjustePage() {
         )}
       </div>
 
-      {/* Pedido do usuário: trazer o histórico do que já foi decidido
-          (aprovado/rejeitado) , antes só existia a caixa de pendentes. */}
-      <h3 style={{ marginTop: 32 }}>Histórico de solicitações decididas</h3>
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Pedidos já aprovados ou rejeitados pelo RH, mais recentes primeiro.
-      </p>
+      </>
+      )}
+
+      {modo !== "pendentes" && (
+      <>
+      <h2>
+        Histórico de solicitações decididas
+        <DicaAoPassar label="Sobre o histórico de solicitações">
+          Pedidos já aprovados ou rejeitados pelo RH, mais recentes primeiro.
+        </DicaAoPassar>
+      </h2>
       <div className="card">
         {carregandoHistorico && <p>Carregando...</p>}
         {erroHistorico && <p className="error-text">{erroHistorico}</p>}
@@ -578,6 +592,8 @@ export function SolicitacoesAjustePage() {
           </>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

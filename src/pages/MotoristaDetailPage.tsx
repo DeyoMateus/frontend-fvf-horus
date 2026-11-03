@@ -288,6 +288,7 @@ export function MotoristaDetailPage() {
 
   const [dataFolga, setDataFolga] = useState("");
   const [motivoFolga, setMotivoFolga] = useState("");
+  const [folgaCompensaFeriado, setFolgaCompensaFeriado] = useState(false);
   const [justificativaExcessoFolga, setJustificativaExcessoFolga] = useState("");
   const [pedeJustificativaFolga, setPedeJustificativaFolga] = useState(false);
   const [concedendoFolga, setConcedendoFolga] = useState(false);
@@ -347,7 +348,8 @@ export function MotoristaDetailPage() {
   async function onBaixarAej() {
     setBaixandoAej(true);
     try {
-      await baixarAej(motoristaId, periodoDosRegistros());
+      const avisos = await baixarAej(motoristaId, periodoDosRegistros());
+      setAvisoAejAssinado(avisos.length > 0 ? avisos.join(" ") : null);
     } finally {
       setBaixandoAej(false);
     }
@@ -1102,12 +1104,14 @@ export function MotoristaDetailPage() {
       await concederFolga(motoristaId, {
         data: dataFolga,
         motivo: motivoFolga || undefined,
+        compensaFeriado: folgaCompensaFeriado || undefined,
         justificativaExcessoDias: pedeJustificativaFolga
           ? justificativaExcessoFolga.trim() || undefined
           : undefined,
       });
       setDataFolga("");
       setMotivoFolga("");
+      setFolgaCompensaFeriado(false);
       setJustificativaExcessoFolga("");
       setPedeJustificativaFolga(false);
       await carregarTudo();
@@ -2411,6 +2415,17 @@ export function MotoristaDetailPage() {
             onChange={(e) => setMotivoFolga(e.target.value)}
             maxLength={400}
           />
+          <label>
+            <input
+              type="checkbox"
+              checked={folgaCompensaFeriado}
+              onChange={(e) => setFolgaCompensaFeriado(e.target.checked)}
+            />{" "}
+            Esta folga compensa um feriado trabalhado
+          </label>
+          <small>
+            Marcada, o AEJ informa folga compensatória de feriado; sem a marca, informa DSR (descanso semanal).
+          </small>
           {pedeJustificativaFolga && (
             <>
               <label>Justificativa (CCT/ACT que autoriza, mínimo 20 caracteres)</label>

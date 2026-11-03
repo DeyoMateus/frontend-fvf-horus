@@ -1,6 +1,7 @@
+import { DicaAoPassar } from "../components/DicaAoPassar";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useEffect, useRef, useState } from "react";
-import { baixarAfd, listEmpresas } from "../api/empresas";
+import { baixarAfd, baixarAfdAssinado, listEmpresas } from "../api/empresas";
 import {
   baixarDossieCobrancaPdf,
   listarDossieCobranca,
@@ -43,6 +44,7 @@ export function FiscalizacaoPage() {
   const [empresaId, setEmpresaId] = useState("");
   const [gerandoAfd, setGerandoAfd] = useState(false);
   const [erroAfd, setErroAfd] = useState<string | null>(null);
+  const [avisoAfd, setAvisoAfd] = useState<string | null>(null);
 
   const [dossies, setDossies] = useState<ItemDossieCobranca[]>([]);
   const [carregandoDossie, setCarregandoDossie] = useState(false);
@@ -115,6 +117,30 @@ export function FiscalizacaoPage() {
     }
   }
 
+  async function onBaixarAfdAssinado() {
+    if (!empresaId) return;
+    setErroAfd(null);
+    setAvisoAfd(null);
+    setGerandoAfd(true);
+    try {
+      const aviso = await baixarAfdAssinado(
+        empresaId,
+        inicioDoDiaLocalIso(inicio),
+        fimDoDiaLocalIso(fim),
+      );
+      setAvisoAfd(aviso);
+    } catch (err) {
+      const codigo = (err as { response?: { data?: { codigo?: string } } })?.response?.data?.codigo;
+      setErroAfd(
+        codigo === "CERTIFICADO_FVF_NAO_CONFIGURADO"
+          ? "O certificado de assinatura da FVF ainda não está configurado neste ambiente. Baixe o AFD sem assinatura."
+          : "Não foi possível gerar o AFD assinado (confira o registro INPI/AFD do CNPJ, veja Empresas).",
+      );
+    } finally {
+      setGerandoAfd(false);
+    }
+  }
+
   async function onBaixarDossiePdf() {
     setErroDossie(null);
     setGerandoDossiePdf(true);
@@ -159,14 +185,16 @@ export function FiscalizacaoPage() {
 
   return (
     <div>
-      <h2>Documentos para fiscalização</h2>
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Extrações pensadas para quando um fiscal do trabalho chega na empresa,
-        ou para faturar o tempo de espera em carga/descarga do embarcador. Os
-        arquivos oficiais seguem o leiaute exigido, mas ainda não levam a
-        assinatura digital qualificada (ICP-Brasil), que depende do certificado
-        da empresa.
-      </p>
+      <h2>
+        Documentos para fiscalização
+        <DicaAoPassar label="Sobre os documentos para fiscalização">
+          Extrações pensadas para quando um fiscal do trabalho chega na
+          empresa, ou para faturar o tempo de espera em carga/descarga do
+          embarcador. Os arquivos oficiais seguem o leiaute exigido, mas ainda
+          não levam a assinatura digital qualificada (ICP-Brasil), que depende
+          do certificado da empresa.
+        </DicaAoPassar>
+      </h2>
 
       <div
         style={{
@@ -205,7 +233,7 @@ export function FiscalizacaoPage() {
         <h3 style={{ marginTop: 0 }}>AFD oficial (Portaria MTP 671/2021)</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
           Arquivo Fonte de Dados (arquivo de texto) no leiaute oficial exigido
-          pela fiscalização, ainda sem a assinatura digital qualificada. É o documento que a Portaria 671/2021 pede diretamente.
+          pela fiscalização. A versão assinada baixa o arquivo e a assinatura digital (.p7s) da FVF juntos; o arquivo e o .p7s devem ser entregues lado a lado. É o documento que a Portaria 671/2021 pede diretamente.
           Sempre por CNPJ.
         </p>
         <div
@@ -235,7 +263,16 @@ export function FiscalizacaoPage() {
           <button onClick={onBaixarAfd} disabled={gerandoAfd || !empresaId}>
             {gerandoAfd ? "Gerando…" : "Baixar AFD (.txt)"}
           </button>
+          <button
+            className="secondary"
+            onClick={onBaixarAfdAssinado}
+            disabled={gerandoAfd || !empresaId}
+            title="Baixa o AFD e a assinatura digital (.p7s) juntos"
+          >
+            Baixar AFD assinado (.p7s)
+          </button>
         </div>
+        {avisoAfd && <p style={{ color: "#b45309", fontSize: 13 }}>{avisoAfd}</p>}
         {erroAfd && <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroAfd}</p>}
       </div>
 

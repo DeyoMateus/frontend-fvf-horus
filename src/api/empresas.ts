@@ -75,3 +75,30 @@ export async function baixarAfd(
     `afd-${empresaId}-${inicio.slice(0, 10)}-a-${fim.slice(0, 10)}.txt`,
   );
 }
+
+/**
+ * Rodada 623: AFD oficial acompanhado da assinatura CAdES destacada (.p7s) da FVF.
+ * Baixa os dois arquivos juntos. Devolve o aviso quando o certificado for de teste.
+ */
+export async function baixarAfdAssinado(
+  empresaId: string,
+  inicio: string,
+  fim: string,
+): Promise<string | null> {
+  const { data } = await api.get<{
+    nomeArquivo: string;
+    conteudoBase64: string;
+    nomeAssinatura: string;
+    assinaturaBase64: string;
+    aviso: string | null;
+  }>("/empresas/afd-assinado", { params: { empresaId, inicio, fim } });
+  const paraBlob = (b64: string, tipo: string) => {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: tipo });
+  };
+  baixarArquivo(paraBlob(data.conteudoBase64, "text/plain;charset=iso-8859-1"), data.nomeArquivo);
+  baixarArquivo(paraBlob(data.assinaturaBase64, "application/pkcs7-signature"), data.nomeAssinatura);
+  return data.aviso;
+}

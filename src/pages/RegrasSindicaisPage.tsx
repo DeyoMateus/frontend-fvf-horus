@@ -15,6 +15,13 @@ import { useConfirm } from "../components/ConfirmProvider";
 import { DuracaoInput } from "../components/DuracaoInput";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { FeriadosPage } from "./FeriadosPage";
+import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
+import { DicaAoPassar } from "../components/DicaAoPassar";
+
+const ABAS_REGRAS: AbaDef[] = [
+  { id: "regras", rotulo: "Regras sindicais (CCT/ACT)" },
+  { id: "feriados", rotulo: "Feriados" },
+];
 import type {
   CategoriaTransporteSindical,
   Empresa,
@@ -67,6 +74,7 @@ function dataCurta(v?: string | null): string | undefined {
  * holerite pronto (ver disclaimer no PDF de apuração).
  */
 export function RegrasSindicaisPage() {
+  const aba = useAbaAtiva(ABAS_REGRAS);
   const confirm = useConfirm();
   const { usuario } = useAuth();
   const [regras, setRegras] = useState<RegraSindical[]>([]);
@@ -245,15 +253,20 @@ export function RegrasSindicaisPage() {
 
   return (
     <div>
-      <h2>Regras sindicais (CCT/ACT)</h2>
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Convenções e acordos coletivos do setor de transporte, por
-        sindicato/base territorial. Vale sobre a regra geral da CLT em vários
-        pontos (Art. 611-A). Cadastre uma regra por convenção e vincule aos
-        CNPJs que ela cobre. Os parâmetros alimentam a apuração de jornada
-        (categorização de horas extras, adicional noturno, banco de horas etc.),
-        o sistema não calcula a folha de pagamento completa.
-      </p>
+      <AbasTopo abas={ABAS_REGRAS} />
+      {aba === "regras" && (
+      <>
+      <h2>
+        Regras sindicais (CCT/ACT)
+        <DicaAoPassar label="Sobre as regras sindicais">
+          Convenções e acordos coletivos do setor de transporte, por
+          sindicato/base territorial. Vale sobre a regra geral da CLT em vários
+          pontos (Art. 611-A). Cadastre uma regra por convenção e vincule aos
+          CNPJs que ela cobre. Os parâmetros alimentam a apuração de jornada
+          (categorização de horas extras, adicional noturno, banco de horas
+          etc.), o sistema não calcula a folha de pagamento completa.
+        </DicaAoPassar>
+      </h2>
 
       {usuario?.papel === "ADMIN" && (
         <div className="card">
@@ -1463,6 +1476,10 @@ export function RegrasSindicaisPage() {
         </table>
       </div>
 
+      </>
+      )}
+
+      {aba === "feriados" && (
       <div
         style={{
           borderTop: "1px solid #e5e7eb",
@@ -1501,6 +1518,7 @@ export function RegrasSindicaisPage() {
         </div>
         <FeriadosPage />
       </div>
+      )}
     </div>
   );
 }

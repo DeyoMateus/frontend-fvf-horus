@@ -21,13 +21,13 @@ export const MODULOS_DO_TOUR: ModuloDoTour[] = [
   { id: "menu", titulo: "Menu lateral", descricao: "Apresentação do menu, do sino de notificações e do seu usuário." },
   { id: "painel", titulo: "Painel", descricao: "Os cartões com a situação da operação agora." },
   { id: "painelIndicadores", titulo: "Painel, alertas e indicadores", descricao: "Lista de alertas da frota e indicadores de horas." },
-  { id: "fechamento", titulo: "Fechamento", descricao: "Relatório de ponto em PDF e pedidos de ajuste dos motoristas." },
+  { id: "fechamento", titulo: "Fechamento", descricao: "Relatório de ponto em PDF, pedidos de ajuste dos motoristas e documentos para fiscalização." },
   { id: "motoristas", titulo: "Motoristas", descricao: "Cadastro e lista de motoristas." },
   { id: "ficha", titulo: "Ficha do motorista", descricao: "Tudo sobre um motorista, da jornada ao holerite." },
   { id: "folgas", titulo: "Pedidos de folga", descricao: "Aprovar ou negar as folgas pedidas pelos motoristas." },
   { id: "ajudantes", titulo: "Ajudantes", descricao: "Cadastro dos ajudantes e vínculo com o aparelho." },
   { id: "documentos", titulo: "Documentos de carga", descricao: "Envio e acompanhamento de CT-e e MDF-e." },
-  { id: "regras", titulo: "Regras sindicais", descricao: "Convenção coletiva, horas extras, adicional noturno e banco de horas." },
+  { id: "regras", titulo: "Regras sindicais", descricao: "Convenção coletiva, horas extras, adicional noturno, banco de horas e feriados." },
   { id: "empresas", titulo: "Empresas", descricao: "Os CNPJs que fazem parte do seu grupo." },
   { id: "auditoria", titulo: "Auditoria", descricao: "Histórico de tudo o que foi feito no sistema." },
   { id: "lgpd", titulo: "Privacidade (LGPD)", descricao: "Pedidos dos titulares e termos aceitos." },
@@ -190,7 +190,14 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   // ===== Painel =====
   {
     modulo: "painel",
-    rota: "/dashboard",
+    rota: "/dashboard?aba=operacoes",
+    alvo: "css:.abas-topo",
+    titulo: "Abas do Painel",
+    texto:
+      "Esta página tem três abas, Painel de Operações, Alertas de jornada da empresa e Indicadores de Jornada. Clique no nome da aba para trocar o conteúdo logo abaixo. A aba escolhida fica em destaque. Os textos explicativos de cada título ficam no ícone de interrogação ao lado dele, é só passar o mouse ou clicar.",
+  },
+  {
+    modulo: "painel",
     alvo: "titulo:Painel da operação",
     titulo: "Painel da operação",
     texto:
@@ -310,17 +317,19 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "painelIndicadores",
+    rota: "/dashboard?aba=alertas",
     alvo: "titulo:Alertas de jornada da empresa",
     titulo: "Alertas de jornada da empresa",
     texto:
-      "Lista de todos os alertas da frota. Você pode filtrar por gravidade e por data, abrir cada alerta para ver os detalhes e tratar a ocorrência, anotando o que foi encontrado.",
+      "Na aba Alertas de jornada da empresa fica a lista de todos os alertas da frota. Você pode filtrar por gravidade e por data, abrir cada alerta para ver os detalhes e tratar a ocorrência, anotando o que foi encontrado.",
   },
   {
     modulo: "painelIndicadores",
+    rota: "/dashboard?aba=indicadores",
     alvo: "titulo:Indicadores de Jornada",
     titulo: "Indicadores de jornada",
     texto:
-      "Aqui estão os números de horas da sua frota, como direção, espera, horas extras, hora noturna, banco de horas e alertas no período escolhido.",
+      "Na aba Indicadores de Jornada estão os números de horas da sua frota, como direção, espera, horas extras, hora noturna, banco de horas e alertas no período escolhido.",
   },
   {
     modulo: "painelIndicadores",
@@ -347,11 +356,18 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   // ===== Fechamento =====
   {
     modulo: "fechamento",
-    rota: "/indicadores",
+    rota: "/indicadores?aba=fechamento",
+    alvo: "css:.abas-topo",
+    titulo: "Abas do Fechamento",
+    texto:
+      "Esta página tem quatro abas, Banco de horas e Fechamento, Solicitações de ajuste de ponto, Histórico de solicitações decididas e Documentos para fiscalização. Clique no nome da aba para trocar o conteúdo logo abaixo. Os textos explicativos de cada título ficam no ícone de interrogação ao lado dele, é só passar o mouse ou clicar.",
+  },
+  {
+    modulo: "fechamento",
     alvo: "titulo:Fechamento",
     titulo: "Fechamento de ponto",
     texto:
-      "Nesta tela você fecha a folha de ponto do período e também decide os pedidos de ajuste que chegaram dos motoristas.",
+      "Na primeira aba ficam os indicadores do banco de horas para decisão e o fechamento da folha de ponto do período.",
   },
   {
     modulo: "fechamento",
@@ -375,6 +391,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "fechamento",
+    rota: "/indicadores?aba=solicitacoes",
     alvo: "titulo:Solicitações de ajuste de ponto",
     titulo: "Solicitações de ajuste de ponto",
     texto:
@@ -382,10 +399,19 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   },
   {
     modulo: "fechamento",
+    rota: "/indicadores?aba=historico",
     alvo: "titulo:Histórico de solicitações decididas",
     titulo: "Histórico de solicitações",
     texto:
       "Aqui ficam todos os pedidos que já foram decididos, com quem decidiu e quando, para você consultar sempre que precisar.",
+  },
+  {
+    modulo: "fechamento",
+    rota: "/indicadores?aba=fiscalizacao",
+    alvo: "titulo:Documentos para fiscalização",
+    titulo: "Documentos para fiscalização",
+    texto:
+      "Nesta aba ficam os arquivos para quando um fiscal do trabalho chega na empresa ou para cobrar o tempo de espera do embarcador. Passe o mouse no ícone de interrogação do título para ler a explicação.",
   },
 
   // ===== Motoristas =====
@@ -779,7 +805,14 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   // ===== Regras sindicais =====
   {
     modulo: "regras",
-    rota: "/regras-sindicais",
+    rota: "/regras-sindicais?aba=regras",
+    alvo: "css:.abas-topo",
+    titulo: "Abas das Regras sindicais",
+    texto:
+      "Esta página tem duas abas, Regras sindicais (CCT/ACT) e Feriados. Clique no nome da aba para trocar o conteúdo logo abaixo. Os textos explicativos de cada título ficam no ícone de interrogação ao lado dele, é só passar o mouse ou clicar.",
+  },
+  {
+    modulo: "regras",
     alvo: "titulo:Regras sindicais",
     titulo: "Regras sindicais",
     texto:
@@ -878,6 +911,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   // ===== Empresas =====
   {
     modulo: "regras",
+    rota: "/regras-sindicais?aba=feriados",
     alvo: "titulo:Como funcionam os feriados",
     titulo: "Feriados",
     texto:

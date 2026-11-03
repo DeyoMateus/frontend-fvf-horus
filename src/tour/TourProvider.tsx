@@ -134,9 +134,12 @@ export function TourProvider({ children }: { children: ReactNode }) {
   // e se perdia. Esta rota so muda depois do commit da nova pagina.
   const localizacao = useLocation();
   const rotaDesenhada = useRef(localizacao.pathname);
+  // Rodada 626: rota com query (?aba=) para os passos que abrem uma aba específica.
+  const rotaCompleta = useRef(localizacao.pathname + localizacao.search);
   useLayoutEffect(() => {
     rotaDesenhada.current = localizacao.pathname;
-  }, [localizacao.pathname]);
+    rotaCompleta.current = localizacao.pathname + localizacao.search;
+  }, [localizacao.pathname, localizacao.search]);
   const chave = usuario ? `${PREFIXO_CHAVE}${usuario.sub}` : null;
 
   const chaveModulos = usuario ? `${PREFIXO_MODULOS}${usuario.sub}` : null;
@@ -314,10 +317,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
             foiCancelado,
           );
         }
-      } else if (passo.rota && rotaDesenhada.current !== passo.rota) {
+      } else if (
+        passo.rota &&
+        (passo.rota.includes("?") ? rotaCompleta : rotaDesenhada).current !== passo.rota
+      ) {
         navigate(passo.rota);
         await esperarAte(
-          () => rotaDesenhada.current === passo.rota,
+          () => (passo.rota!.includes("?") ? rotaCompleta : rotaDesenhada).current === passo.rota,
           3000,
           foiCancelado,
         );

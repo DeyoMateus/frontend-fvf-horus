@@ -1,3 +1,4 @@
+import { DicaAoPassar } from "../components/DicaAoPassar";
 import { FormEvent, useEffect, useState } from "react";
 import { listEmpresas } from "../api/empresas";
 import {
@@ -120,15 +121,17 @@ export function FeriadosPage() {
 
   return (
     <div>
-      <h2>Feriados</h2>
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Um feriado varia de cidade para cidade, e o sistema não tem uma base
-        nacional/municipal embutida. Cadastre aqui os feriados que a empresa
-        aceita, e diga se cada um deve receber o mesmo percentual diferenciado
-        que a convenção coletiva aplica a domingos ("Pago como
-        domingo/feriado"), ou se é só informativo. Domingo continua sendo
-        detectado sozinho, sem precisar de cadastro.
-      </p>
+      <h2>
+        Feriados
+        <DicaAoPassar label="Sobre os feriados">
+          Um feriado varia de cidade para cidade, e o sistema não tem uma base
+          nacional/municipal embutida. Cadastre aqui os feriados que a empresa
+          aceita, e diga se cada um deve receber o mesmo percentual
+          diferenciado que a convenção coletiva aplica a domingos ("Pago como
+          domingo/feriado"), ou se é só informativo. Domingo continua sendo
+          detectado sozinho, sem precisar de cadastro.
+        </DicaAoPassar>
+      </h2>
 
       {usuario?.papel === "ADMIN" && (
         <div className="card">

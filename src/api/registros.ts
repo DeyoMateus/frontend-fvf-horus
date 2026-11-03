@@ -218,7 +218,7 @@ export async function baixarEspelhoRepP(
 export async function baixarAej(
   motoristaId: string,
   periodo?: { inicio?: string; fim?: string },
-) {
+): Promise<string[]> {
   const params: Record<string, string> = {};
   if (periodo?.inicio) params.inicio = periodo.inicio;
   if (periodo?.fim) params.fim = periodo.fim;
@@ -227,6 +227,14 @@ export async function baixarAej(
     { params, responseType: "blob" },
   );
   baixarArquivo(new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }), `AEJ-${motoristaId}.txt`);
+  // Rodada 629: avisos de conformidade do MTE (marcações ímpares etc.).
+  try {
+    const bruto = resposta.headers?.["x-aej-avisos"];
+    const lista = bruto ? (JSON.parse(decodeURIComponent(String(bruto))) as string[]) : [];
+    return Array.isArray(lista) ? lista : [];
+  } catch {
+    return [];
+  }
 }
 
 function base64ParaBlob(b64: string, tipo: string) {
@@ -253,10 +261,12 @@ export async function baixarAejAssinado(
     nomeAssinatura: string;
     assinaturaBase64: string;
     aviso: string | null;
+    avisosConformidade?: string[];
   }>(`/registros-jornada/motorista/${motoristaId}/aej-assinado`, { params });
   baixarArquivo(base64ParaBlob(data.conteudoBase64, "text/plain;charset=iso-8859-1"), data.nomeArquivo);
   baixarArquivo(base64ParaBlob(data.assinaturaBase64, "application/pkcs7-signature"), data.nomeAssinatura);
-  return data.aviso;
+  const avisos = (data.avisosConformidade ?? []).join(" ");
+  return [data.aviso, avisos].filter(Boolean).join(" ") || null;
 }
 
 /** Rodada 589: relatório complementar de direção e espera (o AEJ oficial não tem esses registros). */

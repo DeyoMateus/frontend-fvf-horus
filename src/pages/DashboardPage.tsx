@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
+import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
+
+const ABAS_PAINEL: AbaDef[] = [
+  { id: "operacoes", rotulo: "Painel de Operações" },
+  { id: "alertas", rotulo: "Alertas de jornada da empresa" },
+  { id: "indicadores", rotulo: "Indicadores de Jornada" },
+];
 import {
   getDashboardDetalhe,
   getDashboardResumo,
@@ -473,6 +480,7 @@ function PainelDetalheCard({
  * que continua sendo onde o gestor trata cada alerta individualmente.
  */
 export function DashboardPage() {
+  const aba = useAbaAtiva(ABAS_PAINEL);
   const [resumo, setResumo] = useState<DashboardResumo | null>(null);
   const [tendencia, setTendencia] = useState<DashboardTendenciaDia[]>([]);
   const [periodoDias, setPeriodoDias] = useState(30);
@@ -583,6 +591,9 @@ export function DashboardPage() {
 
   return (
     <div>
+      <AbasTopo abas={ABAS_PAINEL} />
+      {aba === "operacoes" && (
+      <>
       <div
         style={{
           display: "flex",
@@ -958,32 +969,12 @@ export function DashboardPage() {
       </div>
 
       <GraficoTendencia dados={tendencia} />
+      </>
+      )}
 
-      <div
-        style={{
-          borderTop: "1px solid #e5e7eb",
-          marginTop: 32,
-          paddingTop: 24,
-        }}
-      >
-        <AlertasJornadaPage />
-      </div>
+      {aba === "alertas" && <AlertasJornadaPage />}
 
-      {/* Rodada 72 , pedido do usuário: "leve os indicadores e métricas
-          para aba do painel... melhor deixar separado". Mesmo padrão
-          já usado abaixo pra Alertas/Auditoria , uma seção própria,
-          separada por borda, dentro do Painel, sem misturar com o
-          fechamento de ponto/extração de relatório (que ficou só em
-          "Fechamento" , ver IndicadoresPage.tsx). */}
-      <div
-        style={{
-          borderTop: "1px solid #e5e7eb",
-          marginTop: 32,
-          paddingTop: 24,
-        }}
-      >
-        <PainelIndicadores />
-      </div>
+      {aba === "indicadores" && <PainelIndicadores />}
 
       {detalheAberto && (
         <PainelDetalheCard

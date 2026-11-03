@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { listarTodosMotoristas } from "../api/motoristas";
 import { FechamentoModal } from "../components/FechamentoModal";
+import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
+import { DicaAoPassar } from "../components/DicaAoPassar";
+import { useSearchParams } from "react-router-dom";
 import { BotaoAjuda } from "../components/BalaoAjuda";
 import { SolicitacoesAjustePage } from "./SolicitacoesAjustePage";
 import { BancoHorasResumoFechamento } from "../components/BancoHorasResumoFechamento";
@@ -21,6 +24,13 @@ import { dataLocalIso } from '../utils/mascaras';
  * não misturado com "acompanhar indicador".
  */
 
+const ABAS_FECHAMENTO: AbaDef[] = [
+  { id: "fechamento", rotulo: "Banco de horas: Fechamento, indicadores para decisão" },
+  { id: "solicitacoes", rotulo: "Solicitações de ajuste de ponto" },
+  { id: "historico", rotulo: "Histórico de solicitações decididas" },
+  { id: "fiscalizacao", rotulo: "Documentos para fiscalização" },
+];
+
 function hoje(): string {
   return dataLocalIso(new Date());
 }
@@ -30,6 +40,12 @@ function inicioDoMes(): string {
 }
 
 export function IndicadoresPage() {
+  // Link das notificações (?secao=solicitacoes-pendentes) abre a aba das solicitações.
+  const [params] = useSearchParams();
+  const aba = useAbaAtiva(
+    ABAS_FECHAMENTO,
+    params.get("secao") === "solicitacoes-pendentes" ? "solicitacoes" : undefined,
+  );
   const [motoristas, setMotoristas] = useState<Motorista[]>([]);
   const [inicio, setInicio] = useState(inicioDoMes());
   const [fim, setFim] = useState(hoje());
@@ -45,29 +61,31 @@ export function IndicadoresPage() {
 
   return (
     <div>
-      {/* Rodada 489: indicadores do banco de horas no topo do Fechamento. */}
-      <BancoHorasResumoFechamento />
+      <AbasTopo
+        abas={ABAS_FECHAMENTO}
+        padrao={params.get("secao") === "solicitacoes-pendentes" ? "solicitacoes" : undefined}
+      />
 
-      {/* Pedido do usuário: trazer "Solicitações de ajuste de ponto" pro
-          topo da página (onde antes ficava "Fechamento") e deixar o
-          Fechamento abaixo dela , a caixa de entrada do RH é o que
-          precisa de atenção com mais frequência. */}
-      <SolicitacoesAjustePage />
+      {aba === "fechamento" && (
+        <>
+          {/* Rodada 489: indicadores do banco de horas no topo do Fechamento. */}
+          <BancoHorasResumoFechamento />
 
-      <div
-        style={{
-          borderTop: "1px solid #e5e7eb",
-          marginTop: 32,
-          paddingTop: 24,
-        }}
-      >
-        <h2>Fechamento</h2>
-        <p style={{ color: "#000000", marginTop: -8 }}>
-          Fechamento de ponto (PDF pronto pra pagar) e fiscalização/dossiê de
-          cobrança. Métricas e indicadores (horas, extras, noturno, banco de
-          horas, alertas) agora ficam no Painel.
-        </p>
-
+          <div
+            style={{
+              borderTop: "1px solid #e5e7eb",
+              marginTop: 32,
+              paddingTop: 24,
+            }}
+          >
+            <h2>
+              Fechamento
+              <DicaAoPassar label="Sobre o fechamento">
+                Fechamento de ponto (PDF pronto pra pagar) e
+                fiscalização/dossiê de cobrança. Métricas e indicadores (horas,
+                extras, noturno, banco de horas, alertas) ficam no Painel.
+              </DicaAoPassar>
+            </h2>
         <div
           className="card"
           style={{
@@ -126,16 +144,12 @@ export function IndicadoresPage() {
           />
         )}
       </div>
+        </>
+      )}
 
-      <div
-        style={{
-          borderTop: "1px solid #e5e7eb",
-          marginTop: 32,
-          paddingTop: 24,
-        }}
-      >
-        <FiscalizacaoPage />
-      </div>
+      {aba === "solicitacoes" && <SolicitacoesAjustePage modo="pendentes" />}
+      {aba === "historico" && <SolicitacoesAjustePage modo="historico" />}
+      {aba === "fiscalizacao" && <FiscalizacaoPage />}
     </div>
   );
 }
