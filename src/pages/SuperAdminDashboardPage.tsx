@@ -2,7 +2,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { criarEmpresaMae, listarGrupos } from "../api/superAdmin";
 import type { CreateEmpresaMaeInput, GrupoResumo } from "../api/types";
-import { SuperAdminAuditoriaPage } from "./SuperAdminAuditoriaPage";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
@@ -266,16 +265,6 @@ export function SuperAdminDashboardPage() {
           </table>
         </>
       )}
-
-      <div
-        style={{
-          borderTop: "1px solid #e5e7eb",
-          marginTop: 32,
-          paddingTop: 24,
-        }}
-      >
-        <SuperAdminAuditoriaPage />
-      </div>
     </div>
   );
 }
