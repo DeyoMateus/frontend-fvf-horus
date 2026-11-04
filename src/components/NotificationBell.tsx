@@ -2,6 +2,7 @@ import { useToast } from "./ToastProvider";
 import { useEffect, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link, useNavigate } from "react-router-dom";
+import { intervaloVisivel } from "../hooks/intervaloVisivel";
 import { listAlertasByEmpresa, marcarAlertaVisualizado } from "../api/alertas";
 import { listSolicitacoesPendentes } from "../api/solicitacoesAjuste";
 import { listarPedidosFolgaPendentes } from "../api/solicitacoesFolga";
@@ -205,11 +206,10 @@ export function NotificationBell() {
 
   useEffect(() => {
     void buscarPedidosTitular();
-    const id = setInterval(
+    return intervaloVisivel(
       () => void buscarPedidosTitular(),
       INTERVALO_POLL_MS,
     );
-    return () => clearInterval(id);
   }, []);
 
   async function buscarRadar() {
@@ -251,19 +251,18 @@ export function NotificationBell() {
 
   useEffect(() => {
     void buscarRadar();
-    const id = setInterval(() => void buscarRadar(), INTERVALO_POLL_MS);
+    const parar = intervaloVisivel(() => void buscarRadar(), INTERVALO_POLL_MS);
     const aoTratar = () => void buscarRadar();
     window.addEventListener("radar-sem-interacao-atualizado", aoTratar);
     return () => {
-      clearInterval(id);
+      parar();
       window.removeEventListener("radar-sem-interacao-atualizado", aoTratar);
     };
   }, []);
 
   useEffect(() => {
     void buscar();
-    const id = setInterval(() => void buscar(), INTERVALO_POLL_MS);
-    return () => clearInterval(id);
+    return intervaloVisivel(() => void buscar(), INTERVALO_POLL_MS);
   }, []);
 
   function pedirPermissaoDeNotificacao() {
