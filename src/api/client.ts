@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
 
 // Mesma lógica de tokens do backend (AuthModule): access token de vida
 // curta (15 min) no header Authorization, guardado só em memória (nunca
@@ -32,6 +32,48 @@ export const api = axios.create({
   withCredentials: true,
   headers: { [HEADER_ANTI_CSRF]: "1" },
 });
+
+// Rodada 637: GETs IDENTICOS feitos ao mesmo tempo (ex.: o sino de notificacoes e a tela pedindo os
+// mesmos alertas ao abrir) compartilham uma unica chamada ao servidor. Quem chega depois recebe uma
+// COPIA dos dados, para um nao alterar a lista do outro. Fora disso nada muda: chamadas com cancelamento
+// (signal) ou arquivo (blob/arraybuffer) seguem sozinhas, e o compartilhamento termina quando a
+// resposta chega (nao ha cache).
+const getOriginal = api.get.bind(api) as typeof api.get;
+const getsEmVoo = new Map<string, Promise<AxiosResponse<unknown>>>();
+
+function copiarDados<T>(dados: T): T {
+  try {
+    return typeof structuredClone === "function" ? structuredClone(dados) : dados;
+  } catch {
+    return dados;
+  }
+}
+
+api.get = ((url: string, config?: AxiosRequestConfig) => {
+  if (
+    config?.signal ||
+    config?.responseType === "blob" ||
+    config?.responseType === "arraybuffer" ||
+    config?.onDownloadProgress
+  ) {
+    return getOriginal(url, config);
+  }
+  const chave = JSON.stringify([
+    api.defaults.baseURL ?? "",
+    url,
+    config?.params ?? null,
+    config?.headers ?? null,
+  ]);
+  const emVoo = getsEmVoo.get(chave);
+  if (emVoo) {
+    return emVoo.then((resposta) => ({ ...resposta, data: copiarDados(resposta.data) }));
+  }
+  const promessa = getOriginal(url, config).finally(() => {
+    getsEmVoo.delete(chave);
+  }) as Promise<AxiosResponse<unknown>>;
+  getsEmVoo.set(chave, promessa);
+  return promessa;
+}) as typeof api.get;
 
 api.interceptors.request.use((config) => {
   config.headers = config.headers ?? {};
