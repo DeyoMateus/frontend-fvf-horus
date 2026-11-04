@@ -31,6 +31,7 @@ import type {
   TipoAlertaJornada,
 } from "../api/types";
 import { dataLocalIso } from "../utils/mascaras";
+import { intervaloVisivel } from "../hooks/intervaloVisivel";
 
 const INTERVALO_ATUALIZACAO_MS = 30_000; // "tempo real" o suficiente pra um painel de gestão , não precisa de websocket pra isto
 
@@ -539,18 +540,13 @@ export function DashboardPage() {
 
   useEffect(() => {
     carregarResumo().finally(() => setCarregandoInicial(false));
-    const intervalo = setInterval(carregarResumo, INTERVALO_ATUALIZACAO_MS);
-    return () => clearInterval(intervalo);
+    return intervaloVisivel(carregarResumo, INTERVALO_ATUALIZACAO_MS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void carregarAlertasAbertos();
-    const intervalo = setInterval(
-      carregarAlertasAbertos,
-      INTERVALO_ATUALIZACAO_MS,
-    );
-    return () => clearInterval(intervalo);
+    return intervaloVisivel(carregarAlertasAbertos, INTERVALO_ATUALIZACAO_MS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

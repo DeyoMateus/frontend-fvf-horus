@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getIndicadoresPainel, getPeriodoBancoHoras } from "../api/indicadores";
 import type { IndicadoresPainel } from "../api/indicadores";
 import { minParaHoras } from "../utils/formatarDuracao";
+import { intervaloVisivel } from "../hooks/intervaloVisivel";
 
 /**
  * Rodada 489: indicadores-chave do banco de horas no topo do Fechamento, para decidir
@@ -68,10 +69,13 @@ export function BancoHorasResumoFechamento() {
       }
     }
     void carregar(true);
-    const t = setInterval(() => void carregar(false), INTERVALO_ATUALIZACAO_MS);
+    const parar = intervaloVisivel(
+      () => void carregar(false),
+      INTERVALO_ATUALIZACAO_MS,
+    );
     return () => {
       cancelado = true;
-      clearInterval(t);
+      parar();
     };
   }, []);
 

@@ -17,6 +17,7 @@ import {
 } from "../utils/exportarTabelaModal";
 import { RankingFolgas } from "./RankingFolgas";
 import { RegrasDeFolga } from "./RegrasDeFolga";
+import { intervaloVisivel } from "../hooks/intervaloVisivel";
 
 const INTERVALO_ATUALIZACAO_MS = 30_000; // igual ao painel principal
 
@@ -531,8 +532,7 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
 
   useEffect(() => {
     void carregar();
-    const t = setInterval(() => void carregar(), INTERVALO_ATUALIZACAO_MS);
-    return () => clearInterval(t);
+    return intervaloVisivel(() => void carregar(), INTERVALO_ATUALIZACAO_MS);
   }, [carregar]);
 
   // Recarrega quando a lista de pedidos abaixo muda (aprovar/negar).
