@@ -17,6 +17,7 @@ import { listAlertasByEmpresa } from "../api/alertas";
 import { GraficoTendencia } from "../components/TendenciaCharts";
 import { AlertasJornadaPage } from "./AlertasJornadaPage";
 import { PainelIndicadores } from "../components/PainelIndicadores";
+import { JornadasAbertasPainel } from "../components/JornadasAbertasPainel";
 import {
   baixarCsvTabela,
   imprimirTabela,
@@ -763,52 +764,14 @@ export function DashboardPage() {
         />
       </div>
 
-      {motoristas.jornadasAbertasHaMuitoTempo.length > 0 && (
-        <div
-          className="card"
-          style={{ borderColor: "#fca5a5", marginBottom: 24 }}
-        >
-          <strong style={{ color: "#b91c1c" }}>
-            Jornadas aguardando encerramento pelo gestor
-          </strong>
-          <p style={{ fontSize: 12, color: "#000000", marginTop: 4 }}>
-            Início de jornada batido há mais de 14h sem o fim correspondente. O
-            sistema nunca encerra a jornada sozinho: é preciso encerrá-la aqui,
-            lançando o Fim de jornada com a justificativa. Enquanto estiver
-            aberta, o alerta crítico desta jornada não pode ser dispensado.
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Motorista</th>
-                <th>Início da jornada</th>
-                <th>Horas em aberto</th>
-                <th>Ação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {motoristas.jornadasAbertasHaMuitoTempo.map((j) => (
-                <tr key={j.motoristaId}>
-                  <td>
-                    <Link to={`/motoristas/${j.motoristaId}`}>{j.nome}</Link>
-                  </td>
-                  <td>{new Date(j.desde).toLocaleString("pt-BR")}</td>
-                  <td style={{ color: "#b91c1c", fontWeight: 600 }}>
-                    {j.horasAberta}h
-                  </td>
-                  <td>
-                    <Link
-                      to={`/motoristas/${j.motoristaId}?secao=encerrar-jornada`}
-                    >
-                      Encerrar jornada
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <JornadasAbertasPainel
+        primeiraPagina={motoristas.jornadasAbertasHaMuitoTempo}
+        total={
+          motoristas.totalJornadasAbertasHaMuitoTempo ??
+          motoristas.jornadasAbertasHaMuitoTempo.length
+        }
+        atualizadoEm={resumo.atualizadoEm}
+      />
 
       {alertas.topTipos7d.length > 0 && (
         <div className="card" style={{ marginBottom: 24 }}>

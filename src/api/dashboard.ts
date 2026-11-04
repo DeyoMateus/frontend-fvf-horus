@@ -6,11 +6,21 @@ import type {
   DashboardResumo,
   DashboardTendenciaDetalhe,
   DashboardTendenciaDia,
+  PaginaJornadasAbertas,
 } from "./types";
 
 // Espelha DashboardController.
 export function getDashboardResumo() {
   return api.get<DashboardResumo>("/dashboard/resumo").then((r) => r.data);
+}
+
+// Rodada 641: paginas da lista "Jornadas aguardando encerramento pelo gestor".
+export function getJornadasAbertasPagina(page: number, pageSize: number) {
+  return api
+    .get<PaginaJornadasAbertas>("/dashboard/jornadas-abertas", {
+      params: { page, pageSize },
+    })
+    .then((r) => r.data);
 }
 
 // Pedido do usuário: além dos atalhos de 7/30/90 dias, poder extrair os

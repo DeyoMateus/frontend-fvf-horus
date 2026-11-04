@@ -474,12 +474,9 @@ export interface DashboardResumo {
     jornadaAbertaSemSubEvento: number;
     aguardandoDocumentacao: number;
     semJornadaAberta: number;
-    jornadasAbertasHaMuitoTempo: {
-      motoristaId: string;
-      nome: string;
-      desde: string;
-      horasAberta: number;
-    }[];
+    /** So a 1a pagina (Rodada 641); as demais vem de `getJornadasAbertasPagina`. */
+    jornadasAbertasHaMuitoTempo: JornadaAbertaHaMuitoTempo[];
+    totalJornadasAbertasHaMuitoTempo: number;
   };
   alertas: {
     abertos: { CRITICO: number; ATENCAO: number; INFO: number };
@@ -488,6 +485,22 @@ export interface DashboardResumo {
     riscoFraudeUltimos7d: number;
     topTipos7d: { tipo: TipoAlertaJornada; quantidade: number }[];
   };
+}
+
+export interface JornadaAbertaHaMuitoTempo {
+  motoristaId: string;
+  nome: string;
+  desde: string;
+  horasAberta: number;
+}
+
+export interface PaginaJornadasAbertas {
+  atualizadoEm: string;
+  itens: JornadaAbertaHaMuitoTempo[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPaginas: number;
 }
 
 export interface DashboardTendenciaDia {

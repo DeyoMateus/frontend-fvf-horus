@@ -1,3 +1,4 @@
+import { notificacoesDesktopAtivas } from "../utils/notificacoesDesktop";
 import { useToast } from "./ToastProvider";
 import { useEffect, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
@@ -50,6 +51,7 @@ const ROTULOS_SEVERIDADE: Record<string, string> = {
  * maioria dos navegadores exige isso pra mostrar o prompt).
  */
 function notificarAlertaNoDesktop(alerta: AlertaJornada) {
+  if (!notificacoesDesktopAtivas()) return;
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   const titulo =
@@ -75,6 +77,7 @@ function notificarAlertaNoDesktop(alerta: AlertaJornada) {
 }
 
 function notificarSolicitacaoNoDesktop(solicitacao: SolicitacaoAjustePonto) {
+  if (!notificacoesDesktopAtivas()) return;
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   try {
@@ -96,6 +99,7 @@ function notificarSolicitacaoNoDesktop(solicitacao: SolicitacaoAjustePonto) {
 }
 
 function notificarPedidoTitularNoDesktop(nome: string) {
+  if (!notificacoesDesktopAtivas()) return;
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   try {
@@ -229,6 +233,7 @@ export function NotificationBell() {
         chaves.forEach((c) => idsConhecidosRadarRef.current!.add(c));
         if (
           novos.length > 0 &&
+          notificacoesDesktopAtivas() &&
           typeof window !== "undefined" &&
           "Notification" in window &&
           Notification.permission === "granted"
@@ -266,6 +271,7 @@ export function NotificationBell() {
   }, []);
 
   function pedirPermissaoDeNotificacao() {
+  if (!notificacoesDesktopAtivas()) return;
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (Notification.permission === "default") {
       void Notification.requestPermission();
