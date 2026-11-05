@@ -34,6 +34,8 @@ import type {
 import { dataLocalIso } from "../utils/mascaras";
 import { intervaloVisivel } from "../hooks/intervaloVisivel";
 
+const INTERVALO_ALERTAS_ABERTOS_MS = 15_000; // rodada 647: alertas pedem ritmo mais curto que o resto
+const JITTER_MS = 5_000; // rodada 647: abas abertas juntas nao batem no servidor no mesmo instante
 const INTERVALO_ATUALIZACAO_MS = 30_000; // "tempo real" o suficiente pra um painel de gestão , não precisa de websocket pra isto
 
 // Pedido explícito do usuário: cards de risco/alertas piscam e pulsam
@@ -541,13 +543,17 @@ export function DashboardPage() {
 
   useEffect(() => {
     carregarResumo().finally(() => setCarregandoInicial(false));
-    return intervaloVisivel(carregarResumo, INTERVALO_ATUALIZACAO_MS);
+    return intervaloVisivel(carregarResumo, INTERVALO_ATUALIZACAO_MS, {
+      jitterMs: JITTER_MS,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void carregarAlertasAbertos();
-    return intervaloVisivel(carregarAlertasAbertos, INTERVALO_ATUALIZACAO_MS);
+    return intervaloVisivel(carregarAlertasAbertos, INTERVALO_ALERTAS_ABERTOS_MS, {
+      jitterMs: JITTER_MS,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

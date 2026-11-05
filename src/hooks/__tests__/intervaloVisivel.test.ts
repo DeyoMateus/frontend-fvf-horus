@@ -54,4 +54,24 @@ describe("intervaloVisivel", () => {
     definirVisibilidade("visible");
     expect(f).toHaveBeenCalledTimes(0);
   });
+
+  it("com jitter, a primeira execucao so acontece depois de um atraso aleatorio dentro do limite", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const f = vi.fn();
+    const parar = intervaloVisivel(f, 1000, { jitterMs: 400 });
+    vi.advanceTimersByTime(199);
+    expect(f).toHaveBeenCalledTimes(0);
+    vi.advanceTimersByTime(1000 + 1); // atraso de 200 ms + 1 ciclo de 1000 ms
+    expect(f).toHaveBeenCalledTimes(1);
+    parar();
+    vi.mocked(Math.random).mockRestore();
+  });
+
+  it("limpar durante o atraso do jitter cancela tudo", () => {
+    const f = vi.fn();
+    const parar = intervaloVisivel(f, 1000, { jitterMs: 400 });
+    parar();
+    vi.advanceTimersByTime(5000);
+    expect(f).toHaveBeenCalledTimes(0);
+  });
 });

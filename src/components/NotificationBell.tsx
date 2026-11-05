@@ -15,7 +15,16 @@ import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./penMenu";
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
 
-const INTERVALO_POLL_MS = 30000; // mesmo intervalo já usado no dashboard (ver DashboardPage).
+// Rodada 647: cada consulta do sino tem o ritmo que a urgencia dela pede (antes tudo a cada 30 s).
+// Alertas: 15 s (o critico aparece em ate ~15 s, mais ate 10 s de cache no servidor). Solicitacoes
+// de ajuste/folga e pedidos do titular: 60 s. Radar de dias sem interacao: 5 min (e atualiza na hora
+// quando o gestor trata um dia, pelo evento "radar-sem-interacao-atualizado"). Jitter: cada aba comeca
+// o ritmo num instante diferente, para varios paineis nao baterem no servidor juntos.
+const INTERVALO_ALERTAS_MS = 15_000;
+const INTERVALO_SOLICITACOES_MS = 60_000;
+const INTERVALO_PEDIDOS_TITULAR_MS = 60_000;
+const INTERVALO_RADAR_MS = 300_000;
+const JITTER_MS = 5_000;
 
 const LIMIAR_PULSAR_MS = 10 * 60 * 1000; // mesmo limiar usado nos cards do dashboard (ver DashboardPage.tsx)
 
@@ -163,6 +172,9 @@ export function NotificationBell() {
     } catch {
       // Sem rede/sessão momentaneamente , não derruba o resto do shell por causa do sininho.
     }
+  }
+
+  async function buscarSolicitacoes() {
     try {
       const pendentes = await listSolicitacoesPendentes();
       if (idsConhecidosSolicitacoesRef.current === null) {
@@ -212,7 +224,8 @@ export function NotificationBell() {
     void buscarPedidosTitular();
     return intervaloVisivel(
       () => void buscarPedidosTitular(),
-      INTERVALO_POLL_MS,
+      INTERVALO_PEDIDOS_TITULAR_MS,
+      { jitterMs: JITTER_MS },
     );
   }, []);
 
@@ -256,7 +269,9 @@ export function NotificationBell() {
 
   useEffect(() => {
     void buscarRadar();
-    const parar = intervaloVisivel(() => void buscarRadar(), INTERVALO_POLL_MS);
+    const parar = intervaloVisivel(() => void buscarRadar(), INTERVALO_RADAR_MS, {
+      jitterMs: JITTER_MS,
+    });
     const aoTratar = () => void buscarRadar();
     window.addEventListener("radar-sem-interacao-atualizado", aoTratar);
     return () => {
@@ -267,7 +282,18 @@ export function NotificationBell() {
 
   useEffect(() => {
     void buscar();
-    return intervaloVisivel(() => void buscar(), INTERVALO_POLL_MS);
+    return intervaloVisivel(() => void buscar(), INTERVALO_ALERTAS_MS, {
+      jitterMs: JITTER_MS,
+    });
+  }, []);
+
+  useEffect(() => {
+    void buscarSolicitacoes();
+    return intervaloVisivel(
+      () => void buscarSolicitacoes(),
+      INTERVALO_SOLICITACOES_MS,
+      { jitterMs: JITTER_MS },
+    );
   }, []);
 
   function pedirPermissaoDeNotificacao() {
