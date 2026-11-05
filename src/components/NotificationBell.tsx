@@ -13,7 +13,7 @@ import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
 import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./penMenu";
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
-import { listarPendenciasDoPainel } from "../api/painelPendencias";
+import { listarPendenciasDoPainel } from "../api/painelContadores";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
 
 // Rodada 647: cada consulta do sino tem o ritmo que a urgencia dela pede (antes tudo a cada 30 s).
