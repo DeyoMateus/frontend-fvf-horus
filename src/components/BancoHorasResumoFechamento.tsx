@@ -9,7 +9,9 @@ import { intervaloVisivel } from "../hooks/intervaloVisivel";
  * (pagar, compensar, ajustar) antes de fechar a folha. Usa os mesmos dados do Painel
  * (`/indicadores`), so horas, nunca valor em R$.
  */
-const INTERVALO_ATUALIZACAO_MS = 30_000; // igual ao Painel (tempo real)
+// Rodada 648: tela de apuracao do fechamento; 5 min bastam (antes 30 s, como o painel de operacoes).
+const INTERVALO_ATUALIZACAO_MS = 300_000;
+const JITTER_MS = 20_000;
 
 function Kpi({
   titulo,
@@ -72,6 +74,7 @@ export function BancoHorasResumoFechamento() {
     const parar = intervaloVisivel(
       () => void carregar(false),
       INTERVALO_ATUALIZACAO_MS,
+      { jitterMs: JITTER_MS },
     );
     return () => {
       cancelado = true;

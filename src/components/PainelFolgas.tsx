@@ -19,7 +19,10 @@ import { RankingFolgas } from "./RankingFolgas";
 import { RegrasDeFolga } from "./RegrasDeFolga";
 import { intervaloVisivel } from "../hooks/intervaloVisivel";
 
-const INTERVALO_ATUALIZACAO_MS = 30_000; // igual ao painel principal
+// Rodada 648: dashboard de analise (indicadores, ranking, historico de 90 dias): os numeros mudam em horas,
+// entao 5 min bastam. Aprovar/negar um pedido recarrega na hora (`versao`), e o gestor pode atualizar a mao.
+const INTERVALO_ATUALIZACAO_MS = 300_000;
+const JITTER_MS = 20_000;
 
 // Atalhos do período dos pedidos negados e das folgas não realizadas.
 const ATALHOS_PERIODO = [30, 60, 90];
@@ -532,7 +535,9 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
 
   useEffect(() => {
     void carregar();
-    return intervaloVisivel(() => void carregar(), INTERVALO_ATUALIZACAO_MS);
+    return intervaloVisivel(() => void carregar(), INTERVALO_ATUALIZACAO_MS, {
+      jitterMs: JITTER_MS,
+    });
   }, [carregar]);
 
   // Recarrega quando a lista de pedidos abaixo muda (aprovar/negar).
