@@ -13,6 +13,7 @@ import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
 import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./penMenu";
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
+import { listarPendenciasDoPainel } from "../api/painelPendencias";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
 
 // Rodada 647: cada consulta do sino tem o ritmo que a urgencia dela pede (antes tudo a cada 30 s).
@@ -21,8 +22,8 @@ import type { SolicitacaoPendenteSino } from "../api/privacidade";
 // quando o gestor trata um dia, pelo evento "radar-sem-interacao-atualizado"). Jitter: cada aba comeca
 // o ritmo num instante diferente, para varios paineis nao baterem no servidor juntos.
 const INTERVALO_ALERTAS_MS = 15_000;
-const INTERVALO_SOLICITACOES_MS = 60_000;
-const INTERVALO_PEDIDOS_TITULAR_MS = 60_000;
+// Rodada 653: ajustes, folgas e pedidos dos titulares vem numa consulta so, a cada 2 min.
+const INTERVALO_PENDENCIAS_MS = 120_000;
 const INTERVALO_RADAR_MS = 300_000;
 const JITTER_MS = 5_000;
 
@@ -174,23 +175,54 @@ export function NotificationBell() {
     }
   }
 
-  async function buscarSolicitacoes() {
-    try {
-      const pendentes = await listSolicitacoesPendentes();
-      if (idsConhecidosSolicitacoesRef.current === null) {
-        idsConhecidosSolicitacoesRef.current = new Set(
-          pendentes.map((s) => s.id),
-        );
-      } else {
-        const novas = pendentes.filter(
-          (s) => !idsConhecidosSolicitacoesRef.current!.has(s.id),
-        );
-        for (const solicitacao of novas) {
-          idsConhecidosSolicitacoesRef.current.add(solicitacao.id);
-          notificarSolicitacaoNoDesktop(solicitacao);
+  function aplicarAjustes(pendentes: SolicitacaoAjustePonto[]) {
+    if (idsConhecidosSolicitacoesRef.current === null) {
+      idsConhecidosSolicitacoesRef.current = new Set(pendentes.map((s) => s.id));
+    } else {
+      const novas = pendentes.filter(
+        (s) => !idsConhecidosSolicitacoesRef.current!.has(s.id),
+      );
+      for (const solicitacao of novas) {
+        idsConhecidosSolicitacoesRef.current.add(solicitacao.id);
+        notificarSolicitacaoNoDesktop(solicitacao);
+      }
+    }
+    setSolicitacoesPendentes(pendentes);
+  }
+
+  function aplicarTitulares(dados: SolicitacaoPendenteSino[]) {
+    if (idsConhecidosPedidosRef.current === null) {
+      idsConhecidosPedidosRef.current = new Set(dados.map((p) => p.id));
+    } else {
+      for (const p of dados) {
+        if (!idsConhecidosPedidosRef.current.has(p.id)) {
+          idsConhecidosPedidosRef.current.add(p.id);
+          notificarPedidoTitularNoDesktop(p.motorista.nome);
         }
       }
-      setSolicitacoesPendentes(pendentes);
+    }
+    setPedidosTitular(dados);
+  }
+
+  // Rodada 653: uma consulta so; se ela nao existir (servidor mais antigo) ou falhar,
+  // cai nas tres consultas separadas de antes.
+  async function buscarPendencias() {
+    try {
+      const r = await listarPendenciasDoPainel();
+      if (r.ajustes) aplicarAjustes(r.ajustes);
+      if (r.folgas) setPedidosFolga(r.folgas);
+      if (r.titulares) aplicarTitulares(r.titulares);
+      return;
+    } catch {
+      // cai nas consultas separadas
+    }
+    await buscarSolicitacoes();
+    await buscarPedidosTitular();
+  }
+
+  async function buscarSolicitacoes() {
+    try {
+      aplicarAjustes(await listSolicitacoesPendentes());
     } catch {
       // Idem , sininho não trava o resto do shell por isso.
     }
@@ -203,31 +235,11 @@ export function NotificationBell() {
 
   async function buscarPedidosTitular() {
     try {
-      const dados = await listarSolicitacoesTitularPendentes();
-      if (idsConhecidosPedidosRef.current === null) {
-        idsConhecidosPedidosRef.current = new Set(dados.map((p) => p.id));
-      } else {
-        for (const p of dados) {
-          if (!idsConhecidosPedidosRef.current.has(p.id)) {
-            idsConhecidosPedidosRef.current.add(p.id);
-            notificarPedidoTitularNoDesktop(p.motorista.nome);
-          }
-        }
-      }
-      setPedidosTitular(dados);
+      aplicarTitulares(await listarSolicitacoesTitularPendentes());
     } catch {
       // Sininho não trava o shell.
     }
   }
-
-  useEffect(() => {
-    void buscarPedidosTitular();
-    return intervaloVisivel(
-      () => void buscarPedidosTitular(),
-      INTERVALO_PEDIDOS_TITULAR_MS,
-      { jitterMs: JITTER_MS },
-    );
-  }, []);
 
   async function buscarRadar() {
     try {
@@ -288,10 +300,10 @@ export function NotificationBell() {
   }, []);
 
   useEffect(() => {
-    void buscarSolicitacoes();
+    void buscarPendencias();
     return intervaloVisivel(
-      () => void buscarSolicitacoes(),
-      INTERVALO_SOLICITACOES_MS,
+      () => void buscarPendencias(),
+      INTERVALO_PENDENCIAS_MS,
       { jitterMs: JITTER_MS },
     );
   }, []);
