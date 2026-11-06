@@ -160,18 +160,18 @@ function UsuariosEmpresaConteudo() {
         nunca é apagado: "Desativar" só bloqueia o login dele (e a vaga continua
         ocupada); "Excluir" (só gestores) encerra o acesso e libera a vaga. O histórico de tudo que
         ele já fez (ajustes, aprovações, feriados cadastrados) continua intacto.
-        Você pode cadastrar até 2 gestores para sua empresa. As caixas "Aprova
+        Cada empresa tem no máximo 1 admin e 1 gestor. As caixas "Aprova
         ajuste" e "Aceita divergência" definem quem pode aprovar pedidos de
         ajuste de ponto e aceitar divergências de jornada; cada mudança fica no
         histórico de auditoria.
       </p>
 
       <div className="card" style={{ maxWidth: 480 }}>
-        <h3 style={{ marginTop: 0 }}>Gestores ({gestoresAtuais}/2)</h3>
-        {gestoresAtuais >= 2 ? (
+        <h3 style={{ marginTop: 0 }}>Gestor ({gestoresAtuais}/1)</h3>
+        {gestoresAtuais >= 1 ? (
           <p style={{ fontSize: 13 }}>
-            O limite de 2 gestores foi atingido. Para cadastrar outro, é preciso
-            excluir um dos atuais (botão "Excluir" na lista abaixo).
+            O limite de 1 gestor foi atingido. Para cadastrar outro, é preciso
+            excluir o atual (botão "Excluir" na lista abaixo).
           </p>
         ) : !formAberto ? (
           <button type="button" onClick={() => setFormAberto(true)}>

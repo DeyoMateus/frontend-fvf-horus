@@ -1005,7 +1005,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:Gestores",
     titulo: "Cadastrar gestor",
     texto:
-      "O administrador pode cadastrar até dois gestores para a empresa. Informe nome, e-mail, uma senha inicial e, se quiser, o WhatsApp. Peça para o gestor trocar a senha no primeiro acesso, em Configuração.",
+      "O administrador pode cadastrar um gestor para a empresa (o limite é 1 admin e 1 gestor). Informe nome, e-mail, uma senha inicial e, se quiser, o WhatsApp. Peça para o gestor trocar a senha no primeiro acesso, em Configuração.",
   },
   {
     modulo: "usuarios",
