@@ -18,6 +18,7 @@ const ROTULOS_CONHECIDOS: Record<string, string> = {
   registroId: "Registro",
   observacao: "Observação",
   motivo: "Motivo",
+  permissoes: "Permissões que faltavam",
 };
 
 const PALAVRAS_ESPECIAIS: Record<string, string> = {

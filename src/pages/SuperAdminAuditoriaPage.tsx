@@ -1,6 +1,7 @@
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
+import { rotuloAcaoAuditoria, rotuloPermissaoAusente } from "../utils/rotuloAcaoAuditoria";
 import {
   listarAuditoriaSuperAdmin,
   listarOcorrenciasAuditoriaSuperAdmin,
@@ -24,7 +25,7 @@ const ROTULO_ACTOR_TYPE: Record<ActorType, string> = {
 };
 
 function formatarValorDetalhe(valor: unknown): string {
-  if (Array.isArray(valor)) return valor.join(", ");
+  if (Array.isArray(valor)) return valor.map((v) => (typeof v === "string" ? rotuloPermissaoAusente(v) : String(v))).join(", ");
   if (typeof valor === "string" && /^\d{4}-\d{2}-\d{2}T/.test(valor)) {
     return new Date(valor).toLocaleString("pt-BR");
   }
@@ -267,7 +268,7 @@ export function SuperAdminAuditoriaPage() {
                         checked={selecionadas.has(chave)}
                         onChange={() => alternarSelecao(chave)}
                       />{" "}
-                      {o.acao}
+                      {rotuloAcaoAuditoria(o.acao)}
                     </label>
                   );
                 })}
@@ -317,7 +318,7 @@ export function SuperAdminAuditoriaPage() {
                           )}
                         </td>
                         <td>{ROTULO_ACTOR_TYPE[r.actorType]}</td>
-                        <td>{r.acao}</td>
+                        <td title={r.acao}>{rotuloAcaoAuditoria(r.acao)}</td>
                         <td>
                           {r.entidade}
                           {r.entidadeId
