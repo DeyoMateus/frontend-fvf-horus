@@ -19,6 +19,8 @@ const ROTULOS_CONHECIDOS: Record<string, string> = {
   observacao: "Observação",
   motivo: "Motivo",
   permissoes: "Permissões que faltavam",
+  avisos: "Avisos que a pessoa viu e confirmou",
+  flags: "Sinais enviados pelo app",
 };
 
 const PALAVRAS_ESPECIAIS: Record<string, string> = {

@@ -20,6 +20,7 @@ import { PaginacaoPopup } from "../components/PaginacaoPopup";
 const ROTULO_ACTOR_TYPE: Record<ActorType, string> = {
   USUARIO_EMPRESA: "Usuário do painel",
   MOTORISTA: "Motorista (app)",
+  AJUDANTE: "Ajudante (app)",
   SISTEMA: "Sistema (automático)",
   SUPER_ADMIN: "Super admin",
 };

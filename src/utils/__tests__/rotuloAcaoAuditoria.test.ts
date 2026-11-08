@@ -8,6 +8,10 @@ describe('rotuloAcaoAuditoria', () => {
     );
   });
 
+  it('dá nome legível ao aviso confirmado no ponto', () => {
+    expect(rotuloAcaoAuditoria('AVISO_CONFIRMADO_NO_PONTO')).toContain('foi avisada e continuou');
+  });
+
   it('ação sem rótulo continua com o nome técnico', () => {
     expect(rotuloAcaoAuditoria('OUTRA_ACAO')).toBe('OUTRA_ACAO');
   });
@@ -18,6 +22,11 @@ describe('rotuloPermissaoAusente', () => {
     expect(rotuloPermissaoAusente('LOCALIZACAO')).toBe('Localização negada');
     expect(rotuloPermissaoAusente('LOCALIZACAO_SEMPRE')).toBe('Localização sem permissão "o tempo todo"');
     expect(rotuloPermissaoAusente('NOTIFICACOES')).toBe('Notificações desligadas');
+  });
+
+  it('traduz os avisos confirmados', () => {
+    expect(rotuloPermissaoAusente('RELOGIO_DIVERGENTE')).toBe('Horário do aparelho diferente do oficial');
+    expect(rotuloPermissaoAusente('POSICAO_POSSIVELMENTE_FALSA')).toBe('Localização possivelmente alterada');
   });
 
   it('valor desconhecido volta como veio', () => {

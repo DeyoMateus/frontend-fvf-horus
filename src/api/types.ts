@@ -412,6 +412,7 @@ export interface AlertaJornada {
 export type ActorType =
   | "USUARIO_EMPRESA"
   | "MOTORISTA"
+  | "AJUDANTE"
   | "SISTEMA"
   | "SUPER_ADMIN";
 

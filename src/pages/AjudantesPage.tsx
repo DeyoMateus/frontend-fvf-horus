@@ -6,6 +6,7 @@ import { usePrompt } from "../components/PromptProvider";
 import {
   atualizarStatusAjudante,
   baixarEspelhoAjudantePdf,
+  contarAlertasPendentesEspelho,
   createAjudante,
   excluirAjudante,
   getAlertasJornadaAbertaAjudantes,
@@ -60,12 +61,20 @@ export function AjudantesPage() {
   async function onEspelho(a: Ajudante) {
     setEspelhoBaixando(a.id);
     try {
-      await baixarEspelhoAjudantePdf(
-        a.id,
-        a.nome,
-        new Date(`${espInicio}T00:00:00`).toISOString(),
-        new Date(`${espFim}T23:59:59.999`).toISOString(),
-      );
+      const inicioIso = new Date(`${espInicio}T00:00:00`).toISOString();
+      const fimIso = new Date(`${espFim}T23:59:59.999`).toISOString();
+      // Rodada 672: o espelho nao e bloqueado, mas o gestor e avisado se ha alertas de ponto nao tratados.
+      const pendentes = await contarAlertasPendentesEspelho(a.id, inicioIso, fimIso).catch(() => 0);
+      if (
+        pendentes > 0 &&
+        !(await confirm(
+          `${a.nome} tem ${pendentes} alerta(s) de ponto não tratado(s) neste período. As horas do espelho podem mudar depois do tratamento. Baixar o espelho assim mesmo?`,
+          { textoConfirmar: "Baixar assim mesmo" },
+        ))
+      ) {
+        return;
+      }
+      await baixarEspelhoAjudantePdf(a.id, a.nome, inicioIso, fimIso);
     } catch {
       setErro("Não foi possível gerar o espelho de ponto agora (confira o período e tente de novo).");
     } finally {

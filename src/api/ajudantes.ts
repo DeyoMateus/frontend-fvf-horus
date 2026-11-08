@@ -68,6 +68,14 @@ export function revogarDispositivoAjudante(id: string) {
   return api.delete(`/ajudantes/${id}/dispositivo`);
 }
 
+/** Rodada 672: quantos alertas de ponto do ajudante no periodo ainda nao foram tratados. */
+export async function contarAlertasPendentesEspelho(id: string, inicio: string, fim: string): Promise<number> {
+  const resposta = await api.get<{ alertasPendentes?: number }>(`/ajudantes/${id}/espelho`, {
+    params: { inicio, fim },
+  });
+  return resposta.data.alertasPendentes ?? 0;
+}
+
 /** Rodada 491 (N17): baixa o espelho de ponto do ajudante em PDF. */
 export async function baixarEspelhoAjudantePdf(
   id: string,
