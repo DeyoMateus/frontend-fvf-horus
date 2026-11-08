@@ -72,7 +72,14 @@ import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { baixarCsvTabela, imprimirTabela } from "../utils/exportarTabelaModal";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { useListaPaginada } from "../hooks/useListaPaginada";
-import { DadosContratoCard } from "../components/DadosContratoCard";
+import {
+  CamposDadosContrato,
+  contratoDoMotorista,
+  contratoParaPayload,
+  CONTRATO_VAZIO,
+} from "../components/CamposDadosContrato";
+import type { ValoresContrato } from "../components/CamposDadosContrato";
+import { atualizarContratoMotorista } from "../api/dadosContrato";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { baixarHoleritePdf, calcularHolerite } from "../api/holerite";
 import { BancoHorasPainel } from "../components/BancoHorasPainel";
@@ -302,6 +309,8 @@ export function MotoristaDetailPage() {
   const [erroStatus, setErroStatus] = useState<string | null>(null);
 
   const [editandoCadastro, setEditandoCadastro] = useState(false);
+  const [contratoEdit, setContratoEdit] =
+    useState<ValoresContrato>(CONTRATO_VAZIO);
   const [nomeEdit, setNomeEdit] = useState("");
   const [telefoneEdit, setTelefoneEdit] = useState("");
   // Rodada 278: CNPJ ao qual o motorista esta vinculado (editavel).
@@ -1188,6 +1197,7 @@ export function MotoristaDetailPage() {
     setNomeEdit(motorista!.nome);
     setTelefoneEdit(motorista!.telefone ?? "");
     setEmpresaEdit(motorista!.empresaId ?? "");
+    setContratoEdit(contratoDoMotorista(motorista!));
     setErroCadastro(null);
     setEditandoCadastro(true);
   }
@@ -1225,10 +1235,15 @@ export function MotoristaDetailPage() {
             }
           : prev,
       );
+      await atualizarContratoMotorista(
+        motoristaId,
+        contratoParaPayload(contratoEdit),
+      );
       setEditandoCadastro(false);
+      await carregarTudo();
     } catch {
       setErroCadastro(
-        "Não foi possível salvar os dados cadastrais (verifique o nome e o telefone).",
+        "Não foi possível salvar os dados cadastrais (verifique o nome, o telefone e os dados de contrato).",
       );
     } finally {
       setSalvandoCadastro(false);
@@ -1352,7 +1367,11 @@ export function MotoristaDetailPage() {
                 </label>
                 <select
                   value={empresaEdit}
-                  onChange={(e) => setEmpresaEdit(e.target.value)}
+                  onChange={(e) => {
+                    setEmpresaEdit(e.target.value);
+                    // O horário contratual pertence à empresa: troca de CNPJ limpa a escolha.
+                    setContratoEdit((c) => ({ ...c, horarioContratualId: "" }));
+                  }}
                 >
                   {empresasGrupo.map((emp) => (
                     <option key={emp.id} value={emp.id}>
@@ -1366,6 +1385,12 @@ export function MotoristaDetailPage() {
                 </p>
               </>
             )}
+
+            <CamposDadosContrato
+              valores={contratoEdit}
+              onChange={setContratoEdit}
+              empresaId={empresaEdit || motorista.empresaId}
+            />
 
             {erroCadastro && <p className="error-text">{erroCadastro}</p>}
 
@@ -1499,13 +1524,6 @@ export function MotoristaDetailPage() {
             continua intacto.
           </p>
         </div>
-      )}
-
-      {motorista && (
-        <DadosContratoCard
-          motorista={motorista}
-          onSalvo={() => void carregarTudo()}
-        />
       )}
 
       <div className="card">

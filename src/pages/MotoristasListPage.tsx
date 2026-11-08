@@ -3,6 +3,14 @@ import { AxiosError } from "axios";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { Link, useNavigate } from "react-router-dom";
 import { createMotorista, listarTodosMotoristas } from "../api/motoristas";
+import { atualizarContratoMotorista } from "../api/dadosContrato";
+import {
+  CamposDadosContrato,
+  contratoParaPayload,
+  contratoPreenchido,
+  CONTRATO_VAZIO,
+} from "../components/CamposDadosContrato";
+import type { ValoresContrato } from "../components/CamposDadosContrato";
 import type { CreateMotoristaInput } from "../api/motoristas";
 import { listEmpresas } from "../api/empresas";
 import {
@@ -44,6 +52,8 @@ export function MotoristasListPage() {
   const [tecnologiaRastreador, setTecnologiaRastreador] = useState("");
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [criando, setCriando] = useState(false);
+  const [contratoNovo, setContratoNovo] =
+    useState<ValoresContrato>(CONTRATO_VAZIO);
   // Rodada 96 , pedido do usuário: formulário de cadastro minimizado por
   // padrão, só abre ao clicar em "+ Novo motorista" (a lista de
   // motoristas é o que mais se usa no dia a dia; o formulário ocupava
@@ -185,7 +195,7 @@ export function MotoristasListPage() {
     setErroForm(null);
     setCriando(true);
     try {
-      await createMotorista({
+      const criado = await createMotorista({
         nome,
         cpf,
         cnh,
@@ -196,6 +206,19 @@ export function MotoristasListPage() {
         tecnologiaRastreador: (tecnologiaRastreador ||
           undefined) as CreateMotoristaInput["tecnologiaRastreador"],
       });
+      if (contratoPreenchido(contratoNovo)) {
+        try {
+          await atualizarContratoMotorista(
+            criado.id,
+            contratoParaPayload(contratoNovo),
+          );
+        } catch {
+          setErro(
+            "Motorista cadastrado, mas os dados de contrato não foram salvos. Abra o cadastro, clique em Editar e preencha de novo.",
+          );
+        }
+      }
+      setContratoNovo(CONTRATO_VAZIO);
       setNome("");
       setCpf("");
       setCnh("");
@@ -237,6 +260,11 @@ export function MotoristasListPage() {
     (s) => s.criadoEm,
   );
   const paginacaoMotoristas = useListaPaginada(motoristas, (m) => m.createdAt);
+  // Radar: mostra 10 por vez; "100" abre janela dedicada, igual às demais listas.
+  const paginacaoRadar = useListaPaginada(semInteracao, () => null, {
+    qtdInicial: 10,
+    comparador: () => 0,
+  });
 
   return (
     <div>
@@ -345,6 +373,11 @@ export function MotoristasListPage() {
                 </select>
               </>
             )}
+            <CamposDadosContrato
+              valores={contratoNovo}
+              onChange={setContratoNovo}
+              empresaId={empresaId}
+            />
             {erroForm && <p className="error-text">{erroForm}</p>}
             <button type="submit" disabled={criando}>
               {criando ? "Cadastrando..." : "Cadastrar"}
@@ -372,8 +405,22 @@ export function MotoristasListPage() {
             sinal ou esquecimento) e então lança os horários no Tratamento de
             ponto. O dia sai do radar depois de tratado.
           </p>
+          <ControlesListaPaginada
+            ordem={paginacaoRadar.ordem}
+            onAlternarOrdem={paginacaoRadar.alternarOrdem}
+            qtdPorPagina={paginacaoRadar.qtdPorPagina}
+            onMudarQtdPorPagina={paginacaoRadar.mudarQtdPorPagina}
+            pagina={paginacaoRadar.pagina}
+            totalPaginas={paginacaoRadar.totalPaginas}
+            popupAberto={paginacaoRadar.popupAberto}
+            onAbrirPopup={paginacaoRadar.abrirPopup}
+            onFecharPopup={paginacaoRadar.fecharPopup}
+            onSelecionarPagina={paginacaoRadar.irParaPagina}
+            tituloPopup="Radar: dias sem interação"
+            semOrdem
+          >
           <ul style={{ fontSize: 13 }}>
-            {semInteracao.map((m) => (
+            {paginacaoRadar.itensExibidos.map((m) => (
               <li key={m.motoristaId} style={{ marginBottom: 6 }}>
                 <Link to={`/motoristas/${m.motoristaId}`}>{m.nome}</Link>:{" "}
                 {m.diasSemInteracao.map((d) => (
@@ -392,6 +439,7 @@ export function MotoristasListPage() {
               </li>
             ))}
           </ul>
+          </ControlesListaPaginada>
         </div>
       )}
 
