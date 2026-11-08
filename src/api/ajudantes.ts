@@ -97,3 +97,46 @@ export function getAlertasJornadaAbertaAjudantes() {
     .get<AlertaJornadaAbertaAjudante[]>("/ajudantes/alertas/jornada-aberta")
     .then((r) => r.data);
 }
+
+// Rodada 668: pontos do ajudante batidos com divergência de relógio (fila do gestor).
+export interface AlertaPontoAjudante {
+  id: string;
+  ajudanteId: string;
+  ajudanteNome: string;
+  registroId: string;
+  tipoEvento: string;
+  flags: string[];
+  horarioInformado: string;
+  horaProvavel: string | null;
+  horaProvavelFonte: string | null;
+  tratadoEm: string | null;
+  tratamentoObservacao: string | null;
+  createdAt: string;
+}
+
+export function listarAlertasPontoAjudantes(tratado?: boolean) {
+  return api
+    .get<AlertaPontoAjudante[]>("/ajudantes/alertas-ponto/lista", {
+      params: tratado === undefined ? undefined : { tratado },
+    })
+    .then((r) => r.data);
+}
+
+export function tratarAlertaPontoAjudante(alertaId: string, observacao: string) {
+  return api
+    .patch(`/ajudantes/alertas-ponto/${alertaId}/tratar`, { observacao })
+    .then((r) => r.data);
+}
+
+export function corrigirHoraPontoAjudante(
+  alertaId: string,
+  horarioCorreto: string,
+  observacao: string,
+) {
+  return api
+    .patch(`/ajudantes/alertas-ponto/${alertaId}/corrigir-hora`, {
+      horarioCorreto,
+      observacao,
+    })
+    .then((r) => r.data);
+}

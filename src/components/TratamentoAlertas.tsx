@@ -83,6 +83,20 @@ export function FormularioTratamentoAlerta({
   const ehRelogio = alerta.tipo === "RELOGIO_PONTO_RECUSADO";
   const ehPontoComFlag = alerta.tipo === "PONTO_ACEITO_COM_FLAG";
   const obs = observacao.trim();
+  // Hora provável estimada pelo servidor (GPS ou contador do aparelho): só uma
+  // sugestão. O gestor escolhe usá-la ou digita outra; o ponto original não muda.
+  const horaProvavelIso =
+    typeof alerta.detalhes?.horaProvavel === "string"
+      ? alerta.detalhes.horaProvavel
+      : null;
+  const horaProvavelFonte =
+    typeof alerta.detalhes?.horaProvavelFonte === "string"
+      ? alerta.detalhes.horaProvavelFonte
+      : null;
+  const horaInformadaIso =
+    typeof alerta.detalhes?.timestampEvento === "string"
+      ? alerta.detalhes.timestampEvento
+      : null;
 
   async function salvar() {
     if (obs.length < 3) return;
@@ -185,6 +199,39 @@ export function FormularioTratamentoAlerta({
               seguinte do motorista. Se o horário estiver certo, use apenas
               "Salvar tratamento".
             </p>
+            {horaInformadaIso && (
+              <p style={{ fontSize: 13, margin: "0 0 4px" }}>
+                Horário informado pelo aparelho:{" "}
+                <strong>
+                  {new Date(horaInformadaIso).toLocaleString("pt-BR")}
+                </strong>
+              </p>
+            )}
+            {horaProvavelIso ? (
+              <p style={{ fontSize: 13, margin: "0 0 6px" }}>
+                Horário provável estimado pelo sistema (
+                {horaProvavelFonte === "GPS"
+                  ? "pela hora do GPS"
+                  : "pelo tempo que o aparelho ficou ligado desde o toque"}
+                ):{" "}
+                <strong>
+                  {new Date(horaProvavelIso).toLocaleString("pt-BR")}
+                </strong>{" "}
+                <button
+                  type="button"
+                  className="secondary"
+                  style={{ fontSize: 12 }}
+                  onClick={() => setHorario(paraCampoDataHora(horaProvavelIso))}
+                >
+                  Usar este horário
+                </button>
+              </p>
+            ) : (
+              <p style={{ fontSize: 13, margin: "0 0 6px" }}>
+                O sistema não conseguiu estimar um horário provável para este
+                ponto. Informe a hora correta abaixo.
+              </p>
+            )}
             <label style={{ fontSize: 13 }}>
               Hora correta do ponto:{" "}
               <input
@@ -239,6 +286,13 @@ export function FormularioTratamentoAlerta({
       </div>
     </div>
   );
+}
+
+/** ISO (UTC) -> valor do campo datetime-local, no fuso do navegador. */
+function paraCampoDataHora(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 /** Barra do tratamento coletivo: aparece quando há alertas não críticos marcados. */

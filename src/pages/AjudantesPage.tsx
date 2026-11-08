@@ -20,6 +20,7 @@ import { aplicarMascaraCpf, dataLocalIso, somenteDigitos } from "../utils/mascar
 import type { Ajudante, Empresa, StatusMotorista } from "../api/types";
 import { useListaPaginada } from "../hooks/useListaPaginada";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
+import { AlertasPontoAjudante } from "../components/AlertasPontoAjudante";
 
 /**
  * Cadastro e gestão de Ajudantes (Rodada 66) , cadastro SEPARADO do
@@ -230,6 +231,8 @@ export function AjudantesPage() {
           </ul>
         </div>
       )}
+
+      <AlertasPontoAjudante />
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Cadastrar ajudante</h3>
