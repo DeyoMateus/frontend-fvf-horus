@@ -9,7 +9,9 @@ import {
 import type { RelatorioRetencao } from "../api/retencao";
 import type { Empresa } from "../api/types";
 import { useAuth } from "../context/AuthContext";
+import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { useConfirm } from "../components/ConfirmProvider";
+import { useListaPaginada } from "../hooks/useListaPaginada";
 import { usePrompt } from "../components/PromptProvider";
 import { rotuloStatusMotorista } from "../utils/rotulos";
 
@@ -126,6 +128,8 @@ function ParametrosEmpresa({
   );
 }
 
+const SEM_MOTORISTAS: RelatorioRetencao["motoristas"] = [];
+
 function RetencaoConteudo() {
   const confirm = useConfirm();
   const prompt = usePrompt();
@@ -134,6 +138,12 @@ function RetencaoConteudo() {
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [datas, setDatas] = useState<Record<string, string>>({});
+  // Rodada 678: a tabela de motoristas passa a ter "mostrar 10/20/50/100 por vez" como as demais telas.
+  // Ordem fixa por nome (esta lista não tem uma data útil para ordenar ou filtrar).
+  const lista = useListaPaginada(rel?.motoristas ?? SEM_MOTORISTAS, () => null, {
+    qtdInicial: 10,
+    comparador: (a, b) => a.nome.localeCompare(b.nome, "pt-BR"),
+  });
 
   async function carregar() {
     setCarregando(true);
@@ -244,6 +254,20 @@ function RetencaoConteudo() {
             {rel.aviso} Registros que já cumpriram o prazo (informativo):{" "}
             {rel.totalElegiveis}.
           </p>
+          <ControlesListaPaginada
+            ordem={lista.ordem}
+            onAlternarOrdem={lista.alternarOrdem}
+            qtdPorPagina={lista.qtdPorPagina}
+            onMudarQtdPorPagina={lista.mudarQtdPorPagina}
+            pagina={lista.pagina}
+            totalPaginas={lista.totalPaginas}
+            popupAberto={lista.popupAberto}
+            onAbrirPopup={lista.abrirPopup}
+            onFecharPopup={lista.fecharPopup}
+            onSelecionarPagina={lista.irParaPagina}
+            tituloPopup="Retenção: motoristas"
+            semOrdem
+          >
           <div className="card" style={{ overflowX: "auto" }}>
             <table>
               <thead>
@@ -258,7 +282,7 @@ function RetencaoConteudo() {
                 </tr>
               </thead>
               <tbody>
-                {rel.motoristas.map((m) => {
+                {lista.itensExibidos.map((m) => {
                   const atual = (m.dataDesligamento ?? "").slice(0, 10);
                   const valor = datas[m.motoristaId] ?? atual;
                   return (
@@ -314,6 +338,7 @@ function RetencaoConteudo() {
               </tbody>
             </table>
           </div>
+          </ControlesListaPaginada>
         </>
       )}
     </div>
