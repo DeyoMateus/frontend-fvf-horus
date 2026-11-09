@@ -1,3 +1,4 @@
+import { PopupBase } from "./PopupBase";
 import { useState } from "react";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import {
@@ -135,43 +136,46 @@ export function FechamentoModal({
     }
   }
 
+  const btnPeq = { padding: "5px 10px", fontSize: 12 } as const;
+
   return (
-    <div
-      onClick={onFechar}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.4)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 50,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="card"
-        style={{
-          width: 560,
-          maxWidth: "92vw",
-          maxHeight: "85vh",
-          overflowY: "auto",
-          padding: 24,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Fechamento de jornada</h3>
-          <button className="secondary" onClick={onFechar} title="Fechar">
-            ×
+    <PopupBase
+      titulo="Fechamento de jornada"
+      onFechar={onFechar}
+      rodape={
+        <>
+          <button className="secondary" style={btnPeq} onClick={onFechar}>
+            Cancelar
           </button>
-        </div>
-        <p style={{ color: "#000000", marginTop: -8, fontSize: 13 }}>
+          <button
+            className="secondary"
+            style={btnPeq}
+            onClick={onBaixarEventosCsv}
+            disabled={gerando}
+            title="Horas por evento (direção, espera, normais, extras, adicional noturno, interjornada) para importar na folha de pagamento da empresa. Só horas, sem valores em reais."
+          >
+            Eventos para a folha (CSV)
+          </button>
+          <button
+            style={btnPeq}
+            onClick={onBaixar}
+            disabled={gerando}
+            title={
+              quantidadeEfetiva === 1
+                ? "Baixa o fechamento do motorista selecionado em PDF."
+                : "Baixa um ZIP com 1 PDF por motorista."
+            }
+          >
+            {gerando
+              ? "Gerando…"
+              : quantidadeEfetiva === 1
+                ? "Baixar fechamento (PDF)"
+                : "Baixar fechamento (.zip)"}
+          </button>
+        </>
+      }
+    >
+        <p style={{ color: "#000000", margin: "0 0 8px", fontSize: 12 }}>
           Individual (marque um motorista) ou da frota inteira (nenhum marcado =
           todos). Só horas, sem nenhum valor em R$: o RH decide o pagamento fora
           da plataforma com base nas horas completas e separadas.
@@ -182,7 +186,7 @@ export function FechamentoModal({
             display: "flex",
             gap: 16,
             flexWrap: "wrap",
-            marginBottom: 12,
+            marginBottom: 8,
           }}
         >
           <label>
@@ -210,8 +214,8 @@ export function FechamentoModal({
         <div
           style={{
             display: "flex",
-            gap: 16,
-            marginBottom: 12,
+            gap: 12,
+            marginBottom: 8,
             flexWrap: "wrap",
           }}
         >
@@ -268,10 +272,10 @@ export function FechamentoModal({
           style={{
             border: "1px solid #e5e7eb",
             borderRadius: 6,
-            maxHeight: 220,
+            maxHeight: 130,
             overflowY: "auto",
-            padding: 8,
-            marginBottom: 12,
+            padding: 6,
+            marginBottom: 6,
           }}
         >
           {motoristas.length === 0 && (
@@ -330,28 +334,6 @@ export function FechamentoModal({
             </div>
           </div>
         )}
-
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <button className="secondary" onClick={onFechar}>
-            Cancelar
-          </button>
-          <button
-            className="secondary"
-            onClick={onBaixarEventosCsv}
-            disabled={gerando}
-            title="Horas por evento (direção, espera, normais, extras, adicional noturno, interjornada) para importar na folha de pagamento da empresa. Só horas, sem valores em reais."
-          >
-            Baixar eventos para a folha (CSV)
-          </button>
-          <button onClick={onBaixar} disabled={gerando}>
-            {gerando
-              ? "Gerando…"
-              : quantidadeEfetiva === 1
-                ? "Baixar fechamento selecionado (PDF)"
-                : `Baixar fechamento ${todosSelecionados ? "da frota" : "selecionado"} (.zip, 1 PDF por motorista)`}
-          </button>
-        </div>
-      </div>
-    </div>
+    </PopupBase>
   );
 }
