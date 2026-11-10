@@ -416,7 +416,7 @@ function PainelDetalheCard({
                             : 400,
                       }}
                     >
-                      {m.detalhe ? renderizarHorarios(m.detalhe) : ","}
+                      {m.detalhe ? renderizarHorarios(m.detalhe) : "--"}
                     </td>
                   </tr>
                 ))}

@@ -1322,7 +1322,7 @@ export function RegrasSindicaisPage() {
                   </td>
                   <td style={{ fontSize: 12 }}>
                     {(r.empresas ?? []).map((e) => e.razaoSocial).join(", ") ||
-                      ","}
+                      "--"}
                   </td>
                   <td>
                     {usuario?.papel === "ADMIN" && (

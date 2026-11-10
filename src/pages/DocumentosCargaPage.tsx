@@ -395,8 +395,8 @@ export function DocumentosCargaPage() {
             {documentos.map((d) => (
               <tr key={d.id}>
                 <td>{d.tipo === "CTE" ? "CT-e" : "MDF-e"}</td>
-                <td>{d.numero ?? ","}</td>
-                <td style={{ fontSize: 11 }}>{d.chaveAcesso ?? ","}</td>
+                <td>{d.numero ?? "--"}</td>
+                <td style={{ fontSize: 11 }}>{d.chaveAcesso ?? "--"}</td>
                 <td>{d.statusCarga === "CARREGADO" ? "Carregado" : "Vazio"}</td>
                 <td>
                   {d.motoristaId ? (
@@ -404,7 +404,7 @@ export function DocumentosCargaPage() {
                       {d.motorista?.nome ?? d.motoristaId}
                     </Link>
                   ) : (
-                    ","
+                    "--"
                   )}
                 </td>
                 <td>{new Date(d.createdAt).toLocaleString("pt-BR")}</td>
@@ -413,7 +413,7 @@ export function DocumentosCargaPage() {
                       "Fim de descarregamento" no app (desvínculo FIFO). */}
                   {d.entregueEm
                     ? new Date(d.entregueEm).toLocaleString("pt-BR")
-                    : ","}
+                    : "--"}
                 </td>
                 <td style={{ fontSize: 12 }}>
                   {/* Coordenadas do destinatário, geocodificadas automaticamente
@@ -432,7 +432,7 @@ export function DocumentosCargaPage() {
                       Ver cerca virtual
                     </button>
                   ) : (
-                    <span style={{ color: "#000000" }}>,</span>
+                    <span style={{ color: "#000000" }}>--</span>
                   )}
                 </td>
                 <td style={{ display: "flex", gap: 6 }}>

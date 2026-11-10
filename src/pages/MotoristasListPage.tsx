@@ -521,10 +521,10 @@ export function MotoristasListPage() {
                   <td>{s.motorista?.nome ?? s.motoristaId}</td>
                   <td style={{ fontSize: 11 }}>{s.deviceUuidSolicitado}</td>
                   <td style={{ fontSize: 12 }}>
-                    {s.modeloAparelho ?? ","} · {s.sistemaOperacional ?? ","}
+                    {s.modeloAparelho ?? "--"} · {s.sistemaOperacional ?? "--"}
                   </td>
                   <td style={{ fontSize: 12 }}>
-                    {s.observacaoMotorista ?? ","}
+                    {s.observacaoMotorista ?? "--"}
                   </td>
                   <td>{new Date(s.criadoEm).toLocaleString("pt-BR")}</td>
                   <td>

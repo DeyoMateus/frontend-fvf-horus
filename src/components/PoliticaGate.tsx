@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { obterMinhaPolitica } from "../api/privacidade";
 import type { MinhaPolitica } from "../api/privacidade";
+import { liberarPerfilParaResolverPendencia } from "../utils/bloqueioDeAcessoPendente";
 import { PoliticaPrivacidadeModal } from "./PoliticaPrivacidadeModal";
 
 /**
@@ -10,11 +11,13 @@ import { PoliticaPrivacidadeModal } from "./PoliticaPrivacidadeModal";
  * aceita, o painel (e o tour) não abre. Rodada 513 (N201): se o servidor não
  * responder, o painel NÃO abre (falhar aberto deixaria o usuário usar o
  * sistema sem ter aceitado a política); mostra erro com "Tentar novamente".
+ * Rodada 687: exceção só para a tela de perfil quando o servidor bloqueia tudo por senha provisória
+ * ou MFA pendente (senão a pessoa nunca chega ao formulário que resolve isso).
  */
 export function PoliticaGate({ children }: { children: ReactNode }) {
-  const [estado, setEstado] = useState<"carregando" | "pendente" | "liberado" | "erro">(
-    "carregando",
-  );
+  const [estado, setEstado] = useState<
+    "carregando" | "pendente" | "liberado" | "erro" | "perfil-pendencia"
+  >("carregando");
   const [politica, setPolitica] = useState<MinhaPolitica | null>(null);
 
   const [tentativa, setTentativa] = useState(0);
@@ -28,8 +31,13 @@ export function PoliticaGate({ children }: { children: ReactNode }) {
         setPolitica(p);
         setEstado(p.aceita ? "liberado" : "pendente");
       })
-      .catch(() => {
-        if (!cancelado) setEstado("erro");
+      .catch((err) => {
+        if (cancelado) return;
+        setEstado(
+          liberarPerfilParaResolverPendencia(err, window.location.pathname)
+            ? "perfil-pendencia"
+            : "erro",
+        );
       });
     return () => {
       cancelado = true;
@@ -56,5 +64,6 @@ export function PoliticaGate({ children }: { children: ReactNode }) {
       />
     );
   }
+  // "liberado" ou "perfil-pendencia" (o servidor segue barrando tudo, menos a troca de senha / MFA).
   return <>{children}</>;
 }

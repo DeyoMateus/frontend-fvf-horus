@@ -509,7 +509,7 @@ export function SuperAdminGrupoDetailPage() {
                 <tr key={e.id}>
                   <td>{e.razaoSocial}</td>
                   <td>{e.cnpj}</td>
-                  <td>{e.registroInpiAfd ?? ","}</td>
+                  <td>{e.registroInpiAfd ?? "--"}</td>
                   <td>{e.ativo ? "Ativo" : "Desativado"}</td>
                   <td>{e.totalMotoristas}</td>
                   <td style={{ display: "flex", gap: 6 }}>

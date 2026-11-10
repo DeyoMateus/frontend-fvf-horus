@@ -1927,8 +1927,8 @@ export function MotoristaDetailPage() {
             {trocasPendentes.map((t) => (
               <li key={t.id}>
                 {new Date(t.createdAt).toLocaleString("pt-BR")}:{" "}
-                {t.detalhes?.placaAnterior ?? ","} →{" "}
-                {t.detalhes?.placaNova ?? ","} (por{" "}
+                {t.detalhes?.placaAnterior ?? "--"} →{" "}
+                {t.detalhes?.placaNova ?? "--"} (por{" "}
                 {t.actorType === "MOTORISTA" ? "motorista" : "painel"})
               </li>
             ))}

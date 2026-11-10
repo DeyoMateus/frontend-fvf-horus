@@ -310,7 +310,7 @@ export function BancoHorasPainel({ motoristaId }: { motoristaId: string }) {
                   <td>{a.data.slice(0, 10)}</td>
                   <td>{ROTULO_TIPO[a.tipo]}</td>
                   <td>{minParaHoras(a.minutos)}</td>
-                  <td>{a.registradoPorUsuario?.nome ?? ","}</td>
+                  <td>{a.registradoPorUsuario?.nome ?? "--"}</td>
                   <td>{a.observacao ?? ""}</td>
                 </tr>
               ))}

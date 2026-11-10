@@ -49,7 +49,7 @@ export function colunasPorMotorista(
   if (mostrar.bancoHoras) {
     colunas.push({
       titulo: "Banco de horas (saldo)",
-      texto: (m) => (m.bancoHoras.ativo ? minParaHoras(m.bancoHoras.saldoMin) : ","),
+      texto: (m) => (m.bancoHoras.ativo ? minParaHoras(m.bancoHoras.saldoMin) : "--"),
     });
   }
   if (mostrar.alertas) {

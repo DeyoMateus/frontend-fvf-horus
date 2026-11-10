@@ -315,7 +315,7 @@ export function SuperAdminAuditoriaPage() {
                         <td>{new Date(r.createdAt).toLocaleString("pt-BR")}</td>
                         <td>
                           {r.actorNome ?? (
-                            <span style={{ color: "#000000" }}>,</span>
+                            <span style={{ color: "#000000" }}>--</span>
                           )}
                         </td>
                         <td>{ROTULO_ACTOR_TYPE[r.actorType]}</td>
