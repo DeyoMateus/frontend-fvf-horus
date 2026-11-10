@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { AxiosError } from "axios";
-import { atualizarRegimeBancoHorasSuperAdmin } from "../api/superAdmin";
+import { atualizarBancoHorasEmpresa } from "../api/configuracaoApuracao";
 import type {
   RegimeBancoHoras,
   RegimeBancoHorasEmpresa,
@@ -22,7 +22,8 @@ const ROTULO_DOMINGO: Record<RegimeDomingoFeriado, string> = {
 
 /**
  * Rodada 377 (passo 31, interface): regime do banco de horas e de
- * domingo/feriado de UMA empresa. Só o super admin altera; regime com prazo
+ * domingo/feriado de UMA empresa. Rodada 692: quem altera é o admin da própria empresa (aba
+ * "Apuração e banco de horas" em Regras sindicais), não mais o super admin; regime com prazo
  * exige o documento do acordo e o início da vigência (o servidor confere).
  */
 export function RegimeBancoHorasForm({
@@ -44,7 +45,6 @@ export function RegimeBancoHorasForm({
   const [vigencia, setVigencia] = useState(inicial?.vigenciaInicio ?? "");
   const [tetoHoras, setTetoHoras] = useState(inicial?.tetoMin ? String(inicial.tetoMin / 60) : "");
   const [fator, setFator] = useState(String(inicial?.fator ?? 1));
-  const [razaoAtivo, setRazaoAtivo] = useState(inicial?.razaoAtivo ?? false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -66,14 +66,13 @@ export function RegimeBancoHorasForm({
     setSalvando(true);
     try {
       const teto = tetoNum !== null ? Math.round(tetoNum * 60) : undefined;
-      await atualizarRegimeBancoHorasSuperAdmin(empresaId, {
+      await atualizarBancoHorasEmpresa(empresaId, {
         regime,
         domingoFeriado: domingo,
         documento: documento.trim() || undefined,
         vigenciaInicio: vigencia || undefined,
         tetoMin: teto,
         fator: fatorNum,
-        razaoAtivo,
         motivo: motivo.trim(),
       });
       onSalvo();
@@ -112,10 +111,9 @@ export function RegimeBancoHorasForm({
           <input inputMode="decimal" value={fator} onChange={(e) => setFator(e.target.value)} />
         </>
       )}
-      <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <input type="checkbox" checked={razaoAtivo} onChange={(e) => setRazaoAtivo(e.target.checked)} />
-        Ativar o razão de lançamentos (use primeiro numa empresa-piloto)
-      </label>
+      <small>
+        Escolher um regime liga o banco de horas para os motoristas desta empresa. "Nenhum" desliga.
+      </small>
       <label>Motivo da alteração (mín. 10 caracteres, vai para a auditoria)</label>
       <input maxLength={400} value={motivo} onChange={(e) => setMotivo(e.target.value)} required minLength={10} />
       {erro && <p className="error-text">{erro}</p>}

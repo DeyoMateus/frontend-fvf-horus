@@ -13,6 +13,7 @@ export const CAMPOS_PARAMETRO_INATIVO: Record<string, string> = {
   cctVigenciaFim: "Respaldo da convenção: guardado, não altera a apuração atual.",
   cctDocumentoRef: "Respaldo da convenção: guardado, não altera a apuração atual.",
   declaracaoRespaldoCct: "Respaldo da convenção: guardado, não altera a apuração atual.",
+  bancoHorasAtivo: "Substituído pelo regime do banco de horas da empresa (aba Apuração e banco de horas).",
   bancoHorasTipo: "Ainda não altera a apuração atual.",
   bancoHorasFator: "Ainda não altera a apuração atual.",
   interjornadaNoBancoPermitida: "Guardado e auditado: a interjornada suprimida segue paga fora do banco de horas.",

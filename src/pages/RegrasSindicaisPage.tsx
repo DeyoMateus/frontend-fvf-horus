@@ -15,18 +15,19 @@ import { useConfirm } from "../components/ConfirmProvider";
 import { DuracaoInput } from "../components/DuracaoInput";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { FeriadosPage } from "./FeriadosPage";
+import { ConfiguracaoApuracaoAba } from "../components/ConfiguracaoApuracaoAba";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 import { DicaAoPassar } from "../components/DicaAoPassar";
 
 const ABAS_REGRAS: AbaDef[] = [
   { id: "regras", rotulo: "Regras sindicais (CCT/ACT)" },
   { id: "feriados", rotulo: "Feriados" },
+  { id: "apuracao", rotulo: "Apuração e banco de horas" },
 ];
 import type {
   CategoriaTransporteSindical,
   Empresa,
   RegraSindical,
-  BancoHorasTipo,
   FonteFeriado,
   TratamentoFeriado,
 } from "../api/types";
@@ -504,34 +505,11 @@ export function RegrasSindicaisPage() {
               </div>
 
               <div style={{ gridColumn: "1 / -1" }}>
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontWeight: 600,
-                  }}
-                >
-                  <input
-                    name="bancoHorasAtivo"
-                    type="checkbox"
-                    checked={form.bancoHorasAtivo ?? false}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        bancoHorasAtivo: e.target.checked,
-                      }))
-                    }
-                  />
-                  Banco de horas ativo
-                </label>
                 <p style={{ color: "#000000", fontSize: 12, marginTop: 2 }}>
-                  Quando ligado, a hora extra apurada dos motoristas desta
-                  convenção passa a ser tratada como crédito no banco de horas
-                  (aba Indicadores), a compensar em folga ou pagar de acordo com
-                  a lei/CCT. O gestor registra a compensação/pagamento na ficha
-                  do motorista. Desligado (padrão): hora extra continua só
-                  apurada/paga direto, como sempre foi.
+                  <strong>Banco de horas:</strong> o regime, o fator, o teto e a ativação do banco de horas
+                  ficam na aba "Apuração e banco de horas" (ao lado de Feriados). Escolhendo um regime lá, a hora
+                  extra apurada passa a ser tratada como crédito no banco, a compensar em folga ou pagar de acordo
+                  com a lei/CCT. Sem regime, a hora extra continua só apurada e paga direto.
                 </p>
               </div>
               <div>
@@ -1043,46 +1021,6 @@ export function RegrasSindicaisPage() {
                 </small>
               </div>
               <div>
-                <label>Tipo de banco de horas<ParametroInativo campo="bancoHorasTipo" /></label>
-                <select
-                  name="bancoHorasTipo"
-                  value={form.bancoHorasTipo ?? "SEM_BANCO"}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      bancoHorasTipo: e.target.value as BancoHorasTipo,
-                    }))
-                  }
-                >
-                  <option value="SEM_BANCO">Sem banco de horas</option>
-                  <option value="INDIVIDUAL">
-                    Individual (compensação em até 6 meses)
-                  </option>
-                  <option value="COLETIVO">
-                    Coletivo (acordo ou convenção, até 12 meses)
-                  </option>
-                  <option value="MENSAL">Compensação no mesmo mês</option>
-                </select>
-              </div>
-              <div>
-                <label>Fator de conversão do crédito<ParametroInativo campo="bancoHorasFator" /></label>
-                <input
-                  name="bancoHorasFator"
-                  type="number"
-                  step="0.01"
-                  min={1}
-                  value={form.bancoHorasFator ?? 1}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      bancoHorasFator: e.target.value
-                        ? Number(e.target.value)
-                        : 1,
-                    }))
-                  }
-                />
-              </div>
-              <div>
                 <label>Tratamento do trabalho em feriado<ParametroInativo campo="feriadoTratamento" /></label>
                 <select
                   name="feriadoTratamento"
@@ -1267,7 +1205,6 @@ export function RegrasSindicaisPage() {
                 <th>Jornada normal</th>
                 <th>Extra 1ª/demais</th>
                 <th>Adic. noturno</th>
-                <th>Banco de horas</th>
                 <th>Status</th>
                 <th>CNPJs vinculados</th>
                 <th></th>
@@ -1287,7 +1224,6 @@ export function RegrasSindicaisPage() {
                     {r.percentualHoraExtra1}% / {r.percentualHoraExtra2}%
                   </td>
                   <td>{r.percentualAdicionalNoturno}%</td>
-                  <td>{r.bancoHorasAtivo ? "Ativo" : "Desligado"}</td>
                   <td>
                     {r.ativo ? "Ativa" : "Desativada"}
                     {(() => {
@@ -1332,7 +1268,7 @@ export function RegrasSindicaisPage() {
               ))}
               {regras.length === 0 && (
                 <tr>
-                  <td colSpan={9} style={{ color: "#000000" }}>
+                  <td colSpan={8} style={{ color: "#000000" }}>
                     Nenhuma regra sindical cadastrada. Os CNPJs seguem o padrão
                     legal geral (CLT/Lei 13.103).
                   </td>
@@ -1505,6 +1441,8 @@ export function RegrasSindicaisPage() {
         <FeriadosPage />
       </div>
       )}
+
+      {aba === "apuracao" && <ConfiguracaoApuracaoAba podeAlterar={usuario?.papel === "ADMIN"} />}
     </div>
   );
 }

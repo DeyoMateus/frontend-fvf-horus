@@ -119,26 +119,6 @@ export async function excluirUsuarioGrupo(grupoId: string, usuarioId: string) {
   return data;
 }
 
-export async function atualizarRegimeBancoHorasSuperAdmin(
-  empresaId: string,
-  input: {
-    regime: string;
-    domingoFeriado: string;
-    documento?: string;
-    vigenciaInicio?: string;
-    tetoMin?: number;
-    fator?: number;
-    razaoAtivo: boolean;
-    motivo: string;
-  },
-) {
-  const { data } = await superAdminApi.patch(
-    `/super-admin/empresas/${empresaId}/banco-horas-regime`,
-    input,
-  );
-  return data;
-}
-
 export async function atualizarChaveLiberacaoSuperAdmin(
   empresaId: string,
   input: { chave: string; ligada: boolean; motivo: string },

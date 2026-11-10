@@ -25,7 +25,6 @@ import {
   FUSOS_EMPRESA_OPCOES,
 } from "../components/CamposLocalizacaoEmpresa";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
-import { RegimeBancoHorasForm } from "../components/RegimeBancoHorasForm";
 import { ChavesLiberacaoPainel } from "../components/ChavesLiberacaoPainel";
 import { rotuloPapel } from "../utils/rotulos";
 
@@ -76,7 +75,6 @@ export function SuperAdminGrupoDetailPage() {
   const [editandoGrupo, setEditandoGrupo] = useState(false);
   const [razaoSocialGrupo, setRazaoSocialGrupo] = useState("");
   const [limiteMotoristasGrupo, setLimiteMotoristasGrupo] = useState("");
-  const [regimeEmpresaId, setRegimeEmpresaId] = useState<string | null>(null);
   const [chavesEmpresaId, setChavesEmpresaId] = useState<string | null>(null);
   const [empresaEditandoId, setEmpresaEditandoId] = useState<string | null>(
     null,
@@ -531,12 +529,6 @@ export function SuperAdminGrupoDetailPage() {
                     </button>
                     <button
                       className="secondary"
-                      onClick={() => setRegimeEmpresaId(e.id)}
-                    >
-                      Banco de horas
-                    </button>
-                    <button
-                      className="secondary"
                       onClick={() => setChavesEmpresaId(e.id)}
                     >
                       Chaves
@@ -565,25 +557,6 @@ export function SuperAdminGrupoDetailPage() {
                 chaves={emp.chaves ?? []}
                 onAlterado={() => void carregar()}
                 onFechar={() => setChavesEmpresaId(null)}
-              />
-            </div>
-          );
-        })()}
-        {regimeEmpresaId && (() => {
-          const emp = grupo.empresas.find((x) => x.id === regimeEmpresaId);
-          if (!emp) return null;
-          return (
-            <div style={{ marginTop: 16 }}>
-              <RegimeBancoHorasForm
-                key={emp.id}
-                empresaId={emp.id}
-                nome={emp.razaoSocial}
-                inicial={emp.bancoHoras}
-                onFechar={() => setRegimeEmpresaId(null)}
-                onSalvo={() => {
-                  setRegimeEmpresaId(null);
-                  void carregar();
-                }}
               />
             </div>
           );
