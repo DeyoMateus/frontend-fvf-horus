@@ -379,9 +379,11 @@ export function MotoristasListPage() {
               empresaId={empresaId}
             />
             {erroForm && <p className="error-text">{erroForm}</p>}
-            <button type="submit" disabled={criando}>
-              {criando ? "Cadastrando..." : "Cadastrar"}
-            </button>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+              <button type="submit" disabled={criando}>
+                {criando ? "Cadastrando..." : "Cadastrar"}
+              </button>
+            </div>
           </form>
         )}
       </div>

@@ -11,6 +11,9 @@ function hhmm(min: number | null | undefined): string {
   return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 }
 
+/** Cargos disponíveis no cadastro de motorista (seleção, não texto livre). Novos cargos entram aqui. */
+export const CARGOS_MOTORISTA: readonly string[] = ["Motorista"];
+
 export interface ValoresContrato {
   dataAdmissao: string;
   cargo: string;
@@ -112,11 +115,21 @@ export function CamposDadosContrato({
         onChange={(e) => set("dataAdmissao", e.target.value)}
       />
       <label style={rotulo}>Cargo / função</label>
-      <input
-        maxLength={80}
+      <select
         value={valores.cargo}
         onChange={(e) => set("cargo", e.target.value)}
-      />
+      >
+        <option value="">Selecione...</option>
+        {CARGOS_MOTORISTA.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+        {/* Cadastro antigo com texto livre: mantém o valor visível para não apagá-lo sem querer. */}
+        {valores.cargo && !CARGOS_MOTORISTA.includes(valores.cargo) && (
+          <option value={valores.cargo}>{valores.cargo}</option>
+        )}
+      </select>
       <label style={rotulo}>Matrícula</label>
       <input
         maxLength={40}
@@ -147,7 +160,7 @@ export function CamposDadosContrato({
             </option>
           ))}
       </select>
-      <small>
+      <small style={{ display: "block" }}>
         Os horários são cadastrados na tela Empresas. Sem escolha aqui, vale o
         horário padrão da empresa.
       </small>

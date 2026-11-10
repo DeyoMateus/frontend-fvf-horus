@@ -7,6 +7,10 @@ import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import { cpfValido } from "../utils/cpf";
+import {
+  CamposCidadeUf,
+  FUSOS_EMPRESA_OPCOES,
+} from "../components/CamposLocalizacaoEmpresa";
 
 const FORM_PADRAO: CreateEmpresaMaeInput = {
   razaoSocialGrupo: "",
@@ -17,6 +21,9 @@ const FORM_PADRAO: CreateEmpresaMaeInput = {
   emailAdmin: "",
   senhaAdmin: "",
   registroInpiAfd: "",
+  fusoHorario: "America/Sao_Paulo",
+  cidade: "",
+  uf: "",
 };
 
 /**
@@ -134,6 +141,27 @@ export function SuperAdminDashboardPage() {
                 inputMode="numeric"
                 required
               />
+            </div>
+            <CamposCidadeUf
+              cidade={form.cidade ?? ""}
+              uf={form.uf ?? ""}
+              onChange={(v) => setForm((f) => ({ ...f, ...v }))}
+              obrigatorio
+            />
+            <div>
+              <label>Fuso da transportadora</label>
+              <select
+                value={form.fusoHorario ?? "America/Sao_Paulo"}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, fusoHorario: e.target.value }))
+                }
+              >
+                {FUSOS_EMPRESA_OPCOES.map((o) => (
+                  <option key={o.valor} value={o.valor}>
+                    {o.rotulo}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label>Registro INPI/AFD (opcional)</label>

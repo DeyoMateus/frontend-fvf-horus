@@ -677,6 +677,8 @@ export interface GrupoDetalhe {
     ativo: boolean;
     registroInpiAfd: string | null;
     fusoHorario?: string;
+    cidade?: string | null;
+    uf?: string | null;
     totalMotoristas: number;
     bancoHoras?: RegimeBancoHorasEmpresa;
     chaves?: ChaveLiberacaoEstado[];
@@ -696,6 +698,9 @@ export interface UpdateEmpresaInput {
   cnpj?: string;
   registroInpiAfd?: string;
   fusoHorario?: string;
+  /** Rodada 691: cidade e UF da empresa (não exigem motivo). */
+  cidade?: string;
+  uf?: string;
   /** Obrigatório quando algum dado do empregador muda. */
   motivo?: string;
 }
@@ -716,6 +721,10 @@ export interface CreateEmpresaMaeInput {
   emailAdmin: string;
   senhaAdmin: string;
   registroInpiAfd?: string;
+  /** Rodada 691: fuso, cidade e UF da empresa, definidos no cadastro. */
+  fusoHorario?: string;
+  cidade?: string;
+  uf?: string;
 }
 
 // Rodada 38: criar/ativar-desativar funcionário de um grupo já

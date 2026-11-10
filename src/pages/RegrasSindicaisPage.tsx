@@ -1106,24 +1106,10 @@ export function RegrasSindicaisPage() {
                   </option>
                 </select>
               </div>
-              <div>
-                <label>Calendário de feriados usado<ParametroInativo campo="feriadoFonte" /></label>
-                <select
-                  name="feriadoFonte"
-                  value={form.feriadoFonte ?? "BASE_DA_EMPRESA"}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      feriadoFonte: e.target.value as FonteFeriado,
-                    }))
-                  }
-                >
-                  <option value="BASE_DA_EMPRESA">
-                    Cidade-base da empresa
-                  </option>
-                  <option value="LOCAL_DA_OPERACAO">Local da operação</option>
-                </select>
-              </div>
+              <p style={{ fontSize: 13, margin: "4px 0 0" }}>
+                Os feriados pagos são os cadastrados na tela Feriados (para o grupo todo ou só para um CNPJ). O
+                sistema não consulta calendário de cidade: vale o que a empresa cadastrar.
+              </p>
               <div>
                 <label>
                   Folga em domingo a cada quantas semanas (opcional)

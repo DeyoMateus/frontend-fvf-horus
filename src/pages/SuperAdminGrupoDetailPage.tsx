@@ -20,6 +20,10 @@ import type {
 import { TelefoneInput } from "../components/TelefoneInput";
 import { useConfirm } from "../components/ConfirmProvider";
 import { fusoIanaDoNavegador } from "../utils/fusoHorario";
+import {
+  CamposCidadeUf,
+  FUSOS_EMPRESA_OPCOES,
+} from "../components/CamposLocalizacaoEmpresa";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 import { RegimeBancoHorasForm } from "../components/RegimeBancoHorasForm";
 import { ChavesLiberacaoPainel } from "../components/ChavesLiberacaoPainel";
@@ -30,6 +34,8 @@ type FormEmpresa = {
   cnpj: string;
   registroInpiAfd: string;
   fusoHorario: string;
+  cidade: string;
+  uf: string;
   motivo: string;
 };
 type FormUsuario = { nome: string; email: string };
@@ -80,6 +86,8 @@ export function SuperAdminGrupoDetailPage() {
     cnpj: "",
     registroInpiAfd: "",
     fusoHorario: "America/Sao_Paulo",
+    cidade: "",
+    uf: "",
     motivo: "",
   });
   const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(
@@ -167,6 +175,8 @@ export function SuperAdminGrupoDetailPage() {
       cnpj: e.cnpj,
       registroInpiAfd: e.registroInpiAfd ?? "",
       fusoHorario: e.fusoHorario ?? "America/Sao_Paulo",
+      cidade: e.cidade ?? "",
+      uf: e.uf ?? "",
       motivo: "",
     });
     setErroEdicao(null);
@@ -186,6 +196,8 @@ export function SuperAdminGrupoDetailPage() {
           ? formEmpresa.registroInpiAfd.trim()
           : undefined,
         fusoHorario: formEmpresa.fusoHorario,
+        cidade: formEmpresa.cidade.trim() || undefined,
+        uf: formEmpresa.uf || undefined,
         motivo: formEmpresa.motivo.trim() || undefined,
       });
       setEmpresaEditandoId(null);
@@ -443,7 +455,7 @@ export function SuperAdminGrupoDetailPage() {
                         />
                       </div>
                       <div>
-                        <label>Fuso da transportadora (só visualização)</label>
+                        <label>Fuso da transportadora</label>
                         <select
                           value={formEmpresa.fusoHorario}
                           onChange={(ev) =>
@@ -453,18 +465,11 @@ export function SuperAdminGrupoDetailPage() {
                             }))
                           }
                         >
-                          <option value="America/Sao_Paulo">
-                            Brasília (UTC-3)
-                          </option>
-                          <option value="America/Cuiaba">
-                            Mato Grosso / MS / AM / RO / RR (UTC-4)
-                          </option>
-                          <option value="America/Rio_Branco">
-                            Acre (UTC-5)
-                          </option>
-                          <option value="America/Noronha">
-                            Fernando de Noronha (UTC-2)
-                          </option>
+                          {FUSOS_EMPRESA_OPCOES.map((o) => (
+                            <option key={o.valor} value={o.valor}>
+                              {o.rotulo}
+                            </option>
+                          ))}
                         </select>
                         <button
                           type="button"
@@ -479,8 +484,13 @@ export function SuperAdminGrupoDetailPage() {
                           Usar o fuso deste computador
                         </button>
                       </div>
+                      <CamposCidadeUf
+                        cidade={formEmpresa.cidade}
+                        uf={formEmpresa.uf}
+                        onChange={(v) => setFormEmpresa((f) => ({ ...f, ...v }))}
+                      />
                       <div>
-                        <label>Motivo da alteração (obrigatório se algo mudar)</label>
+                        <label>Motivo da alteração (obrigatório se mudar razão social, CNPJ, INPI ou fuso)</label>
                         <input
                           maxLength={300}
                           value={formEmpresa.motivo}
