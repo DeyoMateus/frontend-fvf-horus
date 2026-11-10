@@ -44,6 +44,8 @@ export interface UsuarioAutenticado {
   // (Empresa) sob o mesmo login. Renomeado de empresaId em 2026-09.
   grupoId: string;
   papel: PapelUsuario;
+  /** Rodada 688: senha definida por outra pessoa; o painel só abre o popup de trocar a senha. */
+  senhaProvisoria?: boolean;
 }
 
 export interface Empresa {

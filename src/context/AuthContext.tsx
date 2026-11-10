@@ -15,6 +15,8 @@ interface AuthContextValue {
   carregando: boolean;
   entrar: (email: string, senha: string, codigoMfa?: string) => Promise<void>;
   sair: () => Promise<void>;
+  /** Rodada 688: renova o token da sessão atual para pegar os dados novos (ex.: senha deixou de ser provisória). */
+  recarregarSessao: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -62,8 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(null);
   }
 
+  async function recarregarSessao() {
+    const accessToken = await tentarRefresh();
+    if (accessToken) setUsuario(decodeJwt(accessToken));
+  }
+
   return (
-    <AuthContext.Provider value={{ usuario, carregando, entrar, sair }}>
+    <AuthContext.Provider value={{ usuario, carregando, entrar, sair, recarregarSessao }}>
       {children}
     </AuthContext.Provider>
   );

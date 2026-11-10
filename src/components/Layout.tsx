@@ -8,6 +8,7 @@ import RodapeLegal from "./RodapeLegal";
 import { BolinhaPendencia } from "./BolinhaPen";
 import { usePendenciasDoMenu } from "./penMenu";
 import { PoliticaGate } from "./PoliticaGate";
+import { SenhaProvisoriaGate } from "./SenhaProvisoriaGate";
 import { TourProvider, useTour } from "../tour/TourProvider";
 import { rotuloPapel } from "../utils/rotulos";
 import { SlotAbasContext } from "./AbasTopo";
@@ -66,13 +67,17 @@ const ITENS_NAV: {
 const LARGURA_MINIMA_MENU_EXPANDIDO = 860;
 
 // Rodada 264 , o tour guiado envolve todo o painel.
+// Rodada 688: senha provisória (definida por outra pessoa) abre só o popup de trocar a senha, sem menu,
+// e depois da troca a pessoa segue logada para a Política de Privacidade.
 export function Layout() {
   return (
-    <PoliticaGate>
-      <TourProvider>
-        <LayoutInterno />
-      </TourProvider>
-    </PoliticaGate>
+    <SenhaProvisoriaGate>
+      <PoliticaGate>
+        <TourProvider>
+          <LayoutInterno />
+        </TourProvider>
+      </PoliticaGate>
+    </SenhaProvisoriaGate>
   );
 }
 
