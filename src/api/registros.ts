@@ -215,18 +215,45 @@ export async function baixarEspelhoRepP(
 }
 
 /** Baixa o AEJ no leiaute oficial (leiaute vigente do AEJ publicado pelo MTE, texto ISO 8859-1). */
+/** Rodada 722: o periodo ja tem AEJ emitido com conteudo diferente; o servidor exige o motivo do retificador. */
+export class AejExigeMotivoError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AejExigeMotivoError";
+  }
+}
+
+async function lerErroAejBlob(ex: unknown): Promise<void> {
+  const r = (ex as { response?: { status?: number; data?: unknown } })?.response;
+  if (r?.status !== 409 || !(r.data instanceof Blob)) return;
+  try {
+    const corpo = JSON.parse(await r.data.text()) as { codigo?: string; message?: string };
+    if (corpo.codigo === "AEJ_RETIFICACAO_EXIGE_MOTIVO") throw new AejExigeMotivoError(corpo.message ?? "Informe o motivo da retificação.");
+  } catch (e) {
+    if (e instanceof AejExigeMotivoError) throw e;
+  }
+}
+
 export async function baixarAej(
   motoristaId: string,
-  periodo?: { inicio?: string; fim?: string },
+  periodo?: { inicio?: string; fim?: string; motivoRetificacao?: string },
 ): Promise<string[]> {
   const params: Record<string, string> = {};
   if (periodo?.inicio) params.inicio = periodo.inicio;
   if (periodo?.fim) params.fim = periodo.fim;
-  const resposta = await api.get(
-    `/registros-jornada/motorista/${motoristaId}/aej`,
-    { params, responseType: "blob" },
+  if (periodo?.motivoRetificacao) params.motivoRetificacao = periodo.motivoRetificacao;
+  let resposta;
+  try {
+    resposta = await api.get(`/registros-jornada/motorista/${motoristaId}/aej`, { params, responseType: "blob" });
+  } catch (ex) {
+    await lerErroAejBlob(ex);
+    throw ex;
+  }
+  const versao = Number(resposta.headers?.["x-aej-versao"] ?? 1);
+  baixarArquivo(
+    new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }),
+    versao > 1 ? `AEJ-${motoristaId}-v${versao}-retificador.txt` : `AEJ-${motoristaId}.txt`,
   );
-  baixarArquivo(new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }), `AEJ-${motoristaId}.txt`);
   // Rodada 629: avisos de conformidade do MTE (marcações ímpares etc.).
   try {
     const bruto = resposta.headers?.["x-aej-avisos"];
@@ -250,11 +277,12 @@ function base64ParaBlob(b64: string, tipo: string) {
  */
 export async function baixarAejAssinado(
   motoristaId: string,
-  periodo?: { inicio?: string; fim?: string },
+  periodo?: { inicio?: string; fim?: string; motivoRetificacao?: string },
 ): Promise<string | null> {
   const params: Record<string, string> = {};
   if (periodo?.inicio) params.inicio = periodo.inicio;
   if (periodo?.fim) params.fim = periodo.fim;
+  if (periodo?.motivoRetificacao) params.motivoRetificacao = periodo.motivoRetificacao;
   const { data } = await api.get<{
     nomeArquivo: string;
     conteudoBase64: string;

@@ -2,7 +2,9 @@ import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   listarSolicitacoesTitular,
+  obterCanalPrivacidade,
   obterCiencias,
+  salvarCanalPrivacidade,
 } from "../api/privacidade";
 import type {
   CienciasPainel,
@@ -20,7 +22,7 @@ import {
 } from "../components/TratarPedidoTitularModal";
 import { useAuth } from "../context/AuthContext";
 
-type Aba = "PEDIDOS" | "CIENCIAS";
+type Aba = "PEDIDOS" | "CIENCIAS" | "CANAL";
 
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString("pt-BR") : "-";
@@ -39,15 +41,17 @@ export function PrivacidadePainelPage() {
     <div>
       <h2>Privacidade (LGPD)</h2>
       <p style={{ fontSize: 13, color: "#000000" }}>
-        Pedidos que os motoristas fazem sobre os próprios dados pessoais (a lei
-        dá 15 dias para responder), ciência da política de privacidade por
-        motorista. Os pedidos chegam ao gestor e ao admin da empresa, que respondem pelos dados do grupo.
+        Pedidos que os motoristas fazem sobre os próprios dados pessoais (prazo
+        operacional de atendimento de até 15 dias; para confirmação e acesso
+        completo valem os prazos específicos da lei), ciência da política de
+        privacidade por motorista e o canal de privacidade da empresa. Os pedidos chegam ao gestor e ao admin da empresa, que respondem pelos dados do grupo.
       </p>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {(
           [
             ["PEDIDOS", "Pedidos dos titulares"],
             ["CIENCIAS", "Ciência da política"],
+            ["CANAL", "Canal de privacidade"],
           ] as [Aba, string][]
         ).map(([chave, rotulo]) => (
           <button
@@ -63,6 +67,94 @@ export function PrivacidadePainelPage() {
 
       {aba === "PEDIDOS" && <AbaPedidos />}
       {aba === "CIENCIAS" && <AbaCiencias />}
+      {aba === "CANAL" && <AbaCanal podeEditar={ehAdmin} />}
+    </div>
+  );
+}
+
+/**
+ * Rodada 728 (revisao juridica): encarregado ou canal de privacidade da transportadora.
+ * Aparece na Politica de Privacidade que o motorista le no app. So o ADMIN edita.
+ */
+function AbaCanal({ podeEditar }: { podeEditar: boolean }) {
+  const [encarregado, setEncarregado] = useState("");
+  const [contato, setContato] = useState("");
+  const [carregado, setCarregado] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    obterCanalPrivacidade()
+      .then((c) => {
+        setEncarregado(c.encarregado ?? "");
+        setContato(c.contato ?? "");
+      })
+      .catch(() => setErro("Não foi possível carregar o canal de privacidade."))
+      .finally(() => setCarregado(true));
+  }, []);
+
+  async function salvar(e: FormEvent) {
+    e.preventDefault();
+    setSalvando(true);
+    setErro(null);
+    setMsg(null);
+    try {
+      await salvarCanalPrivacidade({ encarregado: encarregado.trim(), contato: contato.trim() });
+      setMsg("Canal salvo. A Política de Privacidade do app já mostra os novos dados.");
+    } catch {
+      setErro("Não foi possível salvar o canal de privacidade.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  if (!carregado) return <p>Carregando...</p>;
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>Canal de privacidade</h3>
+      <p style={{ fontSize: 13 }}>
+        Informe o encarregado (DPO) da empresa ou, quando a empresa for dispensada dessa
+        indicação, o canal de atendimento aos titulares. Esses dados aparecem na Política de
+        Privacidade que o motorista lê no aplicativo. O contato da FVF não substitui o canal da
+        transportadora.
+      </p>
+      {!encarregado && !contato && (
+        <p className="error-text">
+          Canal ainda não informado: a política indica o RH da empresa até que seja preenchido.
+        </p>
+      )}
+      <form onSubmit={salvar}>
+        <label>
+          Encarregado ou canal de privacidade
+          <input
+            value={encarregado}
+            maxLength={160}
+            disabled={!podeEditar}
+            onChange={(e) => setEncarregado(e.target.value)}
+            placeholder="Nome do encarregado ou identificação do canal"
+          />
+        </label>
+        <label>
+          Contato
+          <input
+            value={contato}
+            maxLength={200}
+            disabled={!podeEditar}
+            onChange={(e) => setContato(e.target.value)}
+            placeholder="E-mail ou outro canal de atendimento"
+          />
+        </label>
+        {podeEditar ? (
+          <button type="submit" disabled={salvando}>
+            {salvando ? "Salvando..." : "Salvar"}
+          </button>
+        ) : (
+          <p style={{ fontSize: 12 }}>Só o administrador da empresa altera estes dados.</p>
+        )}
+      </form>
+      {msg && <p>{msg}</p>}
+      {erro && <p className="error-text">{erro}</p>}
     </div>
   );
 }

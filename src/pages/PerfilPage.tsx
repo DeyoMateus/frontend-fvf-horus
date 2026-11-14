@@ -15,6 +15,14 @@ import { obterMinhaPolitica } from "../api/privacidade";
 import type { MinhaPolitica } from "../api/privacidade";
 import { PoliticaPrivacidadeModal } from "../components/PoliticaPrivacidadeModal";
 import { MfaCard } from "../components/MfaCard";
+import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
+
+/** Rodada 715: Configuração dividida em abas no topo (mesma linha do sino), como o Painel. */
+const ABAS_CONFIGURACAO: AbaDef[] = [
+  { id: "usuario", rotulo: "Dados do usuário" },
+  { id: "gr", rotulo: "Gerenciamento de Risco (GR)" },
+  { id: "privacidade", rotulo: "Política de Privacidade" },
+];
 
 /**
  * "Meu perfil" (Rodada 38) , o próprio ADMIN/GESTOR logado edita seu
@@ -40,6 +48,7 @@ function horasParaMin(h: string): number {
 }
 
 export function PerfilPage() {
+  const aba = useAbaAtiva(ABAS_CONFIGURACAO);
   const [politica, setPolitica] = useState<MinhaPolitica | null>(null);
   const [politicaAberta, setPoliticaAberta] = useState(false);
   const [politicaFalhou, setPoliticaFalhou] = useState(false);
@@ -214,41 +223,18 @@ export function PerfilPage() {
   return (
     <div>
       <h2>Configuração</h2>
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Edite seu nome, contato (WhatsApp) e e-mail de acesso. Papel de acesso e
-        status (ativo/inativo) são gerenciados pelo super admin da plataforma.
-        Fale com quem administra sua conta FVF Hórus caso precise alterar isso.
-      </p>
-
-      <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
-        <h3 style={{ marginTop: 0 }}>Política de Privacidade</h3>
-        <p style={{ fontSize: 13, marginTop: 0 }}>
-          Veja o texto da política que você aceitou ao entrar no painel.
-          {politica?.aceitaEm &&
-            ` Aceita em ${new Date(politica.aceitaEm).toLocaleDateString("pt-BR")}.`}
+      {aba === "usuario" && (
+        <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
+          Edite seu nome, contato (WhatsApp) e e-mail de acesso. Papel de acesso e
+          status (ativo/inativo) são gerenciados pelo super admin da plataforma.
+          Fale com quem administra sua conta FVF Hórus caso precise alterar isso.
         </p>
-        <button
-          type="button"
-          disabled={!politica}
-          onClick={() => setPoliticaAberta(true)}
-        >
-          {politica || politicaFalhou ? "Ler política" : "Carregando…"}
-        </button>
-        {politicaFalhou && (
-          <p style={{ fontSize: 12, color: "#b91c1c" }}>
-            Não foi possível carregar a política agora. Recarregue a página e tente de
-            novo; se continuar, avise o suporte.
-          </p>
-        )}
-        {politicaAberta && politica && (
-          <PoliticaPrivacidadeModal
-            politica={politica}
-            modo="leitura"
-            onFechar={() => setPoliticaAberta(false)}
-          />
-        )}
-      </div>
+      )}
 
+      <AbasTopo abas={ABAS_CONFIGURACAO} />
+
+      {aba === "usuario" && (
+        <>
       <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
         <h3 style={{ marginTop: 0 }}>Dados do usuário</h3>
         <form onSubmit={onSubmit}>
@@ -380,6 +366,11 @@ export function PerfilPage() {
       <MfaCard ativo={!!perfil?.mfaAtivo} validoAte={perfil?.mfaValidoAte} expirado={perfil?.mfaExpirado} onMudou={() => obterMeuPerfil().then(setPerfil).catch(() => undefined)}
       />
 
+        </>
+      )}
+
+      {aba === "gr" && (
+        <>
       <div className="card" style={{ maxWidth: 480, margin: "16px auto 0" }}>
         <h3 style={{ marginTop: 0 }}>Gerenciamento de Risco (GR)</h3>
         <form onSubmit={salvarGr}>
@@ -501,6 +492,42 @@ export function PerfilPage() {
           </div>
         </form>
       </div>
+        </>
+      )}
+
+      {aba === "privacidade" && (
+        <>
+      <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
+        <h3 style={{ marginTop: 0 }}>Política de Privacidade</h3>
+        <p style={{ fontSize: 13, marginTop: 0 }}>
+          Veja o texto da política que você aceitou ao entrar no painel.
+          {politica?.aceitaEm &&
+            ` Aceita em ${new Date(politica.aceitaEm).toLocaleDateString("pt-BR")}.`}
+        </p>
+        <button
+          type="button"
+          disabled={!politica}
+          onClick={() => setPoliticaAberta(true)}
+        >
+          {politica || politicaFalhou ? "Ler política" : "Carregando…"}
+        </button>
+        {politicaFalhou && (
+          <p style={{ fontSize: 12, color: "#b91c1c" }}>
+            Não foi possível carregar a política agora. Recarregue a página e tente de
+            novo; se continuar, avise o suporte.
+          </p>
+        )}
+        {politicaAberta && politica && (
+          <PoliticaPrivacidadeModal
+            politica={politica}
+            modo="leitura"
+            onFechar={() => setPoliticaAberta(false)}
+          />
+        )}
+      </div>
+
+        </>
+      )}
     </div>
   );
 }

@@ -52,6 +52,19 @@ export async function atualizarEmpresaSuperAdmin(
   return data;
 }
 
+/** Rodada 726: inativa/reativa a empresa mãe (painel bloqueado; motoristas seguem batendo ponto). */
+export async function atualizarStatusGrupoSuperAdmin(
+  grupoId: string,
+  ativo: boolean,
+  motivo?: string,
+) {
+  const { data } = await superAdminApi.patch(
+    `/super-admin/grupos/${grupoId}/status`,
+    { ativo, motivo },
+  );
+  return data;
+}
+
 export async function atualizarStatusEmpresaSuperAdmin(
   empresaId: string,
   ativo: boolean,

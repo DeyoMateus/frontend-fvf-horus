@@ -76,9 +76,9 @@ function existeAlertaAbertoHaMuitoTempo(
 
 const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   INTERVALO_REFEICAO_PENDENTE: "Refeição pendente (jornada acima de 6h)",
-  JORNADA_TOTAL_PROXIMA_LIMITE: "Jornada total do dia perto do limite",
-  JORNADA_TOTAL_EXCEDIDA: "Jornada total do dia acima do limite",
-  JORNADA_TOTAL_EXTRAS_LIMITE: "Jornada total com 2h extras (limite)",
+  JORNADA_TOTAL_PROXIMA_LIMITE: "Jornada de trabalho perto da jornada normal",
+  JORNADA_TOTAL_EXCEDIDA: "Jornada de trabalho em hora extra",
+  JORNADA_TOTAL_EXTRAS_LIMITE: "Jornada de trabalho no limite de horas extras",
   REPOUSO_SEMANAL_PROXIMO_LIMITE: "Repouso semanal perto do limite",
   REPOUSO_SEMANAL_ATRASADO: "Repouso semanal atrasado",
   DSR_SEM_DESCANSO_SEMANAL: "Semana sem 24 h de descanso (DSR)",
@@ -91,8 +91,8 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   FOLGA_URGENTE: "Folga urgente: sem folga na janela",
   SEQUENCIA_EVENTOS_INCONSISTENTE: "Sequência de eventos inconsistente",
   JORNADA_ABERTA_PROLONGADA: "Jornada aberta há muito tempo",
-  JORNADA_DIRECAO_PROXIMA_LIMITE: "Jornada de direção perto do limite",
-  JORNADA_DIRECAO_EXCEDIDA: "Jornada de direção excedida",
+  JORNADA_DIRECAO_PROXIMA_LIMITE: "Direção acumulada perto de 8h (aviso antigo)",
+  JORNADA_DIRECAO_EXCEDIDA: "Direção acumulada acima de 10h (aviso antigo)",
   JORNADA_ATUAL_DIRECAO_PROXIMA_LIMITE: "Direção desta jornada perto de 8h",
   JORNADA_ATUAL_DIRECAO_EXCEDIDA: "Direção desta jornada passou de 10h",
   ESPERA_PROXIMA_LIMITE: "Espera perto do limite",
@@ -731,7 +731,7 @@ export function DashboardPage() {
           onClick={() =>
             abrir("alertas-criticos", "Alertas críticos em aberto")
           }
-          descricao="Severidade mais alta: o limite legal já foi ultrapassado (ex.: direção contínua, jornada de direção ou espera em carga/descarga acima do máximo). Exige ação imediata."
+          descricao="Severidade mais alta: o limite de referência já foi ultrapassado, como nos casos de direção contínua superior a 5h30 ou jornada de trabalho acima do limite diário aplicável. Exige análise e providência imediatas do responsável."
         />
         <CartaoMetrica
           titulo="Alertas de atenção em aberto"
@@ -744,7 +744,7 @@ export function DashboardPage() {
           onClick={() =>
             abrir("alertas-atencao", "Alertas de atenção em aberto")
           }
-          descricao="Severidade intermediária: ainda não ultrapassou o limite legal, mas está perto dele, ou merece acompanhamento (ex.: descanso interjornada insuficiente, ociosidade suspeita)."
+          descricao="Severidade intermediária: ainda não ultrapassou o limite de referência, mas está perto dele, ou merece acompanhamento (ex.: descanso interjornada insuficiente, ociosidade suspeita)."
         />
         <CartaoMetrica
           titulo="Alertas nas últimas 24h"
@@ -766,7 +766,7 @@ export function DashboardPage() {
               "Alertas de divergência de registro (7 dias)",
             )
           }
-          descricao="Alertas de integridade do aparelho/GPS dos últimos 7 dias — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (localização falsificada, relógio manipulado, odômetro regressivo etc.)."
+          descricao="Alertas de integridade do aparelho/GPS dos últimos 7 dias — não são sobre a jornada em si, são sobre a confiabilidade do que foi registrado (sinais de localização ou horário do aparelho fora do esperado, odômetro regressivo etc.)."
         />
       </div>
 

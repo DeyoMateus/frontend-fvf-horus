@@ -109,6 +109,15 @@ export const responderSolicitacaoTitular = (
     .patch(`/privacidade/painel/solicitacoes/${id}`, { status, resposta })
     .then((r) => r.data);
 
+/** Rodada 728: canal de privacidade da transportadora (aparece na politica). */
+export type CanalPrivacidade = { encarregado: string | null; contato: string | null };
+
+export const obterCanalPrivacidade = () =>
+  api.get<CanalPrivacidade>("/privacidade/painel/canal").then((r) => r.data);
+
+export const salvarCanalPrivacidade = (dados: { encarregado: string; contato: string }) =>
+  api.put<CanalPrivacidade>("/privacidade/painel/canal", dados).then((r) => r.data);
+
 export const obterCiencias = () =>
   api.get<CienciasPainel>("/privacidade/painel/ciencias").then((r) => r.data);
 

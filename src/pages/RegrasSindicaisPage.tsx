@@ -1,6 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { ParametroInativo } from "../components/ParametroInativo";
-import { listEmpresas, vincularRegraSindical } from "../api/empresas";
+import {
+  listEmpresas,
+  vincularRegraSindical,
+  historicoRegraSindical,
+  type VinculoRegraHistorico,
+} from "../api/empresas";
 import {
   createRegraSindical,
   desativarRegraSindical,
@@ -80,6 +85,8 @@ export function RegrasSindicaisPage() {
   const { usuario } = useAuth();
   const [regras, setRegras] = useState<RegraSindical[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [vigenciaVinculo, setVigenciaVinculo] = useState("");
+  const [historico, setHistorico] = useState<Record<string, VinculoRegraHistorico[] | undefined>>({});
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -248,8 +255,43 @@ export function RegrasSindicaisPage() {
   }
 
   async function onVincularCnpj(empresaId: string, regraSindicalId: string) {
-    await vincularRegraSindical(empresaId, regraSindicalId || null);
+    const vigenciaInicio = vigenciaVinculo || undefined;
+    try {
+      await vincularRegraSindical(empresaId, regraSindicalId || null, { vigenciaInicio });
+    } catch (e) {
+      const d = (e as { response?: { status?: number; data?: { codigo?: string; message?: string } } })
+        ?.response;
+      if (d?.status === 409 && d.data?.codigo === "REGRA_RETROATIVA") {
+        if (
+          await confirm(
+            d.data.message ??
+              "A data é anterior a hoje: as jornadas daquele dia em diante passam a ser calculadas com esta regra. Confirmar?",
+          )
+        ) {
+          await vincularRegraSindical(empresaId, regraSindicalId || null, {
+            vigenciaInicio,
+            confirmarRetroatividade: true,
+          });
+        }
+      } else {
+        throw e;
+      }
+    }
     await carregar();
+    // Historico ja aberto desta empresa: recarrega.
+    if (historico[empresaId]) {
+      setHistorico((h) => ({ ...h, [empresaId]: undefined }));
+      await alternarHistorico(empresaId, true);
+    }
+  }
+
+  async function alternarHistorico(empresaId: string, forcar = false) {
+    if (historico[empresaId] && !forcar) {
+      setHistorico((h) => ({ ...h, [empresaId]: undefined }));
+      return;
+    }
+    const lista = await historicoRegraSindical(empresaId);
+    setHistorico((h) => ({ ...h, [empresaId]: lista }));
   }
 
   return (
@@ -367,8 +409,9 @@ export function RegrasSindicaisPage() {
             >
               <div>
                 <label>
-                  Tolerância de marcação (máximo de 5 minutos, CLT art. 58,
-                  §1º). Aplicada ao extra do dia
+                  Tolerância de marcação (até 5 minutos por marcação,
+                  observado o máximo de 10 minutos no total diário). Aplicada
+                  ao extra do dia
                 </label>
                 <DuracaoInput
                   name="toleranciaMarcacaoMin"
@@ -514,7 +557,7 @@ export function RegrasSindicaisPage() {
               </div>
               <div>
                 <label>
-                  Prazo de expiração do banco de horas (meses, opcional)
+                  Prazo de expiração do banco de horas (meses, opcional; só encurta o prazo legal do regime da empresa)
                 <ParametroInativo campo="bancoHorasPrazoExpiracaoMeses" /></label>
                 <input
                   name="bancoHorasPrazoExpiracaoMeses"
@@ -604,7 +647,7 @@ export function RegrasSindicaisPage() {
               </div>
 
               <div>
-                <label>Descanso mínimo entre jornadas (mínimo 11:00)<ParametroInativo campo="intervaloEntreJornadasMin" /></label>
+                <label>Descanso mínimo entre jornadas (mínimo 11:00)</label>
                 <DuracaoInput
                   name="intervaloEntreJornadasMin"
                   valorMin={form.intervaloEntreJornadasMin ?? 660}
@@ -617,8 +660,8 @@ export function RegrasSindicaisPage() {
                 />
                 <small>
                   Uma jornada só termina depois deste tempo sem trabalho. A CCT
-                  pode aumentar, nunca reduzir abaixo de 11 h. Por ora só
-                  alimenta a apuração em modo sombra.
+                  pode aumentar, nunca reduzir abaixo de 11 h. Vale para o
+                  holerite, o dashboard e os alertas.
                 </small>
               </div>
 
@@ -766,8 +809,9 @@ export function RegrasSindicaisPage() {
                   }
                 />
                 <small>
-                  Vazio = 100 (dobro, Súmula 146 do TST), sujeito a parecer. Só
-                  alimenta o relatório em modo sombra; não altera pagamento.
+                  Vazio = 100 (tratamento em dobro quando devido, sem
+                  compensação válida), sujeito a parecer. Só alimenta o
+                  relatório em modo sombra; não altera pagamento.
                 </small>
               </div>
 
@@ -790,7 +834,8 @@ export function RegrasSindicaisPage() {
                   }
                 />
                 <small>
-                  Padrão 50 (mínimo, OJ 355 SDI-1 do TST), sujeito a parecer.
+                  Padrão 50 (parâmetro do sistema; o tratamento financeiro
+                  segue a legislação e a orientação aplicável), sujeito a parecer.
                   Incide sobre as horas que faltaram para completar o descanso
                   de 11 h. Hoje só aparece no relatório em modo sombra; não
                   altera pagamento.
@@ -837,10 +882,13 @@ export function RegrasSindicaisPage() {
                   <ParametroInativo campo="interjornadaNoBancoPermitida" />
                 </label>
                 <small>
-                  Desmarcado por padrão: a interjornada suprimida é paga em
-                  dinheiro, em evento próprio, fora do banco. Marque só com
-                  acordo ou convenção coletiva registrada (informe o número do
-                  Mediador acima) que preveja a compensação.
+                  Desmarcado por padrão: a supressão do descanso entre
+                  jornadas é registrada separadamente, em evento próprio, fora
+                  do banco de horas; o tratamento financeiro segue a legislação
+                  e a orientação aplicável. Marque só com acordo ou convenção
+                  coletiva registrada (informe o número do Mediador acima) que
+                  preveja a compensação. Isso não afasta o período mínimo de
+                  descanso exigido.
                 </small>
               </div>
 
@@ -867,9 +915,13 @@ export function RegrasSindicaisPage() {
               <div style={{ gridColumn: "1 / -1" }}>
                 <h4 style={{ margin: "8px 0 0" }}>Trabalho noturno</h4>
                 <p style={{ color: "#000000", fontSize: 12, marginTop: 2 }}>
-                  Padrão da CLT: das 22h às 5h, hora de 52min30s e adicional
-                  mínimo de 20%. Valores diferentes só valem com respaldo em
-                  convenção ou acordo coletivo (documento e declaração abaixo).
+                  Trabalho noturno: referência legal das 22h às 5h, com
+                  adicional mínimo de 20% e aplicação da hora noturna reduzida
+                  (52min30s), observadas as regras legais e coletivas
+                  aplicáveis. Período, percentual ou critério diferente exige
+                  identificação do fundamento jurídico e validação do
+                  instrumento (documento e declaração abaixo); a configuração
+                  não pode afastar direitos legalmente assegurados.
                 </p>
               </div>
               <div>
@@ -1050,7 +1102,7 @@ export function RegrasSindicaisPage() {
               </p>
               <div>
                 <label>
-                  Folga em domingo a cada quantas semanas (opcional)
+                  Folga em domingo a cada quantas semanas (opcional; gera aviso quando nenhum domingo ficou livre)
                 <ParametroInativo campo="folgaDomingoACadaSemanas" /></label>
                 <input
                   name="folgaDomingoACadaSemanas"
@@ -1303,23 +1355,36 @@ export function RegrasSindicaisPage() {
             </p>
             <ul style={{ margin: "0 0 8px", paddingLeft: 18 }}>
               <li>
-                Direção contínua: aviso a partir de 5h, crítico em 5h30 (Lei
-                13.103).
+                Direção contínua: aviso a partir de 5 horas; alerta crítico em
+                5 horas e 30 minutos. Referência legal para transporte
+                rodoviário de cargas. A pausa de 30 minutos dentro de cada 6
+                horas de condução pode ser fracionada.
               </li>
               <li>
-                Jornada de direção total no dia: aviso a partir de 8h, crítico
-                em 10h, somando 8h regulares + 2h extras (Lei 13.103).
+                Jornada diária de trabalho: referência normal de 8 horas. A
+                prorrogação pode alcançar até 2 horas extraordinárias, podendo
+                chegar a 4 horas mediante previsão em convenção ou acordo
+                coletivo. O sistema considera o tempo de trabalho computável, e
+                não apenas o tempo de direção. Sem regra coletiva específica
+                cadastrada, o padrão de referência considera 10 horas diárias
+                de trabalho, respeitadas as demais condições legais.
               </li>
               <li>
-                Tempo de espera: informativo a partir de 3h, aviso em 4h45,
-                crítico em 5h. São parâmetros do sistema, não valores da lei. O
-                tempo de espera conta como tempo à disposição (CLT art. 235-C,
-                §1º). A referência de 5h é do art. 11, §5º, da Lei 11.442/2007,
-                usada na cobrança contra o contratante.
+                Tempo de espera: avisos informativos e operacionais a partir
+                dos limites cadastrados pela empresa. Após o julgamento da ADI
+                5322, o tempo de espera integra a jornada de trabalho e deve
+                permanecer registrado em sua categoria própria. A referência de
+                5 horas corresponde ao prazo legal relacionado à carga e
+                descarga no transporte rodoviário de cargas, utilizado para
+                identificar eventual cobrança contra o contratante do frete.
+                Não representa limite máximo de espera do empregado.
               </li>
               <li>
-                Descanso entre jornadas (interjornada): mínimo de 11h (CLT art.
-                66 / Lei 13.103). Se o descanso for menor, o tempo que faltou é pago como hora extra (OJ 355), em evento próprio e fora do banco de horas; só um acordo ou convenção coletiva registrada pode prever outra forma. Se o motorista
+                Descanso entre jornadas: mínimo de 11 horas consecutivas.
+                Quando o período realizado for inferior, o tempo suprimido será
+                registrado em evento próprio, separado das horas efetivamente
+                trabalhadas e do banco de horas. O tratamento financeiro deverá
+                observar a legislação e a orientação aplicável ao caso. Se o motorista
                 encerrou por engano e reabriu, o RH trata o alerta e registra
                 que foi a mesma jornada (a decisão fica na trilha de auditoria).
               </li>
@@ -1328,32 +1393,57 @@ export function RegrasSindicaisPage() {
               <strong>
                 Só vale quando NÃO há regra sindical vinculada ao CNPJ
               </strong>{" "}
-              (vincular uma regra substitui estes três abaixo pelos valores que
-              você cadastrar nela):
+              (vincular uma regra substitui os valores abaixo pelos que você
+              cadastrar nela):
             </p>
             <ul style={{ margin: "0 0 8px", paddingLeft: 18 }}>
               <li>
-                Jornada normal antes de virar hora extra: 8h/dia (CLT art. 58).
+                Jornada normal do motorista profissional: 8 horas diárias,
+                conforme a legislação específica da categoria. A prorrogação
+                deve respeitar os limites legais e as condições previstas no
+                instrumento coletivo aplicável.
               </li>
               <li>
-                Hora extra: 50% na 1ª faixa (até 2h extras), mínimo legal
-                garantido pela CF/CLT art. 7º, XVI.
+                Hora extraordinária: adicional mínimo legal de 50%, podendo a
+                convenção ou o acordo coletivo estabelecer percentual superior.
+                O sistema registra os minutos e não calcula o valor monetário.
               </li>
-              <li>Adicional noturno (22h–5h): 20% (CLT art. 73).</li>
+              <li>
+                Trabalho noturno: referência legal das 22h às 5h, com adicional
+                mínimo de 20% e aplicação da hora noturna reduzida, observadas
+                as regras legais e coletivas aplicáveis.
+              </li>
+              <li>
+                Domingo e feriado: sem regra coletiva vinculada, o sistema
+                utiliza como referência a legislação geral. O trabalho em
+                domingo ou feriado sem compensação válida poderá gerar
+                tratamento em dobro. A apuração depende da escala, da
+                existência de folga compensatória e das condições do
+                instrumento coletivo.
+              </li>
             </ul>
             <p style={{ margin: "4px 0", fontSize: 12, fontStyle: "italic" }}>
-              Atenção: o percentual de 70% para a 2ª faixa de hora extra
-              (visível no formulário de cadastro de regra) é um valor padrão de
-              sistema, não uma exigência legal fixa. A CLT só garante o mínimo
-              de 50% para qualquer hora extra; percentuais maiores costumam vir
-              de convenção coletiva, por isso o sistema deixa esse número
-              editável por regra. Os demais valores acima refletem a legislação
+              Nota: o percentual de 70% para a segunda faixa de horas
+              extraordinárias é um parâmetro padrão do sistema, e não um
+              percentual legal obrigatório. A convenção ou o acordo coletivo
+              pode prever percentuais diferentes. O sistema apenas classifica
+              os minutos conforme a parametrização cadastrada. Os demais valores acima refletem a legislação
               geral (CLT/Lei 13.103), mas nenhuma configuração deste sistema
               substitui a orientação de um advogado trabalhista para o seu caso
               específico.
             </p>
           </div>
         </details>
+        <label>
+          Vale a partir de (vazio = hoje). Cada jornada usa a regra vigente no
+          dia em que começou; períodos anteriores mantêm a regra da época.
+        </label>
+        <input
+          type="date"
+          value={vigenciaVinculo}
+          onChange={(e) => setVigenciaVinculo(e.target.value)}
+          style={{ maxWidth: 200, marginBottom: 8 }}
+        />
         <table>
           <thead>
             <tr>
@@ -1383,7 +1473,22 @@ export function RegrasSindicaisPage() {
                           {r.nome}
                         </option>
                       ))}
-                  </select>
+                  </select>{" "}
+                  <button type="button" onClick={() => alternarHistorico(emp.id)}>
+                    {historico[emp.id] ? "Ocultar histórico" : "Histórico"}
+                  </button>
+                  {historico[emp.id] && (
+                    <ul style={{ fontSize: 13, margin: "6px 0 0" }}>
+                      {historico[emp.id]!.length === 0 && <li>Sem histórico registrado.</li>}
+                      {historico[emp.id]!.map((h) => (
+                        <li key={h.id}>
+                          a partir de {h.vigenciaInicio.split("-").reverse().join("/")}:{" "}
+                          {h.regraSindicalId ? (h.nome ?? "regra removida") : "Padrão legal (sem regra)"}
+                          {h.motivo ? ` (${h.motivo})` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </td>
               </tr>
             ))}

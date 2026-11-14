@@ -135,6 +135,11 @@ export function atualizarCadastroMotorista(
  * banco, só tira da listagem normal do painel. Ver comentário completo
  * em MotoristasService.excluir (backend).
  */
+/** Rodada 725: reativa um cadastro excluido (volta ATIVO). O servidor recusa se CPF/CNH foi reutilizado. */
+export function reativarMotorista(id: string) {
+  return api.post<Motorista>(`/motoristas/${id}/reativar`).then((r) => r.data);
+}
+
 export function excluirMotorista(id: string, motivo: string) {
   return api
     .delete<Motorista>(`/motoristas/${id}`, { data: { motivo } })

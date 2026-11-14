@@ -279,7 +279,10 @@ export function SuperAdminDashboardPage() {
             <tbody>
               {paginacaoGrupos.itensExibidos.map((g) => (
                 <tr key={g.id}>
-                  <td>{g.razaoSocial}</td>
+                  <td>
+                    {g.razaoSocial}
+                    {g.ativo === false ? " (inativa)" : ""}
+                  </td>
                   <td>{g.totalEmpresas}</td>
                   <td>{g.totalUsuarios}</td>
                   <td>{g.totalMotoristas}</td>

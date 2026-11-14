@@ -13,7 +13,7 @@ import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
 import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./penMenu";
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
-import { listarPendenciasDoPainel } from "../api/painelContadores";
+import { listarPendenciasDoPainel, type AvisoBancoVencimento, type AvisoInstrumento } from "../api/painelContadores";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
 
 // Rodada 647: cada consulta do sino tem o ritmo que a urgencia dela pede (antes tudo a cada 30 s).
@@ -108,6 +108,38 @@ function notificarSolicitacaoNoDesktop(solicitacao: SolicitacaoAjustePonto) {
   }
 }
 
+/** Rodada 711: cada etapa (a vencer, vence hoje, vencido) gera um aviso novo, uma vez por motorista. */
+function notificarBancoVencimentoNoDesktop(titulo: string, texto: string, tag: string) {
+  if (!notificacoesDesktopAtivas()) return;
+  if (typeof window === "undefined" || !("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+  try {
+    const n = new Notification(titulo, { body: texto, tag });
+    n.onclick = () => {
+      window.focus();
+      n.close();
+    };
+  } catch {
+    // Não é crítico.
+  }
+}
+
+function etapasBancoJaAvisadas(): Set<string> {
+  try {
+    return new Set<string>(JSON.parse(localStorage.getItem("fvf:banco-venc-avisado") ?? "[]"));
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function lembrarEtapasBanco(s: Set<string>) {
+  try {
+    localStorage.setItem("fvf:banco-venc-avisado", JSON.stringify([...s].slice(-500)));
+  } catch {
+    // Não é crítico.
+  }
+}
+
 function notificarPedidoTitularNoDesktop(nome: string) {
   if (!notificacoesDesktopAtivas()) return;
   if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -124,6 +156,35 @@ function notificarPedidoTitularNoDesktop(nome: string) {
   } catch {
     // Não é crítico.
   }
+}
+
+/** Rodada 702: texto do aviso de fim de vigência do instrumento do banco de horas. */
+function textoInstrumento(a: AvisoInstrumento): string {
+  if (a.situacao === "VENCIDO") {
+    return "o instrumento do banco de horas venceu; as horas extras novas estão indo para pagamento.";
+  }
+  const d = a.diasParaFim ?? 0;
+  return d === 0
+    ? "o instrumento do banco de horas vence hoje."
+    : `o instrumento do banco de horas vence em ${d} dia${d === 1 ? "" : "s"}.`;
+}
+
+function fmtMin(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}h${String(m).padStart(2, "0")}`;
+}
+
+/** Rodada 711: texto do aviso de credito do banco de horas vencido ou a vencer. */
+function textoBancoVencimento(a: AvisoBancoVencimento): string {
+  if (a.vencidoMin > 0) {
+    return `${fmtMin(a.vencidoMin)} de banco de horas vencido, aguardando conferência e baixa.`;
+  }
+  if (a.situacao === "VENCE_HOJE") {
+    return `${fmtMin(a.aVencerMin)} de banco de horas vence hoje.`;
+  }
+  const d = a.diasParaVencer ?? 0;
+  return `${fmtMin(a.aVencerMin)} de banco de horas vence ${d === 0 ? "hoje" : `em ${d} dia${d === 1 ? "" : "s"}`}.`;
 }
 
 export function NotificationBell() {
@@ -147,6 +208,9 @@ export function NotificationBell() {
     SolicitacaoPendenteSino[]
   >([]);
   const idsConhecidosPedidosRef = useRef<Set<string> | null>(null);
+  // Rodada 702: instrumento do banco de horas vencido ou perto de vencer.
+  const [avisosInstrumento, setAvisosInstrumento] = useState<AvisoInstrumento[]>([]);
+  const [avisosBanco, setAvisosBanco] = useState<AvisoBancoVencimento[]>([]);
   const [aberto, setAberto] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -212,6 +276,28 @@ export function NotificationBell() {
       if (r.ajustes) aplicarAjustes(r.ajustes);
       if (r.folgas) setPedidosFolga(r.folgas);
       if (r.titulares) aplicarTitulares(r.titulares);
+      if (r.instrumentos) setAvisosInstrumento(r.instrumentos);
+      if (r.bancoVencimentos) {
+        setAvisosBanco(r.bancoVencimentos);
+        const avisadas = etapasBancoJaAvisadas();
+        let mudou = false;
+        for (const a of r.bancoVencimentos) {
+          const chave = `${a.motoristaId}:${a.situacao}:${a.proximoVencimento ?? "vencido"}`;
+          if (avisadas.has(chave)) continue;
+          avisadas.add(chave);
+          mudou = true;
+          const titulo =
+            a.situacao === "VENCIDO"
+              ? "Banco de horas vencido"
+              : a.situacao === "VENCE_HOJE"
+                ? "Banco de horas vence hoje"
+                : "Banco de horas perto de vencer";
+          const texto = `${a.nome}: ${textoBancoVencimento(a)}`;
+          toast.info(texto);
+          notificarBancoVencimentoNoDesktop(titulo, texto, `banco-${chave}`);
+        }
+        if (mudou) lembrarEtapasBanco(avisadas);
+      }
       return;
     } catch {
       // cai nas consultas separadas
@@ -341,6 +427,8 @@ export function NotificationBell() {
     solicitacoesPendentes.length +
     pedidosFolga.length +
     pedidosTitular.length +
+    avisosInstrumento.length +
+    avisosBanco.length +
     (diasRadar > 0 ? 1 : 0);
   // Rodada 335: resumo por aba para as bolinhas do menu lateral.
   useEffect(() => {
@@ -380,7 +468,24 @@ export function NotificationBell() {
         ),
       };
     }
-    if (semInteracao.length > 0) {
+    if (avisosInstrumento.length > 0) {
+      mapa["/regras-sindicais"] = {
+        total: avisosInstrumento.length,
+        resumo: avisosInstrumento.map((a) => `${a.razaoSocial}: ${textoInstrumento(a)}`),
+      };
+    }
+    if (avisosBanco.length > 0) {
+      mapa["/motoristas"] = {
+        total: avisosBanco.length + semInteracao.length,
+        resumo: [
+          ...avisosBanco.map((a) => `${a.nome}: ${textoBancoVencimento(a)}`),
+          ...semInteracao.map(
+            (m) =>
+              `${m.nome}: ${m.diasSemInteracao.length} ${m.diasSemInteracao.length === 1 ? "dia" : "dias"} sem interação`,
+          ),
+        ],
+      };
+    } else if (semInteracao.length > 0) {
       mapa["/motoristas"] = {
         total: semInteracao.length,
         resumo: semInteracao.map(
@@ -395,6 +500,8 @@ export function NotificationBell() {
     solicitacoesPendentes,
     pedidosFolga,
     pedidosTitular,
+    avisosInstrumento,
+    avisosBanco,
     semInteracao,
   ]);
 
@@ -471,6 +578,8 @@ export function NotificationBell() {
             solicitacoesPendentes.length === 0 &&
             pedidosFolga.length === 0 &&
             pedidosTitular.length === 0 &&
+            avisosInstrumento.length === 0 &&
+            avisosBanco.length === 0 &&
             diasRadar === 0 && (
               <div className="notif-dropdown-vazio">
                 Nenhum alerta pendente.
@@ -520,6 +629,48 @@ export function NotificationBell() {
                 </div>
               </div>
             )}
+            {avisosInstrumento.map((a) => (
+              <div className="notif-item" key={`instrumento-${a.empresaId}`}>
+                <div className="notif-item-topo">
+                  <span className={`badge ${a.situacao === "VENCE_EM_BREVE" ? "neutro" : "erro"}`}>
+                    Banco de horas
+                  </span>
+                </div>
+                <div className="notif-item-mensagem">
+                  {a.razaoSocial}: {textoInstrumento(a)}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <Link
+                    to="/regras-sindicais"
+                    onClick={() => setAberto(false)}
+                    style={{ fontSize: 12 }}
+                  >
+                    Atualizar o instrumento →
+                  </Link>
+                </div>
+              </div>
+            ))}
+            {avisosBanco.map((a) => (
+              <div className="notif-item" key={`banco-${a.motoristaId}`}>
+                <div className="notif-item-topo">
+                  <span className={`badge ${a.situacao === "VENCIDO" ? "erro" : "neutro"}`}>
+                    Banco de horas
+                  </span>
+                </div>
+                <div className="notif-item-mensagem">
+                  {a.nome}: {textoBancoVencimento(a)}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <Link
+                    to={`/motoristas/${a.motoristaId}`}
+                    onClick={() => setAberto(false)}
+                    style={{ fontSize: 12 }}
+                  >
+                    Ver o banco de horas →
+                  </Link>
+                </div>
+              </div>
+            ))}
             {pedidosTitular.length > 0 && (
               <div className="notif-item">
                 <div className="notif-item-topo">

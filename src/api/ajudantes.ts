@@ -43,6 +43,10 @@ export function atualizarStatusAjudante(
     .then((r) => r.data);
 }
 
+export function reativarAjudante(id: string) {
+  return api.post<Ajudante>(`/ajudantes/${id}/reativar`).then((r) => r.data);
+}
+
 export function excluirAjudante(id: string, motivo?: string) {
   return api
     .delete<Ajudante>(`/ajudantes/${id}`, { data: { motivo } })

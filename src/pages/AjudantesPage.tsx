@@ -9,6 +9,7 @@ import {
   contarAlertasPendentesEspelho,
   createAjudante,
   excluirAjudante,
+  reativarAjudante,
   getAlertasJornadaAbertaAjudantes,
   type AlertaJornadaAbertaAjudante,
   listAjudantes,
@@ -195,7 +196,7 @@ export function AjudantesPage() {
 
   async function onExcluirCadastro(a: Ajudante) {
     const confirmacao = await prompt(
-      `Para excluir o cadastro de ${a.nome}, digite EXCLUIR (o histórico de registros de jornada dele continua intacto e pesquisável):`,
+      `Para excluir o cadastro de ${a.nome}, digite EXCLUIR (só é possível para quem nunca bateu ponto):`,
       { titulo: "Excluir cadastro", perigo: true, textoConfirmar: "Excluir" },
     );
     if (confirmacao !== "EXCLUIR") return;
@@ -205,7 +206,26 @@ export function AjudantesPage() {
         placeholder: "Motivo (opcional)",
         multilinha: true,
       })) ?? undefined;
-    await excluirAjudante(a.id, motivo || undefined);
+    try {
+      await excluirAjudante(a.id, motivo || undefined);
+    } catch (ex) {
+      // Rodada 724: cadastro com ponto batido nao pode ser excluido.
+      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
+      setErro(dados?.message ?? "Não foi possível excluir o cadastro.");
+      return;
+    }
+    await carregar();
+  }
+
+  /** Rodada 725: reativa um cadastro de ajudante excluido (volta ATIVO). */
+  async function onReativar(a: Ajudante) {
+    try {
+      await reativarAjudante(a.id);
+    } catch (ex) {
+      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
+      setErro(dados?.message ?? "Não foi possível reativar o cadastro.");
+      return;
+    }
     await carregar();
   }
 
@@ -363,6 +383,7 @@ export function AjudantesPage() {
                 <tr>
                   <th>Nome</th>
                   <th>CPF</th>
+                  <th>Cargo</th>
                   <th>Status</th>
                   <th>Dispositivo</th>
                   <th></th>
@@ -388,6 +409,7 @@ export function AjudantesPage() {
                         )}
                       </td>
                       <td>{a.cpf}</td>
+                      <td>{a.cargo ?? "Ajudante"}</td>
                       <td>
                         {a.excluidoEm ? (
                           a.status
@@ -422,6 +444,9 @@ export function AjudantesPage() {
                         >
                           {espelhoBaixando === a.id ? "Gerando..." : "Espelho (PDF)"}
                         </button>
+                        {a.excluidoEm && (
+                          <button onClick={() => void onReativar(a)}>Reativar cadastro</button>
+                        )}
                         {!a.excluidoEm && (
                           <>
                             {a.dispositivoVinculado ? (
@@ -448,7 +473,7 @@ export function AjudantesPage() {
                     </tr>
                     {novaChavePorAjudante[a.id] && (
                       <tr>
-                        <td colSpan={5} style={{ background: "#fffbeb" }}>
+                        <td colSpan={6} style={{ background: "#fffbeb" }}>
                           <div style={{ padding: "8px 12px" }}>
                             <strong style={{ fontSize: 12 }}>
                               Nova device key (só aparece agora):
@@ -474,7 +499,7 @@ export function AjudantesPage() {
                 ))}
                 {paginacao.itensExibidos.length === 0 && (
                   <tr>
-                    <td colSpan={5} style={{ color: "#000000" }}>
+                    <td colSpan={6} style={{ color: "#000000" }}>
                       {busca
                         ? "Nenhum ajudante encontrado para essa busca."
                         : "Nenhum ajudante cadastrado ainda."}

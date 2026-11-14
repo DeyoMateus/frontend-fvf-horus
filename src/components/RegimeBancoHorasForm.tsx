@@ -43,6 +43,7 @@ export function RegimeBancoHorasForm({
   const [domingo, setDomingo] = useState<RegimeDomingoFeriado>(inicial?.domingoFeriado ?? "NAO_DEFINIDO");
   const [documento, setDocumento] = useState(inicial?.documento ?? "");
   const [vigencia, setVigencia] = useState(inicial?.vigenciaInicio ?? "");
+  const [vigenciaFim, setVigenciaFim] = useState(inicial?.vigenciaFim ?? "");
   const [tetoHoras, setTetoHoras] = useState(inicial?.tetoMin ? String(inicial.tetoMin / 60) : "");
   const [fator, setFator] = useState(String(inicial?.fator ?? 1));
   const [motivo, setMotivo] = useState("");
@@ -63,6 +64,10 @@ export function RegimeBancoHorasForm({
       setErro("O teto do saldo deve ser um número de horas maior que zero (ou fique em branco).");
       return;
     }
+    if (vigencia && vigenciaFim && vigenciaFim < vigencia) {
+      setErro("O fim da vigência não pode ser anterior ao início.");
+      return;
+    }
     setSalvando(true);
     try {
       const teto = tetoNum !== null ? Math.round(tetoNum * 60) : undefined;
@@ -71,6 +76,7 @@ export function RegimeBancoHorasForm({
         domingoFeriado: domingo,
         documento: documento.trim() || undefined,
         vigenciaInicio: vigencia || undefined,
+        vigenciaFim: vigenciaFim || undefined,
         tetoMin: teto,
         fator: fatorNum,
         motivo: motivo.trim(),
@@ -87,6 +93,18 @@ export function RegimeBancoHorasForm({
   return (
     <form onSubmit={salvar} style={{ display: "grid", gap: 8, maxWidth: 560 }}>
       <h4 style={{ margin: 0 }}>Banco de horas: {nome}</h4>
+      {inicial?.instrumento?.situacao === "VENCIDO" && (
+        <p className="error-text">
+          O instrumento do banco de horas venceu. As horas extras novas estão indo para pagamento. Cadastre
+          o novo acordo ou a nova convenção.
+        </p>
+      )}
+      {inicial?.instrumento?.situacao === "VENCE_EM_BREVE" && (
+        <p className="error-text">
+          O instrumento do banco de horas vence em {inicial.instrumento.diasParaFim} dia(s). Providencie a
+          renovação para não interromper o banco.
+        </p>
+      )}
       <label>Regime do banco de horas</label>
       <select value={regime} onChange={(e) => setRegime(e.target.value as RegimeBancoHoras)}>
         {(Object.keys(ROTULO_REGIME) as RegimeBancoHoras[]).map((k) => (
@@ -105,6 +123,12 @@ export function RegimeBancoHorasForm({
           <input maxLength={200} value={documento} onChange={(e) => setDocumento(e.target.value)} />
           <label>Início da vigência</label>
           <input type="date" value={vigencia} onChange={(e) => setVigencia(e.target.value)} />
+          <label>Fim da vigência (opcional)</label>
+          <input type="date" value={vigenciaFim} onChange={(e) => setVigenciaFim(e.target.value)} />
+          <small>
+            Depois dessa data, as horas extras novas deixam de entrar no banco e seguem para o relatório de
+            horas a pagar, até você cadastrar o novo instrumento.
+          </small>
           <label>Teto do saldo, em horas (opcional)</label>
           <input inputMode="decimal" value={tetoHoras} onChange={(e) => setTetoHoras(e.target.value)} />
           <label>Fator de conversão (1 a 3)</label>

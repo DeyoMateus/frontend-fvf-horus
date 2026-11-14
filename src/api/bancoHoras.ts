@@ -74,6 +74,8 @@ export interface VencimentosRazao {
   lotes: LoteBanco[];
   vencidos: LoteBanco[];
   aVencer: LoteBanco[];
+  vencidoPendenteMin?: number;
+  disponivelParaCompensarMin?: number;
 }
 
 export interface VerificacaoRazao {
@@ -94,6 +96,8 @@ export const debitarRazao = (id: string, input: { tipo: 'COMPENSACAO' | 'PAGAMEN
   api.post(`${base(id)}/debitos`, input).then((r) => r.data);
 export const corrigirRazao = (id: string, input: { sentido: 'CREDITO' | 'DEBITO'; minutos: number; data: string; observacao: string }) =>
   api.post(`${base(id)}/correcoes`, input).then((r) => r.data);
+export const reapurarDiaRazao = (id: string, input: { data: string; observacao: string }) =>
+  api.post(`${base(id)}/reapuracao`, input).then((r) => r.data);
 export const expirarVencidosRazao = (id: string) => api.post(`${base(id)}/expirar-vencidos`).then((r) => r.data);
 export const abrirRazao = (id: string, data: string) => api.post(`${base(id)}/abertura`, { data }).then((r) => r.data);
 export const snapshotRazao = (id: string, data: string) => api.post(`${base(id)}/snapshot`, { data }).then((r) => r.data);

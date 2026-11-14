@@ -23,6 +23,7 @@ import {
   atualizarCadastroMotorista,
   atualizarStatusMotorista,
   excluirMotorista,
+  reativarMotorista,
   getMotorista,
   listarAlertasIntegridadeDispositivo,
 } from "../api/motoristas";
@@ -47,6 +48,7 @@ import {
   aceitarDivergenciaIntegridade,
   baixarAej,
   baixarAejAssinado,
+  AejExigeMotivoError,
   baixarDirecaoEsperaCsv,
   baixarPlanilhaJornada,
   baixarComprovante,
@@ -84,6 +86,7 @@ import { TelefoneInput } from "../components/TelefoneInput";
 import { baixarHoleritePdf, calcularHolerite } from "../api/holerite";
 import { BancoHorasPainel } from "../components/BancoHorasPainel";
 import { BancoHorasRazaoPainel } from "../components/BancoHorasRazaoPainel";
+import { FechamentosPeriodoPainel } from "../components/FechamentosPeriodoPainel";
 import type { OpcoesHolerite, ResultadoHolerite } from "../api/holerite";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
@@ -354,10 +357,29 @@ export function MotoristaDetailPage() {
     }
   }
 
+  /** Rodada 722: pede o motivo quando o periodo ja tem AEJ e o conteudo mudou (gera o retificador). */
+  async function pedirMotivoRetificacao(mensagem: string): Promise<string | null> {
+    return prompt(mensagem, {
+      titulo: "AEJ retificador",
+      placeholder: "Motivo da retificação (mínimo de 10 caracteres)",
+      multilinha: true,
+      textoConfirmar: "Gerar retificador",
+      validar: (v) => (v.trim().length < 10 ? "Informe o motivo (mínimo de 10 caracteres)." : null),
+    });
+  }
+
   async function onBaixarAej() {
     setBaixandoAej(true);
     try {
-      const avisos = await baixarAej(motoristaId, periodoDosRegistros());
+      let avisos: string[];
+      try {
+        avisos = await baixarAej(motoristaId, periodoDosRegistros());
+      } catch (ex) {
+        if (!(ex instanceof AejExigeMotivoError)) throw ex;
+        const motivo = await pedirMotivoRetificacao(ex.message);
+        if (!motivo) return;
+        avisos = await baixarAej(motoristaId, { ...periodoDosRegistros(), motivoRetificacao: motivo });
+      }
       setAvisoAejAssinado(avisos.length > 0 ? avisos.join(" ") : null);
     } finally {
       setBaixandoAej(false);
@@ -368,8 +390,15 @@ export function MotoristaDetailPage() {
     setBaixandoAejAssinado(true);
     setAvisoAejAssinado(null);
     try {
-      const aviso = await baixarAejAssinado(motoristaId, periodoDosRegistros());
-      setAvisoAejAssinado(aviso);
+      try {
+        setAvisoAejAssinado(await baixarAejAssinado(motoristaId, periodoDosRegistros()));
+      } catch (ex) {
+        const exige = (ex as { response?: { status?: number; data?: { codigo?: string; message?: string } } })?.response;
+        if (exige?.status !== 409 || exige.data?.codigo !== "AEJ_RETIFICACAO_EXIGE_MOTIVO") throw ex;
+        const motivo = await pedirMotivoRetificacao(exige.data.message ?? "O conteúdo mudou desde o último AEJ deste período.");
+        if (!motivo) return;
+        setAvisoAejAssinado(await baixarAejAssinado(motoristaId, { ...periodoDosRegistros(), motivoRetificacao: motivo }));
+      }
     } catch (ex) {
       const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
       setAvisoAejAssinado(dados?.message ?? "Não foi possível gerar o AEJ assinado.");
@@ -1301,7 +1330,7 @@ export function MotoristaDetailPage() {
    */
   async function onExcluirCadastro() {
     const confirmacao = await prompt(
-      `Excluir o cadastro de ${motorista!.nome}? Isto tira ele da listagem normal do painel e revoga o dispositivo vinculado agora. Nada do histórico é apagado, continua tudo aqui e encontrável pela busca. Para confirmar, digite EXCLUIR:`,
+      `Excluir o cadastro de ${motorista!.nome}? Só é possível para quem nunca bateu ponto (cadastro feito por engano). Isto tira ele da listagem normal do painel e revoga o dispositivo vinculado agora. Para confirmar, digite EXCLUIR:`,
       { titulo: "Excluir cadastro", perigo: true, textoConfirmar: "Excluir" },
     );
     if (confirmacao !== "EXCLUIR") return;
@@ -1321,8 +1350,33 @@ export function MotoristaDetailPage() {
     try {
       await excluirMotorista(motoristaId, motivo);
       navigate("/motoristas");
-    } catch {
-      setErroStatus("Não foi possível excluir o cadastro.");
+    } catch (ex) {
+      // Rodada 724: cadastro com ponto batido nao pode ser excluido; o servidor explica o motivo.
+      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
+      setErroStatus(dados?.message ?? "Não foi possível excluir o cadastro.");
+      setAlterandoStatus(false);
+    }
+  }
+
+  /** Rodada 725: reativa um cadastro excluido (o servidor recusa se CPF/CNH foi reutilizado). */
+  async function onReativarCadastro() {
+    if (
+      !(await confirmarAcao(
+        `Reativar o cadastro de ${motorista!.nome}? Ele volta como ATIVO e reaparece na listagem, com todo o histórico de antes.`,
+        { titulo: "Reativar cadastro", textoConfirmar: "Reativar" },
+      ))
+    ) {
+      return;
+    }
+    setAlterandoStatus(true);
+    setErroStatus(null);
+    try {
+      await reativarMotorista(motoristaId);
+      await carregarTudo();
+    } catch (ex) {
+      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
+      setErroStatus(dados?.message ?? "Não foi possível reativar o cadastro.");
+    } finally {
       setAlterandoStatus(false);
     }
   }
@@ -1523,6 +1577,14 @@ export function MotoristaDetailPage() {
             . Não aparece mais na listagem normal, mas todo o histórico abaixo
             continua intacto.
           </p>
+          <button
+            type="button"
+            style={{ marginTop: 8 }}
+            disabled={alterandoStatus}
+            onClick={onReativarCadastro}
+          >
+            Reativar cadastro
+          </button>
         </div>
       )}
 
@@ -3154,8 +3216,9 @@ export function MotoristaDetailPage() {
         )}
       </div>
 
+      <FechamentosPeriodoPainel motoristaId={motoristaId} />
       <BancoHorasPainel motoristaId={motoristaId} />
-      <BancoHorasRazaoPainel motoristaId={motoristaId} ehAdmin={usuario?.papel === "ADMIN"} />
+      <BancoHorasRazaoPainel motoristaId={motoristaId} empresaId={motorista?.empresaId} ehAdmin={usuario?.papel === "ADMIN"} />
     </div>
   );
 }

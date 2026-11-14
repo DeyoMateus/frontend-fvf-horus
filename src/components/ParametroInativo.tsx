@@ -5,8 +5,6 @@
  * sai dos dois lugares.
  */
 export const CAMPOS_PARAMETRO_INATIVO: Record<string, string> = {
-  intervaloEntreJornadasMin: "Hoje só alimenta a apuração por jornada em sombra; não muda o resultado oficial.",
-  bancoHorasPrazoExpiracaoMeses: "Ainda não altera a apuração atual.",
   percentualHoraEspera: "Informativo: benefício da convenção, não entra no cálculo.",
   percentualHoraEsperaRefeicao: "Informativo: benefício da convenção, não entra no cálculo.",
   cctVigenciaInicio: "Respaldo da convenção: guardado, não altera a apuração atual.",
@@ -19,9 +17,8 @@ export const CAMPOS_PARAMETRO_INATIVO: Record<string, string> = {
   interjornadaNoBancoPermitida: "Guardado e auditado: a interjornada suprimida segue paga fora do banco de horas.",
   feriadoTratamento: "Ainda não altera a apuração atual.",
   feriadoFonte: "Ainda não altera a apuração atual.",
-  folgaDomingoACadaSemanas: "Ainda não altera a apuração atual.",
-  marcoAdi5322Data: "Ainda não altera a apuração atual.",
-  marcoAdi5322Referencia: "Ainda não altera a apuração atual.",
+  marcoAdi5322Data: "Guardado: a espera integra a jornada em todos os dias, então a data não muda o cálculo (o sistema só tem registros posteriores a 2023).",
+  marcoAdi5322Referencia: "Guardado: a referência da decisão não altera a apuração atual.",
 };
 
 export function ParametroInativo({ campo }: { campo: string }) {

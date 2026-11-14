@@ -30,7 +30,8 @@ function numOuNull(v: string): number | null {
  * Passo 45 (rodada 399): retenção de dados. Parâmetros por empresa (vazio =
  * mínimo da lei; nunca abaixo dele), data de desligamento do motorista,
  * bloqueio por processo (legal hold) e relatório informativo. Esta tela não
- * apaga nem anonimiza nada: o expurgo só será ligado após validação jurídica.
+ * apaga nem anonimiza nada: registros de ponto e jornadas são sempre mantidos
+ * (decisão de 13/11/2026).
  */
 export function RetencaoPage() {
   const { usuario } = useAuth();
@@ -233,11 +234,16 @@ function RetencaoConteudo() {
     <div>
       <h2>Retenção de dados</h2>
       <p style={{ color: "#000000", fontSize: 13 }}>
-        Define por quanto tempo os dados de ponto são guardados. Campos vazios
-        usam o mínimo previsto em lei; nenhum valor abaixo dele é aceito. Esta
-        tela não apaga nem anonimiza nenhum dado: o expurgo só será ligado
-        depois de validação jurídica. Motorista com bloqueio por processo não
-        entra em nenhum critério de expurgo.
+        Esta tela apresenta as referências de conservação dos dados, conforme
+        sua categoria e finalidade. A data exibida representa uma previsão de
+        revisão da necessidade de conservação e não determina, por si só, a
+        eliminação automática: o sistema não apaga nada sozinho. Registros
+        sujeitos a obrigação legal, fiscalização, contestação ou processo em
+        andamento poderão ter sua conservação prolongada pelo tempo necessário,
+        com justificativa e controle de acesso (o bloqueio por processo marca
+        esses casos). As marcações originais de ponto são preservadas. Dados
+        que não precisem mais ser conservados deverão ser avaliados para
+        eliminação ou anonimização.
       </p>
       {erro && <p className="error-text">{erro}</p>}
       {carregando && <p>Carregando...</p>}
@@ -251,8 +257,7 @@ function RetencaoConteudo() {
       {rel && (
         <>
           <p style={{ color: "#000000", fontSize: 13 }}>
-            {rel.aviso} Registros que já cumpriram o prazo (informativo):{" "}
-            {rel.totalElegiveis}.
+            {rel.aviso}
           </p>
           <ControlesListaPaginada
             ordem={lista.ordem}
@@ -275,8 +280,7 @@ function RetencaoConteudo() {
                   <th>Motorista</th>
                   <th>Situação</th>
                   <th>Data de desligamento</th>
-                  <th>Prazo após desligamento</th>
-                  <th>Registros além do prazo</th>
+                  <th>Revisão da conservação</th>
                   <th>Bloqueio por processo</th>
                   <th></th>
                 </tr>
@@ -311,7 +315,6 @@ function RetencaoConteudo() {
                             : "Em curso"
                           : "Sem desligamento"}
                       </td>
-                      <td>{m.registrosElegiveisAoExpurgo}</td>
                       <td>
                         {m.bloqueado ? `Bloqueado (${m.processo ?? ""})` : "Não"}
                       </td>

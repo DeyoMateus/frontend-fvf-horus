@@ -16,7 +16,10 @@ export const ROTULO_TIPO_PEDIDO: Record<string, string> = {
   INFORMACAO_COMPARTILHAMENTO: "Informação sobre compartilhamento",
   REVOGACAO_CONSENTIMENTO: "Revogação de consentimento",
   REVISAO_DECISAO_AUTOMATIZADA: "Revisão de decisão automática",
-  OPOSICAO: "Oposição ao tratamento",
+  OPOSICAO: "Questionamento ou oposição ao tratamento",
+  ELIMINACAO: "Eliminação de dados",
+  BLOQUEIO_ANONIMIZACAO: "Bloqueio ou anonimização de dados",
+  DUVIDA_PRIVACIDADE: "Dúvida sobre privacidade",
 };
 
 export const ROTULO_STATUS_PEDIDO: Record<StatusSolicitacaoTitular, string> = {
@@ -35,17 +38,23 @@ const ORIENTACAO: Record<string, string> = {
   CORRECAO:
     "Nome e telefone o motorista edita no Perfil. Outros dados (CPF, CNH) são corrigidos pelo RH no cadastro. Registros de jornada não são alterados: a correção é feita por ajuste de ponto.",
   ANONIMIZACAO_ELIMINACAO:
-    "Registros de jornada e GPS das marcações precisam ser guardados por obrigação legal (prova trabalhista). Se for o caso, negue com justificativa explicando isso e o prazo de guarda.",
+    "Analise cada categoria de dado separadamente. As marcações de ponto ainda sujeitas à preservação legal são mantidas. GPS, mensagens, informações de aparelhos e anexos que não sejam mais necessários devem ser avaliados para eliminação, bloqueio ou anonimização. Responda explicando o que foi atendido e o que precisou ser mantido, com a justificativa.",
+  ELIMINACAO:
+    "Analise cada categoria de dado separadamente. As marcações de ponto ainda sujeitas à preservação legal são mantidas. GPS, mensagens, informações de aparelhos e anexos que não sejam mais necessários devem ser avaliados para eliminação. Responda explicando o que foi atendido e o que precisou ser mantido, com a justificativa. Correção de ponto nunca apaga a marcação original.",
+  BLOQUEIO_ANONIMIZACAO:
+    "Identifique os dados indicados pelo motorista. Dados desnecessários, excessivos ou tratados em desconformidade devem ser avaliados para bloqueio ou anonimização. As marcações de ponto sujeitas à preservação legal são mantidas; explique ao motorista o que foi atendido e o que foi mantido.",
+  DUVIDA_PRIVACIDADE:
+    "Responda à dúvida do motorista com base na Política de Privacidade. Se a dúvida revelar um pedido (acesso, correção, eliminação), trate-o como tal.",
   PORTABILIDADE:
     "O motorista pode baixar os dados em formato estruturado (JSON) no aplicativo, em Privacidade.",
   INFORMACAO_COMPARTILHAMENTO:
     "Os dados são compartilhados com a empresa (gestores autorizados), a fiscalização do trabalho quando exigido e fornecedores de infraestrutura (veja a Política de Privacidade).",
   REVOGACAO_CONSENTIMENTO:
-    "O tratamento não depende de consentimento (base: contrato de trabalho e obrigação legal). Explique isso ao motorista.",
+    "O tratamento dos dados de jornada é realizado com fundamento nas obrigações legais e na execução do contrato de trabalho, e não depende de consentimento. A retirada de uma permissão técnica do aparelho, como a localização em segundo plano, deve ser tratada separadamente e conforme as funcionalidades que dependem dessa permissão.",
   REVISAO_DECISAO_AUTOMATIZADA:
     "Os alertas são calculados automaticamente por regras legais e não punem sozinhos. Analise o caso e explique a decisão ao motorista.",
   OPOSICAO:
-    "Analise o motivo da oposição. Se o tratamento é obrigatório por lei ou contrato, explique por que não pode ser interrompido.",
+    "Analise o motivo apresentado pelo motorista e identifique qual tratamento de dados está sendo questionado. A oposição deve ser avaliada conforme a legislação e a base legal utilizada. Quando o tratamento for necessário ao cumprimento de obrigação legal ou à execução do contrato de trabalho, explique ao motorista os motivos pelos quais ele precisa ser mantido. Se houver tratamento desnecessário, excessivo ou em desconformidade com a legislação, encaminhe a solicitação para correção, bloqueio, anonimização ou eliminação, conforme o caso.",
 };
 
 const fmt = (iso: string | null) =>

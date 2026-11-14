@@ -8,6 +8,7 @@ import {
   debitarRazao,
   expirarVencidosRazao,
   listarRazao,
+  reapurarDiaRazao,
   verificarRazao,
   vencimentosRazao,
 } from "../api/bancoHoras";
@@ -16,6 +17,7 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { dataLocalIso } from "../utils/mascaras";
 import { ContestacoesBancoHoras } from "./ContestacoesBancoHoras";
 import { useConfirm } from "./ConfirmProvider";
+import { listarConfiguracaoApuracao } from "../api/configuracaoApuracao";
 
 const ROTULO: Record<TipoLancamentoBanco, string> = {
   ABERTURA: "Abertura (saldo inicial)",
@@ -40,14 +42,17 @@ const dia = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse()
 
 /**
  * Rodada 379 (passo 31, interface): razão de lançamentos do banco de horas.
- * Só funciona quando o super admin ativou o razão para a empresa; senão o
- * servidor responde com a explicação e o painel mostra essa mensagem.
+ * Só funciona quando a empresa escolheu um regime de banco de horas (r693); sem regime o
+ * Antes de chamar o razão, o painel consulta a configuração da empresa e, sem regime, não chama o servidor
+ * (evita o 400 no console). Se a consulta falhar ou a empresa não vier, segue o caminho antigo.
  */
 export function BancoHorasRazaoPainel({
   motoristaId,
+  empresaId,
   ehAdmin,
 }: {
   motoristaId: string;
+  empresaId?: string | null;
   ehAdmin: boolean;
 }) {
   const confirmar = useConfirm();
@@ -69,10 +74,22 @@ export function BancoHorasRazaoPainel({
   const [kSentido, setKSentido] = useState<"CREDITO" | "DEBITO">("CREDITO");
   const [kHoras, setKHoras] = useState("1");
   const [kObs, setKObs] = useState("");
+  const [rData, setRData] = useState("");
+  const [rObs, setRObs] = useState("");
   const [aData, setAData] = useState(dataLocalIso(new Date()));
 
   async function carregar() {
     try {
+      if (empresaId) {
+        const empresas = await listarConfiguracaoApuracao().catch(() => null);
+        const minha = empresas?.find((x) => x.id === empresaId);
+        if (minha && !minha.bancoHoras.razaoAtivo) {
+          setVenc(null);
+          setLista([]);
+          setIndisponivel("Banco de horas sem regime nesta empresa.");
+          return;
+        }
+      }
       const [v, l] = await Promise.all([vencimentosRazao(motoristaId), listarRazao(motoristaId)]);
       setVenc(v);
       setLista(l);
@@ -83,7 +100,7 @@ export function BancoHorasRazaoPainel({
   }
   useEffect(() => {
     void carregar();
-  }, [motoristaId]);
+  }, [motoristaId, empresaId]);
 
   async function executar(fn: () => Promise<unknown>, ok?: string) {
     setErro(null);
@@ -114,6 +131,12 @@ export function BancoHorasRazaoPainel({
       {venc.vencidos.length > 0 && (
         <p style={{ color: "#b91c1c", fontSize: 13 }}>
           Vencido: {venc.vencidos.map((l) => `${minParaHoras(l.restanteMin)} (venceu em ${dia(l.venceEm)})`).join("; ")}
+        </p>
+      )}
+      {venc.vencidos.length > 0 && venc.disponivelParaCompensarMin !== undefined && (
+        <p style={{ fontSize: 13 }}>
+          Disponível para compensar: {minParaHoras(venc.disponivelParaCompensarMin)}. O vencido não pode mais ser
+          compensado; aguarda conferência e baixa por um administrador.
         </p>
       )}
       {venc.aVencer.length > 0 && (
@@ -168,12 +191,20 @@ export function BancoHorasRazaoPainel({
               const r = (await creditarPeriodoRazao(motoristaId, cInicio, cFim)) as {
                 dias?: Array<{ dia: string; resultado: string }>;
               };
+              const emAndamento = (r?.dias ?? []).filter((d) => d.resultado === "EM_ANDAMENTO");
               const divergentes = (r?.dias ?? []).filter((d) => d.resultado === "DIVERGENTE");
+              if (emAndamento.length > 0 && divergentes.length === 0) {
+                setErro(
+                  `Atenção: ${emAndamento.length} dia(s) não foram creditados porque há uma jornada em andamento (${emAndamento
+                    .map((d) => d.dia.split("-").reverse().join("/"))
+                    .join(", ")}). Credite de novo depois que ela terminar.`,
+                );
+              }
               if (divergentes.length > 0) {
                 setErro(
                   `Atenção: ${divergentes.length} dia(s) já lançado(s) estão com valor diferente da apuração de hoje (${divergentes
                     .map((d) => d.dia.split("-").reverse().join("/"))
-                    .join(", ")}). O razão não é alterado sozinho: use "Correção" se a apuração nova estiver certa.`,
+                    .join(", ")}). O razão não é alterado sozinho: use "Reapurar dia" se a apuração nova estiver certa.`,
                 );
               }
             }); }}
@@ -216,6 +247,17 @@ export function BancoHorasRazaoPainel({
           <div><label>Horas</label><input inputMode="decimal" value={kHoras} onChange={(e) => setKHoras(e.target.value)} style={{ width: 70 }} /></div>
           <div><label>Motivo (mín. 10 caracteres)</label><input minLength={10} maxLength={400} value={kObs} onChange={(e) => setKObs(e.target.value)} required /></div>
           <button type="submit" disabled={ocupado}>Registrar correção</button>
+        </form>
+      )}
+
+      {ehAdmin && (
+        <form
+          onSubmit={(e: FormEvent) => { e.preventDefault(); void executar(async () => { const r = await reapurarDiaRazao(motoristaId, { data: rData, observacao: rObs.trim() }); setRObs(""); return r; }); }}
+          style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 12 }}
+        >
+          <div><label>Reapurar dia já lançado</label><input type="date" value={rData} onChange={(e) => setRData(e.target.value)} required /></div>
+          <div><label>Motivo (mín. 10 caracteres)</label><input minLength={10} maxLength={300} value={rObs} onChange={(e) => setRObs(e.target.value)} required /></div>
+          <button type="submit" disabled={ocupado}>Reapurar dia</button>
         </form>
       )}
 

@@ -205,6 +205,7 @@ export interface Ajudante {
   id: string;
   nome: string;
   cpf: string;
+  cargo?: string;
   telefone?: string | null;
   status: StatusMotorista;
   empresaId?: string;
@@ -632,6 +633,8 @@ export interface GrupoResumo {
   totalEmpresas: number;
   totalUsuarios: number;
   totalMotoristas: number;
+  ativo?: boolean;
+  inativadoEm?: string | null;
 }
 
 export type RegimeBancoHoras =
@@ -651,6 +654,9 @@ export interface RegimeBancoHorasEmpresa {
   domingoFeriado: RegimeDomingoFeriado;
   documento: string | null;
   vigenciaInicio: string | null;
+  /** Rodada 701: último dia de vigência do instrumento (null = sem fim informado). */
+  vigenciaFim?: string | null;
+  instrumento?: { situacao: "SEM_FIM" | "VIGENTE" | "VENCE_EM_BREVE" | "VENCIDO"; diasParaFim: number | null };
   tetoMin: number | null;
   fator: number;
   razaoAtivo: boolean;
@@ -670,6 +676,9 @@ export interface GrupoDetalhe {
   razaoSocial: string;
   createdAt: string;
   limiteMotoristas?: number | null;
+  ativo?: boolean;
+  inativadoEm?: string | null;
+  motivoInativacao?: string | null;
   empresas: {
     id: string;
     razaoSocial: string;

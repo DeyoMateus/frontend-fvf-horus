@@ -45,11 +45,31 @@ export function excluirEmpresa(id: string) {
 export function vincularRegraSindical(
   empresaId: string,
   regraSindicalId: string | null,
+  // Rodada 719: dia (AAAA-MM-DD) em que a regra passa a valer; vazio = hoje. Data passada = retroativa.
+  opcoes?: { vigenciaInicio?: string; confirmarRetroatividade?: boolean },
 ) {
   return api
     .patch<Empresa>(`/empresas/${empresaId}/regra-sindical`, {
       regraSindicalId,
+      ...(opcoes?.vigenciaInicio ? { vigenciaInicio: opcoes.vigenciaInicio } : {}),
+      ...(opcoes?.confirmarRetroatividade ? { confirmarRetroatividade: true } : {}),
     })
+    .then((r) => r.data);
+}
+
+export interface VinculoRegraHistorico {
+  id: string;
+  regraSindicalId: string | null;
+  nome: string | null;
+  vigenciaInicio: string;
+  motivo: string | null;
+  registradoEm: string;
+}
+
+// Rodada 720: historico de regras do CNPJ (mais recente primeiro).
+export function historicoRegraSindical(empresaId: string) {
+  return api
+    .get<VinculoRegraHistorico[]>(`/empresas/${empresaId}/regra-sindical/historico`)
     .then((r) => r.data);
 }
 

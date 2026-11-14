@@ -43,6 +43,7 @@ export function atualizarBancoHorasEmpresa(
     domingoFeriado: string;
     documento?: string;
     vigenciaInicio?: string;
+    vigenciaFim?: string;
     tetoMin?: number;
     fator?: number;
     motivo: string;

@@ -45,21 +45,21 @@ const IND_ALERTAS_CRITICO: DefinicaoIndicador = {
   rotulo: "Alertas críticos",
   cor: "#b91c1c",
   descricao:
-    "Severidade mais alta: o limite legal já foi ultrapassado (ex.: direção contínua, jornada de direção ou espera em carga/descarga acima do máximo). Exige ação imediata e pode gerar dossiê de cobrança.",
+    "Severidade mais alta: o limite de referência já foi ultrapassado, como nos casos de direção contínua superior a 5h30 ou jornada de trabalho acima do limite diário aplicável. Exige análise e providência imediatas do responsável.",
 };
 const IND_ALERTAS_ATENCAO: DefinicaoIndicador = {
   chave: "alertasAtencao",
   rotulo: "Alertas de atenção",
   cor: "#b45309",
   descricao:
-    "Severidade intermediária: ainda não ultrapassou o limite legal, mas está perto dele, ou é um aviso que merece acompanhamento (ex.: descanso interjornada insuficiente, ociosidade suspeita durante a direção, tempo indefinido prolongado).",
+    "Severidade intermediária: ainda não ultrapassou o limite de referência, mas está perto dele, ou é um aviso que merece acompanhamento (ex.: descanso interjornada insuficiente, ociosidade suspeita durante a direção, tempo indefinido prolongado).",
 };
 const IND_ALERTAS_INFO: DefinicaoIndicador = {
   chave: "alertasInfo",
   rotulo: "Alertas informativos",
   cor: "#9ca3af",
   descricao:
-    "Severidade mais baixa: um aviso antecipado, sem indicar risco nem proximidade de limite legal — só mantém o gestor informado do que já foi acumulado na jornada (ex.: horas de espera já somadas, ainda longe do limiar legal).",
+    "Severidade mais baixa: um aviso antecipado, sem indicar risco nem proximidade de limite de referência — só mantém o gestor informado do que já foi acumulado na jornada (ex.: horas de espera já somadas, ainda longe do limiar de referência).",
 };
 const IND_RISCO_FRAUDE: DefinicaoIndicador = {
   chave: "riscoFraude",
@@ -80,7 +80,7 @@ const IND_HORAS_ESPERA: DefinicaoIndicador = {
   rotulo: "Horas de espera",
   cor: "#f59e0b",
   sufixo: "h",
-  descricao: "Soma das horas em espera de carga/descarga, por dia — é o tempo que conta para o limite crítico de espera (referência de 5h do art. 11 da Lei 11.442/2007; o limite é configurável).",
+  descricao: "Tempo de espera para carga ou descarga, por dia. A referência de 5 horas é utilizada para identificar situações relacionadas ao prazo legal de carga e descarga e à eventual cobrança prevista na legislação do transporte rodoviário de cargas. Os avisos anteriores a esse prazo são parâmetros operacionais do sistema.",
 };
 // Rodada 68 — jornada aberta sem etapa em aberto (nem direção, nem
 // descanso, nem espera, nem "aguardando documentação").

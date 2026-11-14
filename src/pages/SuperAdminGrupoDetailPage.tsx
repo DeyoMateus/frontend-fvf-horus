@@ -6,6 +6,7 @@ import {
   atualizarEmpresaSuperAdmin,
   atualizarGrupo,
   atualizarStatusEmpresaSuperAdmin,
+  atualizarStatusGrupoSuperAdmin,
   atualizarDestinatariosWhatsapp,
   atualizarStatusUsuarioGrupo,
   excluirUsuarioGrupo,
@@ -111,6 +112,32 @@ export function SuperAdminGrupoDetailPage() {
   // INICIAL (mount, com `comCarregamentoTelaCheia = true`) passa por
   // essa tela cheia; toda atualização depois de salvar só troca os
   // dados no lugar, sem desmontar nada.
+  async function alternarStatusGrupo() {
+    if (!grupoId || !grupo) return;
+    const inativar = grupo.ativo !== false;
+    let motivo: string | undefined;
+    if (inativar) {
+      const digitado = window.prompt(
+        "Motivo da inativação (mínimo 5 caracteres). O painel da empresa fica bloqueado; os motoristas continuam batendo ponto e nada é apagado.",
+      );
+      if (digitado === null) return;
+      motivo = digitado.trim();
+      if (motivo.length < 5) {
+        setErroEdicao("Informe o motivo da inativação (mínimo 5 caracteres).");
+        return;
+      }
+    } else if (!(await confirm("Confirma reativar esta empresa? O painel volta a funcionar."))) {
+      return;
+    }
+    try {
+      await atualizarStatusGrupoSuperAdmin(grupoId, !inativar, motivo);
+      setErroEdicao(null);
+      await carregar();
+    } catch {
+      setErroEdicao("Não foi possível alterar o status da empresa.");
+    }
+  }
+
   async function carregar(comCarregamentoTelaCheia = false) {
     if (!grupoId) return;
     if (comCarregamentoTelaCheia) setCarregando(true);
@@ -375,8 +402,28 @@ export function SuperAdminGrupoDetailPage() {
             onClick={iniciarEdicaoGrupo}
           >
             Editar
+          </button>{" "}
+          <span style={{ fontSize: 12, fontWeight: 600 }}>
+            {grupo.ativo === false ? "INATIVA" : "ATIVA"}
+          </span>{" "}
+          <button
+            className="secondary"
+            style={{ fontSize: 12 }}
+            onClick={alternarStatusGrupo}
+          >
+            {grupo.ativo === false ? "Reativar empresa" : "Inativar empresa"}
           </button>
         </h2>
+      )}
+      {grupo.ativo === false && (
+        <p className="error-text" style={{ marginTop: -8 }}>
+          Inativa desde{" "}
+          {grupo.inativadoEm
+            ? new Date(grupo.inativadoEm).toLocaleDateString("pt-BR")
+            : "-"}
+          {grupo.motivoInativacao ? ` · Motivo: ${grupo.motivoInativacao}` : ""}.
+          O painel está bloqueado; os motoristas continuam batendo ponto.
+        </p>
       )}
       <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
         Empresa mãe desde{" "}

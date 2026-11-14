@@ -751,14 +751,14 @@ export function PainelIndicadores() {
                   valor={String(painel.totais.alertas.criticos)}
                   cor="#b91c1c"
                   onClick={() => irParaGrafico("alertas")}
-                  descricao="Severidade mais alta: o limite legal já foi ultrapassado (ex.: direção contínua, jornada de direção ou espera em carga/descarga acima do máximo). Exige ação imediata."
+                  descricao="Severidade mais alta: o limite de referência já foi ultrapassado, como nos casos de direção contínua superior a 5h30 ou jornada de trabalho acima do limite diário aplicável. Exige análise e providência imediatas do responsável."
                 />
                 <CartaoIndicador
                   titulo="Alertas de atenção"
                   valor={String(painel.totais.alertas.atencao)}
                   cor="#b45309"
                   onClick={() => irParaGrafico("alertas")}
-                  descricao="Severidade intermediária: ainda não ultrapassou o limite legal, mas está perto dele, ou merece acompanhamento (ex.: descanso interjornada insuficiente, ociosidade suspeita)."
+                  descricao="Severidade intermediária: ainda não ultrapassou o limite de referência, mas está perto dele, ou merece acompanhamento (ex.: descanso interjornada insuficiente, ociosidade suspeita)."
                 />
                 <CartaoIndicador
                   titulo="Divergências de registro"
