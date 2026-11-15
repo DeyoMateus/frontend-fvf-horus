@@ -55,3 +55,23 @@ export function atualizarRetencaoMotorista(
     .patch(`/retencao/motoristas/${motoristaId}`, input)
     .then((r) => r.data);
 }
+
+/** Rodada 733: dados que ja passaram do prazo fixo do sistema, por tipo. */
+export interface VencidosRetencao {
+  prazos: Record<string, string>;
+  GPS_PERIODICO: number;
+  ANEXOS: number;
+  APARELHOS: number;
+}
+
+export function obterVencidosRetencao() {
+  return api.get<VencidosRetencao>("/retencao/vencidos").then((r) => r.data);
+}
+
+export function eliminarVencidosRetencao() {
+  return api
+    .post<{ GPS_PERIODICO: number; ANEXOS: number; APARELHOS: number; motoristas: number }>(
+      "/retencao/vencidos/eliminar",
+    )
+    .then((r) => r.data);
+}

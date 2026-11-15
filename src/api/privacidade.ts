@@ -29,6 +29,16 @@ export type SolicitacaoTitularPainel = {
   createdAt: string;
   vencida: boolean;
   motorista: { id: string; nome: string };
+  /** Rodada 733 */
+  protocolo?: string | null;
+};
+
+/** Rodada 733: decisao por tipo de dado num pedido de eliminacao/bloqueio. */
+export type CategoriaDadoTitular = "GPS_PERIODICO" | "ANEXOS" | "APARELHOS" | "ALERTAS";
+export type DecisaoCategoriaTitular = {
+  categoria: CategoriaDadoTitular;
+  decisao: "ELIMINADO" | "MANTIDO";
+  justificativa?: string;
 };
 
 export type FiltroSolicitacoesTitular = {
@@ -104,10 +114,19 @@ export const responderSolicitacaoTitular = (
   id: string,
   status: StatusSolicitacaoTitular,
   resposta: string,
+  decisoes?: DecisaoCategoriaTitular[],
 ) =>
   api
-    .patch(`/privacidade/painel/solicitacoes/${id}`, { status, resposta })
+    .patch(`/privacidade/painel/solicitacoes/${id}`, { status, resposta, decisoes })
     .then((r) => r.data);
+
+/** Rodada 733: dados que passaram do prazo fixo, por tipo (tela Retencao). */
+export type VencidosRetencao = {
+  prazos: Record<string, string>;
+  GPS_PERIODICO: number;
+  ANEXOS: number;
+  APARELHOS: number;
+};
 
 /** Rodada 728: canal de privacidade da transportadora (aparece na politica). */
 export type CanalPrivacidade = { encarregado: string | null; contato: string | null };
@@ -153,3 +172,10 @@ export const aceitarMinhaPolitica = (versao: string) =>
       { versao },
     )
     .then((r) => r.data);
+
+/** Rodada 734: o RH registra um pedido recebido pelo canal de privacidade (e-mail, RH). */
+export const registrarSolicitacaoTitularPainel = (dados: {
+  motoristaId: string;
+  tipo: string;
+  descricao: string;
+}) => api.post("/privacidade/painel/solicitacoes", dados).then((r) => r.data);

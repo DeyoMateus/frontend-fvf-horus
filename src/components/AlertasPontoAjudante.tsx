@@ -147,7 +147,8 @@ function Tratamento({
   );
 }
 
-export function AlertasPontoAjudante() {
+/** `ajudanteId` (rodada 739): na ficha do ajudante, mostra só os dele, mesmo sem nenhum. */
+export function AlertasPontoAjudante({ ajudanteId }: { ajudanteId?: string } = {}) {
   const [alertas, setAlertas] = useState<AlertaPontoAjudante[]>([]);
   const [aberto, setAberto] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -155,7 +156,8 @@ export function AlertasPontoAjudante() {
 
   async function carregar() {
     try {
-      setAlertas(await listarAlertasPontoAjudantes(false));
+      const todos = await listarAlertasPontoAjudantes(false);
+      setAlertas(ajudanteId ? todos.filter((a) => a.ajudanteId === ajudanteId) : todos);
     } catch {
       setAlertas([]);
     }
@@ -164,7 +166,15 @@ export function AlertasPontoAjudante() {
     void carregar();
   }, []);
 
-  if (alertas.length === 0) return null;
+  if (alertas.length === 0) {
+    if (!ajudanteId) return null;
+    return (
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Pontos com divergência de relógio</h3>
+        <p style={{ fontSize: 13, margin: 0 }}>Nenhum ponto pendente de conferência.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="card" style={{ borderLeft: "4px solid #b45309" }}>

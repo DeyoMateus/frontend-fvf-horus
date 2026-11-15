@@ -14,6 +14,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { MotoristasListPage } from "./pages/MotoristasListPage";
 import { MotoristaDetailPage } from "./pages/MotoristaDetailPage";
 import { AjudantesPage } from "./pages/AjudantesPage";
+import { AjudanteDetailPage } from "./pages/AjudanteDetailPage";
 import { DocumentosCargaPage } from "./pages/DocumentosCargaPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { IndicadoresPage } from "./pages/IndicadoresPage";
@@ -86,6 +87,7 @@ export function App() {
                       element={<EventoIntegridadePage />}
                     />
                     <Route path="/ajudantes" element={<AjudantesPage />} />
+                    <Route path="/ajudantes/:ajudanteId" element={<AjudanteDetailPage />} />
                     <Route
                       path="/documentos-carga"
                       element={<DocumentosCargaPage />}

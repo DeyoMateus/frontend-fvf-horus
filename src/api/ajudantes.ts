@@ -152,3 +152,62 @@ export function corrigirHoraPontoAjudante(
     })
     .then((r) => r.data);
 }
+
+// Rodada 739: ficha do ajudante (cadastro, registros e alertas).
+export function getAjudante(id: string) {
+  return api.get<Ajudante>(`/ajudantes/${id}`).then((r) => r.data);
+}
+
+export interface EventoEspelhoAjudante {
+  tipoEvento: string;
+  timestampEvento: string;
+  flagsConfianca?: string[];
+  relogioIncerto?: boolean;
+}
+
+export interface JornadaEspelhoAjudante {
+  inicio: string;
+  fim: string | null;
+  aberta: boolean;
+  duracaoMin: number;
+  descansoMin: number;
+  carregamentoMin: number;
+  descargaMin: number;
+  trabalhadoMin: number;
+  eventos: EventoEspelhoAjudante[];
+  sinais: string[];
+}
+
+export interface TotaisEspelhoAjudante {
+  jornadas: number;
+  duracaoMin: number;
+  descansoMin: number;
+  carregamentoMin: number;
+  descargaMin: number;
+  trabalhadoMin: number;
+}
+
+export interface EspelhoAjudante {
+  jornadas: JornadaEspelhoAjudante[];
+  totais: TotaisEspelhoAjudante;
+  alertasPendentes?: number;
+}
+
+/** Espelho em JSON (o mesmo do PDF) para a aba Registros da ficha. */
+export function obterEspelhoAjudante(id: string, inicio: string, fim: string) {
+  return api
+    .get<EspelhoAjudante>(`/ajudantes/${id}/espelho`, { params: { inicio, fim } })
+    .then((r) => r.data);
+}
+
+/** Rodada 743: integridade da cadeia do cadastro antigo de ajudante. */
+export interface IntegridadeAjudante {
+  valido: boolean;
+  totalRegistros: number;
+  quebras: { sequencial: number; motivo: string }[];
+  verificadoEm: string;
+}
+
+export function verificarIntegridadeAjudante(id: string) {
+  return api.get<IntegridadeAjudante>(`/ajudantes/${id}/integridade`).then((r) => r.data);
+}

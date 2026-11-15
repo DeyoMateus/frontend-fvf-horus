@@ -2,9 +2,20 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { responderSolicitacaoTitular } from "../api/privacidade";
 import type {
+  CategoriaDadoTitular,
+  DecisaoCategoriaTitular,
   SolicitacaoTitularPainel,
   StatusSolicitacaoTitular,
 } from "../api/privacidade";
+
+/** Rodada 733: pedidos que passam pela decisao por tipo de dado. */
+const TIPOS_ELIMINACAO = ["ELIMINACAO", "BLOQUEIO_ANONIMIZACAO", "ANONIMIZACAO_ELIMINACAO"];
+const CATEGORIAS: { categoria: CategoriaDadoTitular; rotulo: string; podeEliminar: boolean }[] = [
+  { categoria: "GPS_PERIODICO", rotulo: "GPS periódico (localização de hora em hora)", podeEliminar: true },
+  { categoria: "ANEXOS", rotulo: "Anexos e evidências", podeEliminar: true },
+  { categoria: "APARELHOS", rotulo: "Aparelhos (pedidos de troca já decididos)", podeEliminar: true },
+  { categoria: "ALERTAS", rotulo: "Mensagens e alertas (ficam com a jornada)", podeEliminar: false },
+];
 import { TextoLongo } from "./TextoLongo";
 
 export const ROTULO_TIPO_PEDIDO: Record<string, string> = {
@@ -77,6 +88,13 @@ export function TratarPedidoTitularModal({
 }) {
   const aberto = pedido.status === "ABERTA" || pedido.status === "EM_ANALISE";
   const [resposta, setResposta] = useState(pedido.resposta ?? "");
+  const ehEliminacao = TIPOS_ELIMINACAO.includes(pedido.tipo);
+  const [decisoes, setDecisoes] = useState<Record<CategoriaDadoTitular, DecisaoCategoriaTitular>>(
+    () =>
+      Object.fromEntries(
+        CATEGORIAS.map((c) => [c.categoria, { categoria: c.categoria, decisao: "MANTIDO", justificativa: "" }]),
+      ) as Record<CategoriaDadoTitular, DecisaoCategoriaTitular>,
+  );
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -90,7 +108,33 @@ export function TratarPedidoTitularModal({
     setEnviando(true);
     setErro(null);
     try {
-      await responderSolicitacaoTitular(pedido.id, status, resposta.trim());
+      const comDecisoes = ehEliminacao && status === "ATENDIDA";
+      if (comDecisoes) {
+        const faltaMotivo = Object.values(decisoes).some(
+          (d) => d.decisao === "MANTIDO" && (d.justificativa ?? "").trim().length < 5,
+        );
+        if (faltaMotivo) {
+          setErro("Informe o motivo de cada tipo de dado mantido (mínimo de 5 caracteres).");
+          setEnviando(false);
+          return;
+        }
+        const eliminar = Object.values(decisoes).filter((d) => d.decisao === "ELIMINADO");
+        if (
+          eliminar.length > 0 &&
+          !window.confirm(
+            "Os dados marcados como Eliminar serão apagados agora e não podem ser recuperados. Marcações de ponto, ajustes e auditoria não são apagados. Confirmar?",
+          )
+        ) {
+          setEnviando(false);
+          return;
+        }
+      }
+      await responderSolicitacaoTitular(
+        pedido.id,
+        status,
+        resposta.trim(),
+        comDecisoes ? Object.values(decisoes) : undefined,
+      );
       onTratado();
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string | string[] } } })
@@ -125,6 +169,11 @@ export function TratarPedidoTitularModal({
               <strong style={{ color: "#b91c1c" }}> , PRAZO VENCIDO</strong>
             )}
           </div>
+          {pedido.protocolo && (
+            <div>
+              <strong>Protocolo:</strong> {pedido.protocolo}
+            </div>
+          )}
           <div>
             <strong>Aberto em:</strong> {fmt(pedido.createdAt)}
           </div>
@@ -151,10 +200,55 @@ export function TratarPedidoTitularModal({
 
         {aberto ? (
           <>
+            {ehEliminacao && (
+              <div style={{ marginBottom: 10 }}>
+                <strong style={{ fontSize: 13 }}>Decisão por tipo de dado</strong>
+                <p style={{ fontSize: 12, margin: "4px 0 6px" }}>
+                  Vale ao concluir o pedido. As marcações de ponto (com a localização da batida),
+                  os ajustes e a auditoria são sempre mantidos. O resultado é acrescentado à
+                  resposta ao motorista.
+                </p>
+                {CATEGORIAS.map((c) => {
+                  const d = decisoes[c.categoria];
+                  return (
+                    <div key={c.categoria} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6, marginBottom: 6, fontSize: 13 }}>
+                      <span>{c.rotulo}</span>
+                      <select
+                        value={d.decisao}
+                        disabled={!c.podeEliminar}
+                        onChange={(e) =>
+                          setDecisoes((atual) => ({
+                            ...atual,
+                            [c.categoria]: { ...d, decisao: e.target.value as "ELIMINADO" | "MANTIDO" },
+                          }))
+                        }
+                      >
+                        <option value="MANTIDO">Manter</option>
+                        {c.podeEliminar && <option value="ELIMINADO">Eliminar</option>}
+                      </select>
+                      {d.decisao === "MANTIDO" && (
+                        <input
+                          style={{ gridColumn: "1 / -1" }}
+                          maxLength={500}
+                          placeholder="Motivo para manter (aparece na resposta ao motorista)"
+                          value={d.justificativa ?? ""}
+                          onChange={(e) =>
+                            setDecisoes((atual) => ({
+                              ...atual,
+                              [c.categoria]: { ...d, justificativa: e.target.value },
+                            }))
+                          }
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <label>Resposta ao motorista</label>
             <textarea
               rows={4}
-              maxLength={2000}
+              maxLength={500}
               value={resposta}
               onChange={(e) => {
                 setResposta(e.target.value);
@@ -162,6 +256,7 @@ export function TratarPedidoTitularModal({
               }}
               placeholder="Esta resposta aparece para o motorista no aplicativo."
             />
+            <small>{resposta.length}/500 caracteres</small>
           </>
         ) : (
           <div style={{ fontSize: 13 }}>

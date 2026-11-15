@@ -52,7 +52,6 @@ const REGRA_PADRAO: RegraSindicalInput = {
   duracaoMinutoNoturnoMin: "60",
   intervaloRefeicaoMinimoMin: 60,
   intervaloEntreJornadasMin: 660,
-  percentualHoraEspera: "30",
   bancoHorasAtivo: false,
   janelaNoturnaInicioMin: 1320,
   janelaNoturnaFimMin: 300,
@@ -163,7 +162,7 @@ export function RegrasSindicaisPage() {
       incideReflexoDsrInterjornada: regra.incideReflexoDsrInterjornada ?? true,
       interjornadaNoBancoPermitida: regra.interjornadaNoBancoPermitida ?? false,
       bancoGuarda: regra.bancoGuarda ?? "fictos",
-      percentualHoraEspera: regra.percentualHoraEspera,
+      percentualHoraEspera: regra.percentualHoraEspera ?? null,
       acordoColetivo: regra.acordoColetivo ?? false,
       numeroMediador: regra.numeroMediador ?? undefined,
       sindicato: regra.sindicato ?? undefined,
@@ -902,11 +901,12 @@ export function RegrasSindicaisPage() {
                   type="number"
                   step="0.01"
                   min={0}
-                  value={form.percentualHoraEspera ?? "30"}
+                  value={form.percentualHoraEspera ?? ""}
+                  placeholder="Vazio se a convenção não prevê"
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      percentualHoraEspera: e.target.value,
+                      percentualHoraEspera: e.target.value || null,
                     }))
                   }
                 />
@@ -1373,11 +1373,10 @@ export function RegrasSindicaisPage() {
                 Tempo de espera: avisos informativos e operacionais a partir
                 dos limites cadastrados pela empresa. Após o julgamento da ADI
                 5322, o tempo de espera integra a jornada de trabalho e deve
-                permanecer registrado em sua categoria própria. A referência de
-                5 horas corresponde ao prazo legal relacionado à carga e
-                descarga no transporte rodoviário de cargas, utilizado para
-                identificar eventual cobrança contra o contratante do frete.
-                Não representa limite máximo de espera do empregado.
+                permanecer registrado em sua categoria própria. O tempo
+                configurado pela empresa só define quando os avisos aparecem e
+                quais esperas entram no relatório de espera. Não representa
+                limite máximo de espera do empregado.
               </li>
               <li>
                 Descanso entre jornadas: mínimo de 11 horas consecutivas.

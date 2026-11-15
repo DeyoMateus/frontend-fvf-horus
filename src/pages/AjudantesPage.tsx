@@ -1,4 +1,5 @@
 import { Fragment, FormEvent, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { useConfirm } from "../components/ConfirmProvider";
@@ -39,6 +40,7 @@ export function AjudantesPage() {
   }, []);
   const confirm = useConfirm();
   const prompt = usePrompt();
+  const navigate = useNavigate();
   const { usuario } = useAuth();
   const [ajudantes, setAjudantes] = useState<Ajudante[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -235,11 +237,12 @@ export function AjudantesPage() {
 
   return (
     <div>
-      <h2>Ajudantes</h2>
+      <h2>Ajudantes (histórico)</h2>
       <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Cadastro separado do motorista (sem CNH, sem veículo), usando o mesmo
-        app, mas com apenas 4 eventos disponíveis: início de jornada, início de
-        descanso, fim de descanso e fim de jornada.
+        Os ajudantes agora são cadastrados e acompanhados em{" "}
+        <a href="/motoristas">Colaboradores</a>, com a função Ajudante: lá ficam tratamento de
+        ponto, folgas, banco de horas e fechamentos. Esta tela guarda o cadastro antigo e os pontos
+        batidos antes da mudança, só para consulta (nada foi apagado).
       </p>
 
       {alertasAbertos.length > 0 && (
@@ -263,50 +266,7 @@ export function AjudantesPage() {
 
       <AlertasPontoAjudante />
 
-      <div className="card">
-        <h3 style={{ marginTop: 0 }}>Cadastrar ajudante</h3>
-        <form onSubmit={onSubmit}>
-          <label>Nome</label>
-          <input
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            maxLength={60}
-            required
-          />
-          <label>CPF (11 dígitos)</label>
-          <input
-            value={aplicarMascaraCpf(cpf)}
-            onChange={(e) => setCpf(somenteDigitos(e.target.value))}
-            pattern="\d{3}\.\d{3}\.\d{3}-\d{2}"
-            maxLength={14}
-            inputMode="numeric"
-            required
-          />
-          <label>Telefone de contato (opcional)</label>
-          <TelefoneInput value={telefone} onChange={setTelefone} />
-          {empresas.length > 1 && (
-            <>
-              <label>Empresa (CNPJ)</label>
-              <select
-                value={empresaId}
-                onChange={(e) => setEmpresaId(e.target.value)}
-                required
-              >
-                <option value="">Selecione...</option>
-                {empresas.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.razaoSocial} ({emp.cnpj})
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
-          {erroForm && <p className="error-text">{erroForm}</p>}
-          <button type="submit" disabled={criando}>
-            {criando ? "Cadastrando..." : "Cadastrar"}
-          </button>
-        </form>
-      </div>
+      {/* Rodada 743: cadastro novo de ajudante é feito em Colaboradores. */}
 
       <div className="card">
         <div
@@ -395,6 +355,17 @@ export function AjudantesPage() {
                     <tr style={a.excluidoEm ? { opacity: 0.6 } : undefined}>
                       <td>
                         {a.nome}
+                        {a.convertidoEmColaboradorEm && (
+                          <button
+                            type="button"
+                            className="secondary"
+                            style={{ fontSize: 11, marginLeft: 6, padding: "2px 8px" }}
+                            onClick={() => navigate(`/motoristas/${a.id}`)}
+                            title="Este ajudante agora é colaborador; os pontos novos ficam na ficha dele."
+                          >
+                            já é colaborador: abrir ficha
+                          </button>
+                        )}
                         {a.excluidoEm && (
                           <span
                             className="badge"
@@ -437,6 +408,14 @@ export function AjudantesPage() {
                         </span>
                       </td>
                       <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {/* Rodada 739: ficha do ajudante em abas (Cadastro, Registros, Alertas). */}
+                        <button
+                          type="button"
+                          style={{ fontSize: 12, padding: "4px 10px" }}
+                          onClick={() => navigate(`/ajudantes/${a.id}`)}
+                        >
+                          Ver detalhes
+                        </button>
                         <button
                           className="secondary"
                           disabled={espelhoBaixando === a.id}

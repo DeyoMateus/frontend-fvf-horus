@@ -7,6 +7,8 @@ import {
   obterRelatorioRetencao,
 } from "../api/retencao";
 import type { RelatorioRetencao } from "../api/retencao";
+import { eliminarVencidosRetencao, obterVencidosRetencao } from "../api/retencao";
+import type { VencidosRetencao } from "../api/retencao";
 import type { Empresa } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
@@ -131,6 +133,97 @@ function ParametrosEmpresa({
 
 const SEM_MOTORISTAS: RelatorioRetencao["motoristas"] = [];
 
+/**
+ * Rodada 733: retencao por tipo de dado com prazos fixos do sistema. Mostra o que ja passou
+ * do prazo e deixa o ADMIN eliminar (nada roda sozinho). Marcacoes, ajustes, auditoria e
+ * alertas nunca sao apagados; motorista com bloqueio por processo fica de fora.
+ */
+const ROTULOS_VENCIDOS: [keyof Omit<VencidosRetencao, "prazos">, string][] = [
+  ["GPS_PERIODICO", "GPS periódico (localização de hora em hora)"],
+  ["ANEXOS", "Anexos e evidências"],
+  ["APARELHOS", "Aparelhos (pedidos de troca já decididos)"],
+];
+
+function CardDadosVencidos() {
+  const confirm = useConfirm();
+  const [dados, setDados] = useState<VencidosRetencao | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [executando, setExecutando] = useState(false);
+
+  async function carregar() {
+    try {
+      setDados(await obterVencidosRetencao());
+      setErro(null);
+    } catch (err) {
+      setErro(mensagemErro(err));
+    }
+  }
+  useEffect(() => {
+    void carregar();
+  }, []);
+
+  const total = dados ? dados.GPS_PERIODICO + dados.ANEXOS + dados.APARELHOS : 0;
+
+  async function eliminar() {
+    if (
+      !(await confirm(
+        `Eliminar ${total} item(ns) que já passaram do prazo? Isso apaga os dados e não pode ser desfeito. Marcações de ponto, ajustes, auditoria e alertas não são apagados, e motoristas com bloqueio por processo ficam de fora.`,
+      ))
+    )
+      return;
+    setExecutando(true);
+    setMsg(null);
+    try {
+      const r = await eliminarVencidosRetencao();
+      setMsg(
+        `Eliminados: ${r.GPS_PERIODICO} registro(s) de GPS periódico, ${r.ANEXOS} anexo(s) e ${r.APARELHOS} pedido(s) de troca de aparelho, de ${r.motoristas} motorista(s).`,
+      );
+      await carregar();
+    } catch (err) {
+      setErro(mensagemErro(err));
+    } finally {
+      setExecutando(false);
+    }
+  }
+
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>Dados que já passaram do prazo</h3>
+      <p style={{ fontSize: 13 }}>
+        Prazos fixos do sistema por tipo de dado. Marcações de ponto (com a localização da
+        batida), ajustes, espelho, AEJ, auditoria e alertas nunca são apagados. Motoristas com
+        bloqueio por processo ficam de fora. A eliminação só acontece quando você pedir.
+      </p>
+      {dados && (
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo de dado</th>
+              <th>Prazo</th>
+              <th>Passaram do prazo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ROTULOS_VENCIDOS.map(([chave, rotulo]) => (
+              <tr key={chave}>
+                <td>{rotulo}</td>
+                <td>{dados.prazos[chave]}</td>
+                <td>{dados[chave]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <button type="button" disabled={executando || total === 0} onClick={() => void eliminar()}>
+        {executando ? "Eliminando..." : "Eliminar dados vencidos"}
+      </button>
+      {msg && <p>{msg}</p>}
+      {erro && <p className="error-text">{erro}</p>}
+    </div>
+  );
+}
+
 function RetencaoConteudo() {
   const confirm = useConfirm();
   const prompt = usePrompt();
@@ -247,6 +340,8 @@ function RetencaoConteudo() {
       </p>
       {erro && <p className="error-text">{erro}</p>}
       {carregando && <p>Carregando...</p>}
+
+      <CardDadosVencidos />
 
       <h3>Parâmetros por empresa</h3>
       {empresas.map((e) => (

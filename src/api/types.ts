@@ -22,7 +22,12 @@ export type TipoEvento =
   | "FIM_ESPERA_CARGA_DESCARGA"
   | "FIM_DESCARREGAMENTO"
   | "FIM_JORNADA"
-  | "OUTRO";
+  | "OUTRO"
+  // Rodada 740: eventos do ajudante.
+  | "INICIO_CARREGAMENTO"
+  | "FIM_CARREGAMENTO"
+  | "INICIO_DESCARGA"
+  | "FIM_DESCARGA";
 
 export const TIPOS_EVENTO: TipoEvento[] = [
   "INICIO_JORNADA",
@@ -36,6 +41,30 @@ export const TIPOS_EVENTO: TipoEvento[] = [
   "FIM_JORNADA",
   "OUTRO",
 ];
+
+/** Rodada 740: motorista e ajudante são colaboradores no mesmo cadastro. */
+export type FuncaoColaborador = "MOTORISTA" | "AJUDANTE";
+
+export const ROTULO_FUNCAO: Record<FuncaoColaborador, string> = {
+  MOTORISTA: "Motorista",
+  AJUDANTE: "Ajudante",
+};
+
+/** Eventos que o AJUDANTE registra (jornada, descanso, carregamento e descarga). */
+export const TIPOS_EVENTO_AJUDANTE: TipoEvento[] = [
+  "INICIO_JORNADA",
+  "INICIO_DESCANSO",
+  "FIM_DESCANSO",
+  "INICIO_CARREGAMENTO",
+  "FIM_CARREGAMENTO",
+  "INICIO_DESCARGA",
+  "FIM_DESCARGA",
+  "FIM_JORNADA",
+];
+
+export function tiposEventoDaFuncao(funcao?: FuncaoColaborador | null): TipoEvento[] {
+  return funcao === "AJUDANTE" ? TIPOS_EVENTO_AJUDANTE : TIPOS_EVENTO;
+}
 
 export interface UsuarioAutenticado {
   sub: string;
@@ -121,7 +150,8 @@ export interface RegraSindical {
   incideReflexoDsrInterjornada?: boolean;
   bancoGuarda?: "fictos" | "reais";
   interjornadaNoBancoPermitida?: boolean;
-  percentualHoraEspera: string;
+  // Rodada 744: opcional, sem padrão (o antigo 30 era a indenização do art. 235-C § 9º, inconstitucional).
+  percentualHoraEspera?: string | null;
   percentualHoraEsperaRefeicao?: string | null;
   acordoColetivo?: boolean;
   numeroMediador?: string | null;
@@ -171,7 +201,10 @@ export interface Motorista {
   id: string;
   nome: string;
   cpf: string;
-  cnh?: string;
+  /** Rodada 740: só motorista tem CNH. */
+  cnh?: string | null;
+  /** Rodada 740: MOTORISTA ou AJUDANTE (cadastros antigos vêm como MOTORISTA). */
+  funcao?: FuncaoColaborador;
   telefone?: string | null;
   status: StatusMotorista;
   empresaId?: string;
@@ -215,6 +248,8 @@ export interface Ajudante {
   createdAt: string;
   excluidoEm?: string | null;
   motivoExclusao?: string | null;
+  /** Rodada 743: quando este cadastro antigo virou colaborador (mesmo id). */
+  convertidoEmColaboradorEm?: string | null;
   dispositivoVinculado?: {
     deviceUuid: string;
     vinculadoEm?: string;

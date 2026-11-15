@@ -1,3 +1,4 @@
+import type { FuncaoColaborador } from "./types";
 import { api } from "./client";
 import type { Motorista, StatusMotorista, TecnologiaRastreador } from "./types";
 
@@ -84,7 +85,9 @@ export function getMotorista(id: string) {
 export interface CreateMotoristaInput {
   nome: string;
   cpf: string;
-  cnh: string;
+  /** Rodada 740: obrigatória só para motorista. */
+  cnh?: string;
+  funcao?: FuncaoColaborador;
   empresaId: string;
   /** Placa do veículo de tração , opcional no cadastro (formato antigo ABC1234 ou Mercosul ABC1D23). */
   placa?: string;

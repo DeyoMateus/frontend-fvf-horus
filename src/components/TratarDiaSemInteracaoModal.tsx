@@ -121,7 +121,7 @@ export function TratarDiaSemInteracaoModal({
     }
     if (escolha === "SEM_SINAL") {
       navigate(
-        `/motoristas/${motoristaId}?secao=lancar-jornada&data=${dia.slice(0, 10)}`,
+        `/indicadores?aba=tratamento&motorista=${motoristaId}&secao=lancar-jornada&data=${dia.slice(0, 10)}`,
       );
       onFechar();
       return;

@@ -102,7 +102,7 @@ export function JornadasAbertasPainel({
               </td>
               <td>
                 <Link
-                  to={`/motoristas/${j.motoristaId}?secao=encerrar-jornada`}
+                  to={`/indicadores?aba=tratamento&motorista=${j.motoristaId}&secao=encerrar-jornada`}
                 >
                   Encerrar jornada
                 </Link>

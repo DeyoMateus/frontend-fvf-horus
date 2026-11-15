@@ -34,10 +34,12 @@ const ITENS_NAV: {
   { to: "/dashboard", label: "Painel", abreviacao: "PA" },
   // Rodada 216: percurso do motorista no mapa (coordenadas + sentido), com PDF.
   { to: "/indicadores", label: "Fechamento", abreviacao: "FE" },
-  { to: "/motoristas", label: "Motoristas", abreviacao: "MO" },
+  // Rodada 740: motoristas e ajudantes são colaboradores (um cadastro só, com a função).
+  { to: "/motoristas", label: "Colaboradores", abreviacao: "CO" },
   // Rodada 221: pedidos de folga dos motoristas (aprovar/negar com justificativa).
   { to: "/pedidos-folga", label: "Pedidos de folga", abreviacao: "PF" },
-  { to: "/ajudantes", label: "Ajudantes", abreviacao: "AJ" },
+  // Rodada 743: os ajudantes viraram colaboradores; aqui fica o cadastro antigo, só para consulta.
+  { to: "/ajudantes", label: "Ajudantes (histórico)", abreviacao: "AJ" },
   { to: "/documentos-carga", label: "Documentos de carga", abreviacao: "DC" },
   { to: "/regras-sindicais", label: "Regras sindicais", abreviacao: "RS" },
   { to: "/empresas", label: "Empresas", abreviacao: "EM" },

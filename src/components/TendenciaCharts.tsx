@@ -80,7 +80,7 @@ const IND_HORAS_ESPERA: DefinicaoIndicador = {
   rotulo: "Horas de espera",
   cor: "#f59e0b",
   sufixo: "h",
-  descricao: "Tempo de espera para carga ou descarga, por dia. A referência de 5 horas é utilizada para identificar situações relacionadas ao prazo legal de carga e descarga e à eventual cobrança prevista na legislação do transporte rodoviário de cargas. Os avisos anteriores a esse prazo são parâmetros operacionais do sistema.",
+  descricao: "Tempo de espera para carga ou descarga, por dia. Os avisos usam o tempo configurado pela empresa; são parâmetros operacionais do sistema.",
 };
 // Rodada 68 — jornada aberta sem etapa em aberto (nem direção, nem
 // descanso, nem espera, nem "aguardando documentação").
@@ -885,7 +885,7 @@ export function GraficoTendencia({
           <DicaAoPassar label="Como ler a evolução ao longo do tempo">
             A linha pontilhada de cada indicador é a tendência (regressão
             linear) no período, mostrando se está subindo ou descendo. É o sinal
-            de que as ações tomadas (treinamento, ajuste de escala, cobrança de
+            de que as ações tomadas (treinamento, ajuste de escala, acompanhamento do
             tempo de espera) estão ou não funcionando. Clique em uma barra ou
             ponto para ver as ações que compõem aquele número naquele dia.
           </DicaAoPassar>

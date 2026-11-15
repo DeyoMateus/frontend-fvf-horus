@@ -90,7 +90,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   {
     modulo: "menu",
     alvo: nav("/motoristas"),
-    titulo: "Motoristas",
+    titulo: "Colaboradores",
     texto:
       "Aqui ficam o cadastro de todos os motoristas, o vínculo de cada um com o aparelho e com o veículo, e a ficha completa com a jornada, os alertas e os documentos de cada pessoa.",
   },

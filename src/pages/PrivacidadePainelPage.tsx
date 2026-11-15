@@ -4,8 +4,10 @@ import {
   listarSolicitacoesTitular,
   obterCanalPrivacidade,
   obterCiencias,
+  registrarSolicitacaoTitularPainel,
   salvarCanalPrivacidade,
 } from "../api/privacidade";
+import { listarTodosMotoristas } from "../api/motoristas";
 import type {
   CienciasPainel,
   ListaSolicitacoesTitular,
@@ -69,6 +71,112 @@ export function PrivacidadePainelPage() {
       {aba === "CIENCIAS" && <AbaCiencias />}
       {aba === "CANAL" && <AbaCanal podeEditar={ehAdmin} />}
     </div>
+  );
+}
+
+/**
+ * Rodada 734: pedidos de eliminacao, bloqueio ou anonimizacao chegam pelo canal de
+ * privacidade (e-mail, RH), nao pelo app. O RH registra aqui para ter protocolo, prazo e a
+ * decisao por tipo de dado.
+ */
+const TIPOS_CANAL: [string, string][] = [
+  ["ELIMINACAO", "Eliminação de dados"],
+  ["BLOQUEIO_ANONIMIZACAO", "Bloqueio ou anonimização de dados"],
+  ["ACESSO", "Acesso aos dados"],
+  ["CORRECAO", "Correção de dados"],
+  ["OPOSICAO", "Questionamento ou oposição ao tratamento"],
+  ["INFORMACAO_COMPARTILHAMENTO", "Informação sobre compartilhamento"],
+  ["REVISAO_DECISAO_AUTOMATIZADA", "Revisão de decisão automática"],
+  ["DUVIDA_PRIVACIDADE", "Dúvida sobre privacidade"],
+];
+
+function RegistrarPedidoCanal({ onRegistrado }: { onRegistrado: () => void }) {
+  const [abrir, setAbrir] = useState(false);
+  const [motoristas, setMotoristas] = useState<{ id: string; nome: string }[]>([]);
+  const [motoristaId, setMotoristaId] = useState("");
+  const [tipo, setTipo] = useState("ELIMINACAO");
+  const [descricao, setDescricao] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!abrir || motoristas.length > 0) return;
+    listarTodosMotoristas(undefined, true)
+      .then((p) => setMotoristas(p.dados.map((m) => ({ id: m.id, nome: m.nome }))))
+      .catch(() => setErro("Não foi possível carregar os motoristas."));
+  }, [abrir, motoristas.length]);
+
+  async function registrar(e: FormEvent) {
+    e.preventDefault();
+    if (!motoristaId || descricao.trim().length < 5) {
+      setErro("Escolha o motorista e descreva o pedido (mínimo de 5 caracteres).");
+      return;
+    }
+    setSalvando(true);
+    setErro(null);
+    try {
+      await registrarSolicitacaoTitularPainel({ motoristaId, tipo, descricao: descricao.trim() });
+      setAbrir(false);
+      setDescricao("");
+      setMotoristaId("");
+      onRegistrado();
+    } catch {
+      setErro("Não foi possível registrar o pedido.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  if (!abrir) {
+    return (
+      <p>
+        <button type="button" className="secondary" onClick={() => setAbrir(true)}>
+          Registrar pedido recebido pelo canal de privacidade
+        </button>
+      </p>
+    );
+  }
+  return (
+    <form className="card" onSubmit={registrar}>
+      <h3 style={{ marginTop: 0 }}>Registrar pedido recebido pelo canal</h3>
+      <p style={{ fontSize: 13 }}>
+        Pedidos de eliminação, bloqueio ou anonimização chegam pelo canal de privacidade da
+        empresa (não pelo aplicativo). Registre aqui para gerar o protocolo, contar o prazo e
+        decidir por tipo de dado. O motorista vê o pedido e a resposta no aplicativo.
+      </p>
+      <label>
+        Motorista
+        <select value={motoristaId} onChange={(e) => setMotoristaId(e.target.value)}>
+          <option value="">Selecione</option>
+          {motoristas.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.nome}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Tipo de pedido
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          {TIPOS_CANAL.map(([v, r]) => (
+            <option key={v} value={v}>
+              {r}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        O que o motorista pediu (e por qual canal)
+        <textarea rows={3} maxLength={1000} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+      </label>
+      <button type="submit" disabled={salvando}>
+        {salvando ? "Registrando..." : "Registrar"}
+      </button>{" "}
+      <button type="button" className="secondary" onClick={() => setAbrir(false)}>
+        Cancelar
+      </button>
+      {erro && <p className="error-text">{erro}</p>}
+    </form>
   );
 }
 
@@ -223,6 +331,7 @@ function AbaPedidos() {
 
   return (
     <div>
+      <RegistrarPedidoCanal onRegistrado={() => void carregar()} />
       {resumo && (
         <p style={{ fontSize: 13 }}>
           <strong>{resumo.abertas}</strong> aberto(s) ·{" "}

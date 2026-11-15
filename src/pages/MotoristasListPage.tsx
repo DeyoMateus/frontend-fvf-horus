@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { AxiosError } from "axios";
 import { TelefoneInput } from "../components/TelefoneInput";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { createMotorista, listarTodosMotoristas } from "../api/motoristas";
 import { atualizarContratoMotorista } from "../api/dadosContrato";
 import {
@@ -33,6 +33,8 @@ import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { usePrompt } from "../components/PromptProvider";
 import { ImportarContratosCard } from "../components/ImportarContratosCard";
 import { rotuloStatusMotorista } from "../utils/rotulos";
+import { ROTULO_FUNCAO } from "../api/types";
+import type { FuncaoColaborador } from "../api/types";
 
 export function MotoristasListPage() {
   const { usuario } = useAuth();
@@ -45,6 +47,26 @@ export function MotoristasListPage() {
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [cnh, setCnh] = useState("");
+  // Rodada 740: colaborador é motorista ou ajudante (ajudante sem CNH e sem veículo).
+  const [funcaoNova, setFuncaoNova] = useState<FuncaoColaborador>("MOTORISTA");
+  const ehAjudanteNovo = funcaoNova === "AJUDANTE";
+  // Rodada 745: filtro por função no topo da página, guardado na URL (?funcao=MOTORISTA|AJUDANTE).
+  // Vale para a lista, o radar de dias sem interação e as trocas de aparelho.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const funcaoUrl = searchParams.get("funcao");
+  const filtroFuncao: "" | FuncaoColaborador =
+    funcaoUrl === "MOTORISTA" || funcaoUrl === "AJUDANTE" ? funcaoUrl : "";
+  function setFiltroFuncao(valor: "" | FuncaoColaborador) {
+    setSearchParams(
+      (atual) => {
+        const proximo = new URLSearchParams(atual);
+        if (valor) proximo.set("funcao", valor);
+        else proximo.delete("funcao");
+        return proximo;
+      },
+      { replace: true },
+    );
+  }
   const [telefone, setTelefone] = useState("");
   const [empresaId, setEmpresaId] = useState("");
   const [placa, setPlaca] = useState("");
@@ -185,11 +207,11 @@ export function MotoristasListPage() {
     e.preventDefault();
     if (!usuario) return;
     if (!empresaId) {
-      setErroForm("Selecione a empresa (CNPJ) a que este motorista pertence.");
+      setErroForm("Selecione a empresa (CNPJ) a que este colaborador pertence.");
       return;
     }
     if (!telefone.trim()) {
-      setErroForm("Informe o telefone de contato do motorista.");
+      setErroForm("Informe o telefone de contato do colaborador.");
       return;
     }
     setErroForm(null);
@@ -198,13 +220,18 @@ export function MotoristasListPage() {
       const criado = await createMotorista({
         nome,
         cpf,
-        cnh,
+        funcao: funcaoNova,
+        ...(ehAjudanteNovo
+          ? {}
+          : {
+              cnh,
+              placa: placa.trim() || undefined,
+              idRastreador: idRastreador.trim() || undefined,
+              tecnologiaRastreador: (tecnologiaRastreador ||
+                undefined) as CreateMotoristaInput["tecnologiaRastreador"],
+            }),
         empresaId,
         telefone: telefone.trim(),
-        placa: placa.trim() || undefined,
-        idRastreador: idRastreador.trim() || undefined,
-        tecnologiaRastreador: (tecnologiaRastreador ||
-          undefined) as CreateMotoristaInput["tecnologiaRastreador"],
       });
       if (contratoPreenchido(contratoNovo)) {
         try {
@@ -255,20 +282,56 @@ export function MotoristasListPage() {
 
   // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
+  // Rodada 745: função de cada colaborador, para filtrar também o radar e as trocas de aparelho.
+  // Quem não está na lista carregada (ex.: fora da busca) continua aparecendo.
+  const funcaoPorId = new Map(motoristas.map((m) => [m.id, m.funcao ?? "MOTORISTA"]));
+  const passaFiltro = (motoristaId: string) =>
+    !filtroFuncao || (funcaoPorId.get(motoristaId) ?? filtroFuncao) === filtroFuncao;
+  const solicitacoesFiltradas = solicitacoes.filter((s) => passaFiltro(s.motoristaId));
+  const semInteracaoFiltrado = semInteracao.filter((s) => passaFiltro(s.motoristaId));
   const paginacaoSolicitacoes = useListaPaginada(
-    solicitacoes,
+    solicitacoesFiltradas,
     (s) => s.criadoEm,
   );
-  const paginacaoMotoristas = useListaPaginada(motoristas, (m) => m.createdAt);
+  const motoristasFiltrados = filtroFuncao
+    ? motoristas.filter((m) => (m.funcao ?? "MOTORISTA") === filtroFuncao)
+    : motoristas;
+  const qtdMotoristas = motoristas.filter((m) => (m.funcao ?? "MOTORISTA") === "MOTORISTA").length;
+  const qtdAjudantes = motoristas.length - qtdMotoristas;
+  const paginacaoMotoristas = useListaPaginada(motoristasFiltrados, (m) => m.createdAt);
   // Radar: mostra 10 por vez; "100" abre janela dedicada, igual às demais listas.
-  const paginacaoRadar = useListaPaginada(semInteracao, () => null, {
+  const paginacaoRadar = useListaPaginada(semInteracaoFiltrado, () => null, {
     qtdInicial: 10,
     comparador: () => 0,
   });
 
   return (
     <div>
-      <h2>Motoristas</h2>
+      <h2>Colaboradores</h2>
+
+      <div
+        role="group"
+        aria-label="Filtrar por função"
+        style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}
+      >
+        {(
+          [
+            ["", `Todos (${motoristas.length})`],
+            ["MOTORISTA", `Motoristas (${qtdMotoristas})`],
+            ["AJUDANTE", `Ajudantes (${qtdAjudantes})`],
+          ] as Array<["" | FuncaoColaborador, string]>
+        ).map(([valor, rotulo]) => (
+          <button
+            key={valor || "todos"}
+            type="button"
+            className={filtroFuncao === valor ? "" : "secondary"}
+            aria-pressed={filtroFuncao === valor}
+            onClick={() => setFiltroFuncao(valor)}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
 
       <div className="card">
         <div
@@ -279,17 +342,25 @@ export function MotoristasListPage() {
             marginBottom: formAberto ? 12 : 0,
           }}
         >
-          <h3 style={{ margin: 0 }}>Cadastrar motorista</h3>
+          <h3 style={{ margin: 0 }}>Cadastrar colaborador</h3>
           <button
             type="button"
             className={formAberto ? "secondary" : ""}
             onClick={() => setFormAberto((atual) => !atual)}
           >
-            {formAberto ? "Cancelar" : "+ Novo motorista"}
+            {formAberto ? "Cancelar" : "+ Novo colaborador"}
           </button>
         </div>
         {formAberto && (
           <form onSubmit={onSubmit}>
+            <label>Função</label>
+            <select
+              value={funcaoNova}
+              onChange={(e) => setFuncaoNova(e.target.value as FuncaoColaborador)}
+            >
+              <option value="MOTORISTA">Motorista</option>
+              <option value="AJUDANTE">Ajudante</option>
+            </select>
             <label>Nome</label>
             <input
               value={nome}
@@ -306,14 +377,20 @@ export function MotoristasListPage() {
               inputMode="numeric"
               required
             />
-            <label>CNH</label>
-            <input maxLength={20}
-              value={cnh}
-              onChange={(e) => setCnh(e.target.value)}
-              required
-            />
+            {!ehAjudanteNovo && (
+              <>
+                <label>CNH</label>
+                <input maxLength={20}
+                  value={cnh}
+                  onChange={(e) => setCnh(e.target.value)}
+                  required
+                />
+              </>
+            )}
             <label>Telefone de contato</label>
             <TelefoneInput value={telefone} onChange={setTelefone} required />
+            {!ehAjudanteNovo && (
+            <>
             <label>
               Placa do veículo de tração (cavalo mecânico), opcional
             </label>
@@ -356,6 +433,8 @@ export function MotoristasListPage() {
               <option value="HIBRIDO">Híbrido (GPS + satélite)</option>
               <option value="OUTRO">Outro</option>
             </select>
+            </>
+            )}
             {empresas.length > 1 && (
               <>
                 <label>Empresa (CNPJ)</label>
@@ -388,7 +467,7 @@ export function MotoristasListPage() {
         )}
       </div>
 
-      {semInteracao.length > 0 && (
+      {semInteracaoFiltrado.length > 0 && (
         <div
           className="card"
           style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}
@@ -473,7 +552,7 @@ export function MotoristasListPage() {
         />
       )}
 
-      {solicitacoes.length > 0 && (
+      {solicitacoesFiltradas.length > 0 && (
         <div
           className="card"
           style={{ background: "#fffbeb", borderColor: "#fde68a" }}
@@ -629,12 +708,13 @@ export function MotoristasListPage() {
                 onDataFim: paginacaoMotoristas.setDataFim,
                 rotulo: "data de cadastro",
               }}
- tituloPopup="Motoristas"
+ tituloPopup="Colaboradores"
 >
             <table>
               <thead>
                 <tr>
                   <th>Nome</th>
+                  <th>Função</th>
                   <th>CPF</th>
                   <th>Status</th>
                   <th>Placa</th>
@@ -663,10 +743,13 @@ export function MotoristasListPage() {
                         </span>
                       )}
                     </td>
+                    <td>{ROTULO_FUNCAO[m.funcao ?? "MOTORISTA"]}</td>
                     <td>{m.cpf}</td>
                     <td>{rotuloStatusMotorista(m.status)}</td>
                     <td>
-                      {m.veiculoVinculado?.placa ?? (
+                      {m.funcao === "AJUDANTE" ? (
+                        <span style={{ fontSize: 12 }}>não se aplica</span>
+                      ) : m.veiculoVinculado?.placa ?? (
                         <span
                           className="badge"
                           style={{ background: "#fee2e2", color: "#b91c1c" }}
@@ -696,10 +779,14 @@ export function MotoristasListPage() {
                 ))}
                 {paginacaoMotoristas.itensExibidos.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ color: "#000000" }}>
+                    <td colSpan={7} style={{ color: "#000000" }}>
                       {busca
-                        ? "Nenhum motorista encontrado para essa busca."
-                        : "Nenhum motorista cadastrado ainda."}
+                        ? "Nenhum colaborador encontrado para essa busca."
+                        : filtroFuncao === "AJUDANTE"
+                          ? "Nenhum ajudante cadastrado."
+                          : filtroFuncao === "MOTORISTA"
+                            ? "Nenhum motorista cadastrado."
+                            : "Nenhum colaborador cadastrado ainda."}
                     </td>
                   </tr>
                 )}

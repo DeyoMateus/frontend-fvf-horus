@@ -3,10 +3,10 @@ import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useEffect, useRef, useState } from "react";
 import { baixarAfd, baixarAfdAssinado, listEmpresas } from "../api/empresas";
 import {
-  baixarDossieCobrancaPdf,
-  listarDossieCobranca,
-} from "../api/dossieCobranca";
-import type { ItemDossieCobranca } from "../api/dossieCobranca";
+  baixarRelatorioEsperaPdf,
+  listarRelatorioEspera,
+} from "../api/relatorioEspera";
+import type { ItemRelatorioEspera } from "../api/relatorioEspera";
 import { baixarEspelhosRepPFiscalizacaoPdf } from "../api/fechamentoFiscal";
 import { listarTodosMotoristas } from "../api/motoristas";
 import type { Empresa, Motorista } from "../api/types";
@@ -24,9 +24,8 @@ function inicioDoMes(): string {
 /**
  * "Documentos para fiscalização" (Rodada 66) , pedido do usuário:
  *
- * 1. "em fechamento precisa do recurso de extração do dossiê de
- *    cobrança" , o motor de limites legais já detecta o tempo de
- *    espera em carga/descarga acima do limiar legal de 5h e guarda os
+ * 1. Relatório de espera (antes "dossiê de cobrança", renomeado na rodada 732): o motor
+ *    já detecta a espera em carga/descarga acima do tempo configurado pela empresa e guarda os
  *    dados de apoio (ver JornadaLegalService), mas não havia como
  *    extrair isso. Agora tem: preview na tela + PDF.
  * 2. "Caso vá um fiscal na empresa ele precisa dos documentos
@@ -46,10 +45,10 @@ export function FiscalizacaoPage() {
   const [erroAfd, setErroAfd] = useState<string | null>(null);
   const [avisoAfd, setAvisoAfd] = useState<string | null>(null);
 
-  const [dossies, setDossies] = useState<ItemDossieCobranca[]>([]);
-  const [carregandoDossie, setCarregandoDossie] = useState(false);
-  const [gerandoDossiePdf, setGerandoDossiePdf] = useState(false);
-  const [erroDossie, setErroDossie] = useState<string | null>(null);
+  const [esperas, setEsperas] = useState<ItemRelatorioEspera[]>([]);
+  const [carregandoEspera, setCarregandoEspera] = useState(false);
+  const [gerandoEsperaPdf, setGerandoEsperaPdf] = useState(false);
+  const [erroEspera, setErroEspera] = useState<string | null>(null);
 
   const [selecionadosRepP, setSelecionadosRepP] = useState<Set<string>>(
     new Set(),
@@ -74,27 +73,27 @@ export function FiscalizacaoPage() {
   // a carga INICIAL mostra esse texto; mudanças de período depois só
   // atualizam a contagem no lugar (mesmo padrão já usado em
   // MotoristaDetailPage.tsx/AuditoriaPage.tsx).
-  const primeiraCargaDossieFeita = useRef(false);
+  const primeiraCargaEsperaFeita = useRef(false);
 
-  async function carregarDossies() {
-    if (!primeiraCargaDossieFeita.current) setCarregandoDossie(true);
-    setErroDossie(null);
+  async function carregarEsperas() {
+    if (!primeiraCargaEsperaFeita.current) setCarregandoEspera(true);
+    setErroEspera(null);
     try {
-      const lista = await listarDossieCobranca(
+      const lista = await listarRelatorioEspera(
         inicioDoDiaLocalIso(inicio),
         fimDoDiaLocalIso(fim),
       );
-      setDossies(lista);
+      setEsperas(lista);
     } catch {
-      setErroDossie("Não foi possível carregar o dossiê agora.");
+      setErroEspera("Não foi possível carregar o relatório de espera agora.");
     } finally {
-      setCarregandoDossie(false);
-      primeiraCargaDossieFeita.current = true;
+      setCarregandoEspera(false);
+      primeiraCargaEsperaFeita.current = true;
     }
   }
 
   useEffect(() => {
-    carregarDossies();
+    carregarEsperas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inicio, fim]);
 
@@ -141,18 +140,18 @@ export function FiscalizacaoPage() {
     }
   }
 
-  async function onBaixarDossiePdf() {
-    setErroDossie(null);
-    setGerandoDossiePdf(true);
+  async function onBaixarEsperaPdf() {
+    setErroEspera(null);
+    setGerandoEsperaPdf(true);
     try {
-      await baixarDossieCobrancaPdf(
+      await baixarRelatorioEsperaPdf(
         inicioDoDiaLocalIso(inicio),
         fimDoDiaLocalIso(fim),
       );
     } catch {
-      setErroDossie("Não foi possível gerar o PDF agora.");
+      setErroEspera("Não foi possível gerar o PDF agora.");
     } finally {
-      setGerandoDossiePdf(false);
+      setGerandoEsperaPdf(false);
     }
   }
 
@@ -276,37 +275,34 @@ export function FiscalizacaoPage() {
         {erroAfd && <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroAfd}</p>}
       </div>
 
-      {/* ===== Dossiê de Cobrança ===== */}
+      {/* ===== Relatório de Espera ===== */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Dossiê de cobrança do tempo de espera</h3>
+        <h3 style={{ marginTop: 0 }}>Relatório de espera em carga/descarga</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
-          Ocorrências em que a espera em carga/descarga passou de 5h
-          contadas da chegada ao destino (Lei 11.442/2007, art. 11, §5º). A
-          cobrança é contra o contratante do frete e vale para o transportador
-          autônomo (TAC) e para a empresa de transporte (ETC). Não é
-          indenização ao empregado. Valor a cobrar não é calculado aqui
-          (preencher na conferência com o faturamento).
+          Esperas em carga/descarga que passaram do tempo configurado pela
+          empresa, com data, horários e duração. É um registro que a empresa
+          pode apresentar se entender necessário.
         </p>
-        {carregandoDossie ? (
+        {carregandoEspera ? (
           <p style={{ fontSize: 13 }}>Carregando…</p>
         ) : (
           <p style={{ fontSize: 13 }}>
-            <strong>{dossies.length}</strong> ocorrência(s) neste período
-            {dossies.length > 0 && (
+            <strong>{esperas.length}</strong> ocorrência(s) neste período
+            {esperas.length > 0 && (
               <>
                 , no total de{" "}
-                {minParaHoras(dossies.reduce((s, d) => s + d.minutosTotais, 0))}{" "}
+                {minParaHoras(esperas.reduce((s, d) => s + d.minutosTotais, 0))}{" "}
                 de espera acima do limiar
               </>
             )}
             .
           </p>
         )}
-        <button onClick={onBaixarDossiePdf} disabled={gerandoDossiePdf}>
-          {gerandoDossiePdf ? "Gerando…" : "Baixar dossiê de cobrança (PDF)"}
+        <button onClick={onBaixarEsperaPdf} disabled={gerandoEsperaPdf}>
+          {gerandoEsperaPdf ? "Gerando…" : "Baixar relatório de espera (PDF)"}
         </button>
-        {erroDossie && (
-          <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroDossie}</p>
+        {erroEspera && (
+          <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroEspera}</p>
         )}
       </div>
 

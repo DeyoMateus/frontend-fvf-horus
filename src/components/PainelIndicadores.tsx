@@ -665,11 +665,17 @@ export function PainelIndicadores() {
             <CartaoIndicador
               titulo="Total de horas"
               valor={minParaHoras(
-                painel.totais.direcaoMin + painel.totais.esperaMin,
+                painel.totais.direcaoMin +
+                  painel.totais.esperaMin +
+                  (painel.totais.trabalhoAjudanteMin ?? 0),
               )}
-              subtitulo="Direção + espera no período"
+              subtitulo={
+                (painel.totais.trabalhoAjudanteMin ?? 0) > 0
+                  ? "Direção + espera + trabalho dos ajudantes no período"
+                  : "Direção + espera no período"
+              }
               cor="#111827"
-              descricao="Soma de todo o tempo com etapa definida como direção ou espera em carga/descarga no período filtrado (não inclui tempo indefinido nem descanso)."
+              descricao="Soma do tempo de direção e de espera em carga/descarga dos motoristas e do tempo de trabalho dos ajudantes no período filtrado (não inclui tempo indefinido dos motoristas nem descanso)."
             />
             {mostrar.horas && (
               <>
@@ -687,6 +693,14 @@ export function PainelIndicadores() {
                   onClick={() => irParaGrafico("espera")}
                   descricao="Tempo parado esperando carga/descarga (etapa ESPERA_CARGA_DESCARGA até o fim dela), somado de todos os motoristas filtrados."
                 />
+                {(painel.totais.trabalhoAjudanteMin ?? 0) > 0 && (
+                  <CartaoIndicador
+                    titulo="Trabalho (ajudante)"
+                    valor={minParaHoras(painel.totais.trabalhoAjudanteMin)}
+                    cor="#0f766e"
+                    descricao="Tempo de jornada dos ajudantes fora de descanso e refeição: carregamento, descarga e o tempo entre eles, em que o ajudante está à disposição da empresa (CLT art. 4º e art. 235-C § 16)."
+                  />
+                )}
               </>
             )}
             {mostrar.extras && (
@@ -726,7 +740,7 @@ export function PainelIndicadores() {
                 subtitulo={`${painel.totais.percentualIndefinidoSobreJornada}% da jornada sem direção, descanso ou espera escolhidos`}
                 cor="#ea580c"
                 onClick={() => irParaGrafico("indefinido")}
-                descricao="Tempo com a jornada aberta sem o motorista ter marcado direção, descanso ou espera no app. Pode indicar jornada esquecida em aberto ou dificuldade de uso do app; confirme com o motorista antes de qualquer conclusão."
+                descricao="Tempo com a jornada aberta sem o motorista ter marcado direção, descanso ou espera no app. Pode indicar jornada esquecida em aberto ou dificuldade de uso do app; confirme com o motorista antes de qualquer conclusão. Não inclui ajudantes: para eles esse tempo é trabalho."
               />
             )}
             {temBancoHoras &&
@@ -818,6 +832,7 @@ export function PainelIndicadores() {
                           "Extra (min)",
                           "Noturno (min)",
                           "Indefinido (min)",
+                          "Trabalho dos ajudantes (min)",
                           "Alertas",
                           "Banco de horas , saldo acumulado (min)",
                         ],
@@ -828,6 +843,7 @@ export function PainelIndicadores() {
                           String(d.extraMin),
                           String(d.noturnoMin),
                           String(d.indefinidoMin),
+                          String(d.trabalhoAjudanteMin ?? 0),
                           String(d.alertas),
                           String(d.bancoHorasSaldoAcumuladoMin),
                         ]),

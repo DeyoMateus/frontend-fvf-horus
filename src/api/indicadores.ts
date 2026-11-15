@@ -33,6 +33,9 @@ export interface IndicadoresMotorista {
   // não escolheu a próxima ação. Separado das demais categorias de
   // propósito: não é tempo trabalhado, é tempo sem status.
   indefinidoMin: number;
+  // Rodada 744 (CLT art. 235-C § 16): no ajudante, o tempo de trabalho fica aqui, não em indefinidoMin.
+  funcao: "MOTORISTA" | "AJUDANTE";
+  trabalhoAjudanteMin: number;
   alertas: IndicadoresAlertas;
   percentualExtraSobreDirecao: number;
   percentualEsperaSobreTotal: number;
@@ -49,6 +52,7 @@ export interface IndicadoresDiaTendencia {
   extraMin: number;
   noturnoMin: number;
   indefinidoMin: number;
+  trabalhoAjudanteMin: number;
   alertas: number;
   bancoHorasCreditoMin: number;
   bancoHorasDebitoMin: number;
@@ -73,6 +77,7 @@ export interface IndicadoresPainel {
     extraMin: number;
     noturnoMin: number;
     indefinidoMin: number;
+    trabalhoAjudanteMin: number;
     alertas: IndicadoresAlertas;
     percentualExtraSobreDirecao: number;
     percentualEsperaSobreTotal: number;

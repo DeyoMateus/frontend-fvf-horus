@@ -4,7 +4,7 @@ import {
   anexarEvidenciaTratamento,
   createJornadaTratamento,
 } from "../api/tratamentos";
-import type { TipoEvento } from "../api/types";
+import type { FuncaoColaborador, TipoEvento } from "../api/types";
 import {
   instanteDaParede,
   resolverFusoDoAjuste,
@@ -22,6 +22,10 @@ const ROTULOS: Record<TipoEvento, string> = {
   FIM_ESPERA_CARGA_DESCARGA: "Fim de espera (carga/descarga)",
   FIM_DESCARREGAMENTO: "Fim de descarregamento",
   OUTRO: "Aguardando documentação",
+  INICIO_CARREGAMENTO: "Início de carregamento",
+  FIM_CARREGAMENTO: "Fim de carregamento",
+  INICIO_DESCARGA: "Início de descarga",
+  FIM_DESCARGA: "Fim de descarga",
 };
 
 /** Mesma máquina de estados do app e do servidor: o que pode vir depois de cada evento. */
@@ -66,6 +70,29 @@ const PROXIMOS: Record<TipoEvento, TipoEvento[]> = {
   ESPERA_CARGA_DESCARGA: ["FIM_ESPERA_CARGA_DESCARGA", "FIM_DESCARREGAMENTO"],
   FIM_JORNADA: ["INICIO_JORNADA"],
   OUTRO: ["INICIO_DIRECAO", "INICIO_DESCANSO", "ESPERA_CARGA_DESCARGA", "FIM_JORNADA"],
+  INICIO_CARREGAMENTO: [],
+  FIM_CARREGAMENTO: [],
+  INICIO_DESCARGA: [],
+  FIM_DESCARGA: [],
+};
+
+/** Rodada 740: sequência do ajudante (igual ao app e ao servidor). */
+const LIVRE_AJUDANTE: TipoEvento[] = ["INICIO_CARREGAMENTO", "INICIO_DESCARGA", "INICIO_DESCANSO", "FIM_JORNADA"];
+const PROXIMOS_AJUDANTE: Record<TipoEvento, TipoEvento[]> = {
+  INICIO_JORNADA: LIVRE_AJUDANTE,
+  FIM_DESCANSO: LIVRE_AJUDANTE,
+  FIM_CARREGAMENTO: LIVRE_AJUDANTE,
+  FIM_DESCARGA: LIVRE_AJUDANTE,
+  INICIO_DESCANSO: ["FIM_DESCANSO"],
+  INICIO_CARREGAMENTO: ["FIM_CARREGAMENTO"],
+  INICIO_DESCARGA: ["FIM_DESCARGA"],
+  FIM_JORNADA: ["INICIO_JORNADA"],
+  INICIO_DIRECAO: [],
+  FIM_DIRECAO: [],
+  ESPERA_CARGA_DESCARGA: [],
+  FIM_ESPERA_CARGA_DESCARGA: [],
+  FIM_DESCARREGAMENTO: [],
+  OUTRO: [],
 };
 
 interface Linha {
@@ -81,12 +108,20 @@ const novaLinha = (tipo: TipoEvento, hora = ""): Linha => ({
   hora,
 });
 
-const modeloInicial = (): Linha[] => [
-  novaLinha("INICIO_JORNADA"),
-  novaLinha("INICIO_DIRECAO"),
-  novaLinha("FIM_DIRECAO"),
-  novaLinha("FIM_JORNADA"),
-];
+const modeloInicial = (funcao?: FuncaoColaborador | null): Linha[] =>
+  funcao === "AJUDANTE"
+    ? [
+        novaLinha("INICIO_JORNADA"),
+        novaLinha("INICIO_CARREGAMENTO"),
+        novaLinha("FIM_CARREGAMENTO"),
+        novaLinha("FIM_JORNADA"),
+      ]
+    : [
+        novaLinha("INICIO_JORNADA"),
+        novaLinha("INICIO_DIRECAO"),
+        novaLinha("FIM_DIRECAO"),
+        novaLinha("FIM_JORNADA"),
+      ];
 
 function dataBr(iso: string): string {
   return iso.slice(0, 10).split("-").reverse().join("/");
@@ -104,8 +139,11 @@ export function LancarJornadaInteira({
   dataInicial,
   abrirInicialmente,
   onLancado,
+  funcao,
 }: {
   motoristaId: string;
+  /** Rodada 740: a sequência de eventos depende da função (motorista ou ajudante). */
+  funcao?: FuncaoColaborador | null;
   registros: { timestampEvento: string; fusoOffsetMin?: number | null }[];
   dataInicial?: string;
   abrirInicialmente?: boolean;
@@ -113,7 +151,8 @@ export function LancarJornadaInteira({
 }) {
   const [aberto, setAberto] = useState(!!abrirInicialmente);
   const [data, setData] = useState(dataInicial ?? "");
-  const [linhas, setLinhas] = useState<Linha[]>(modeloInicial);
+  const PROX = funcao === "AJUDANTE" ? PROXIMOS_AJUDANTE : PROXIMOS;
+  const [linhas, setLinhas] = useState<Linha[]>(() => modeloInicial(funcao));
   const [motivo, setMotivo] = useState("");
   const [evidencias, setEvidencias] = useState<File[]>([]);
   const [enviando, setEnviando] = useState(false);
@@ -165,7 +204,8 @@ export function LancarJornadaInteira({
         copia[copia.length - 1]?.tipo === "FIM_JORNADA" ? copia.pop() : null;
       const ultimo = copia[copia.length - 1]?.tipo ?? "INICIO_JORNADA";
       const sugerido =
-        PROXIMOS[ultimo].find((t) => t !== "FIM_JORNADA") ?? "INICIO_DIRECAO";
+        PROX[ultimo].find((t) => t !== "FIM_JORNADA") ??
+        (funcao === "AJUDANTE" ? "INICIO_CARREGAMENTO" : "INICIO_DIRECAO");
       copia.push(novaLinha(sugerido));
       if (fim) copia.push(fim);
       return copia;
@@ -208,8 +248,8 @@ export function LancarJornadaInteira({
       return 'O último evento precisa ser "Fim de jornada".';
     if (linhas.some((l) => !l.hora)) return "Preencha o horário de todos os eventos.";
     for (let i = 1; i < linhas.length; i++) {
-      if (!PROXIMOS[linhas[i - 1].tipo].includes(linhas[i].tipo)) {
-        return `Depois de "${ROTULOS[linhas[i - 1].tipo]}" não pode vir "${ROTULOS[linhas[i].tipo]}" (linha ${i + 1}). Permitido: ${PROXIMOS[linhas[i - 1].tipo].map((t) => ROTULOS[t]).join(", ")}.`;
+      if (!PROX[linhas[i - 1].tipo].includes(linhas[i].tipo)) {
+        return `Depois de "${ROTULOS[linhas[i - 1].tipo]}" não pode vir "${ROTULOS[linhas[i].tipo]}" (linha ${i + 1}). Permitido: ${PROX[linhas[i - 1].tipo].map((t) => ROTULOS[t]).join(", ")}.`;
       }
     }
     if (motivo.trim().length < 10) return "Escreva o motivo (mínimo 10 caracteres).";
@@ -252,7 +292,7 @@ export function LancarJornadaInteira({
       setSucesso(
         `Jornada lançada: ${criados.length} eventos registrados${falhas ? `, mas ${falhas} evidência(s) não subiram (anexe de novo em um lançamento da lista)` : ""}.`,
       );
-      setLinhas(modeloInicial());
+      setLinhas(modeloInicial(funcao));
       setMotivo("");
       setEvidencias([]);
       await onLancado();
@@ -315,7 +355,7 @@ export function LancarJornadaInteira({
             {linhas.map((l, i) => {
               const anterior = i > 0 ? linhas[i - 1].tipo : null;
               const opcoes = anterior
-                ? PROXIMOS[anterior]
+                ? PROX[anterior]
                 : (["INICIO_JORNADA"] as TipoEvento[]);
               const travado = i === 0;
               return (

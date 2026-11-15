@@ -84,9 +84,8 @@ import type { ValoresContrato } from "../components/CamposDadosContrato";
 import { atualizarContratoMotorista } from "../api/dadosContrato";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { baixarHoleritePdf, calcularHolerite } from "../api/holerite";
-import { BancoHorasPainel } from "../components/BancoHorasPainel";
-import { BancoHorasRazaoPainel } from "../components/BancoHorasRazaoPainel";
-import { FechamentosPeriodoPainel } from "../components/FechamentosPeriodoPainel";
+import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
+import { getAjudante } from "../api/ajudantes";
 import type { OpcoesHolerite, ResultadoHolerite } from "../api/holerite";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
@@ -126,7 +125,7 @@ import type {
   TratamentoPonto,
   VerificacaoIntegridade,
 } from "../api/types";
-import { TIPOS_EVENTO } from "../api/types";
+import { ROTULO_FUNCAO, tiposEventoDaFuncao } from "../api/types";
 import { TextoLongo } from "../components/TextoLongo";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
@@ -153,14 +152,45 @@ type JornadaDoCiclo = {
   totalJornadaMin: number;
 };
 
-export function MotoristaDetailPage() {
+/**
+ * Rodada 739: a ficha do motorista em abas no topo (linha do sino). Banco de horas, tratamento
+ * de ponto, relatório de horas apuradas e fechamentos de período saíram daqui e ficam só no
+ * Fechamento, com seletor de motorista.
+ */
+const ABAS_MOTORISTA: AbaDef[] = [
+  { id: "cadastro", rotulo: "Cadastro" },
+  { id: "registros", rotulo: "Registros" },
+  { id: "folgas", rotulo: "Folgas" },
+  { id: "alertas", rotulo: "Alertas" },
+];
+
+/**
+ * `somente` (rodada 739): o Fechamento reaproveita esta tela para mostrar só o tratamento de
+ * ponto ou só o relatório de horas apuradas de um motorista escolhido lá.
+ */
+export function MotoristaDetailPage({
+  motoristaId: motoristaIdProp,
+  somente,
+}: {
+  motoristaId?: string;
+  somente?: "tratamento" | "relatorio";
+} = {}) {
   const { usuario } = useAuth();
   // Rodada 215: usuários do painel (ADMIN e GESTOR) veem localização; o backend audita cada consulta.
   const veLocalizacao =
     usuario?.papel === "ADMIN" || usuario?.papel === "GESTOR";
-  const { motoristaId = "" } = useParams();
+  const parametrosRota = useParams();
+  const motoristaId = motoristaIdProp ?? parametrosRota.motoristaId ?? "";
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Vindo de um alerta (?secao=alertas-jornada), abre direto a aba Alertas.
+  const abaAtiva = useAbaAtiva(
+    ABAS_MOTORISTA,
+    searchParams.get("secao") === "alertas-jornada" ? "alertas" : undefined,
+  );
+  const mostrar = (aba: string) => !somente && abaAtiva === aba;
+  // Rodada 743: ajudante que veio do cadastro antigo tem os pontos de antes lá (mesmo id).
+  const [temCadastroAntigoAjudante, setTemCadastroAntigoAjudante] = useState(false);
   // Pedido do usuário: vindo de um alerta (sininho, painel de alertas,
   // card "em risco agora" etc.), o clique no nome do motorista deve
   // cair direto na seção de alertas dele, já pronta pra marcar como
@@ -220,6 +250,16 @@ export function MotoristaDetailPage() {
   const [documentosCarga, setDocumentosCarga] = useState<DocumentoCarga[]>([]);
   const [carregando, setCarregando] = useState(true);
 
+  useEffect(() => {
+    if (motorista?.funcao !== "AJUDANTE" || somente) return;
+    let ativo = true;
+    getAjudante(motoristaId)
+      .then(() => ativo && setTemCadastroAntigoAjudante(true))
+      .catch(() => ativo && setTemCadastroAntigoAjudante(false));
+    return () => {
+      ativo = false;
+    };
+  }, [motorista?.funcao, motoristaId, somente]);
   const cardTratamentoRef = useRef<HTMLDivElement | null>(null);
   const veioParaEncerrarJornada =
     searchParams.get("secao") === "encerrar-jornada";
@@ -1076,8 +1116,11 @@ export function MotoristaDetailPage() {
     );
   }
 
+  // Rodada 740: ajudante não tem direção nem espera; o relatório dele sai sem essas colunas.
+  const holeriteMostraDirecaoEspera =
+    holeriteDirecaoEspera && motorista?.funcao !== "AJUDANTE";
   const opcoesHolerite: OpcoesHolerite = {
-    direcaoEspera: holeriteDirecaoEspera,
+    direcaoEspera: holeriteMostraDirecaoEspera,
     normalExtra: holeriteNormalExtra,
     adicionalNoturno: holeriteAdicionalNoturno,
   };
@@ -1383,6 +1426,12 @@ export function MotoristaDetailPage() {
 
   return (
     <div>
+      {!somente && (
+      <>
+      <AbasTopo
+        abas={ABAS_MOTORISTA}
+        padrao={searchParams.get("secao") === "alertas-jornada" ? "alertas" : undefined}
+      />
       {editandoCadastro ? (
         <div className="card" style={{ maxWidth: 480 }}>
           <h3 style={{ marginTop: 0 }}>Editar dados cadastrais</h3>
@@ -1467,7 +1516,7 @@ export function MotoristaDetailPage() {
         <>
           <h2>{motorista.nome}</h2>
           <p style={{ color: "#000000", marginTop: -8 }}>
-            CPF {motorista.cpf}
+            {ROTULO_FUNCAO[motorista.funcao ?? "MOTORISTA"]} · CPF {motorista.cpf}
             {motorista.telefone && <> · {motorista.telefone}</>}
             {(() => {
               const emp = empresasGrupo.find(
@@ -1588,6 +1637,11 @@ export function MotoristaDetailPage() {
         </div>
       )}
 
+      </>
+      )}
+
+      {mostrar("cadastro") && (
+      <>
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Dispositivo vinculado</h3>
 
@@ -1700,6 +1754,8 @@ export function MotoristaDetailPage() {
         )}
       </div>
 
+      {/* Rodada 740: ajudante não tem veículo de tração. */}
+      {motorista.funcao !== "AJUDANTE" && (
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Veículo de tração vinculado</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
@@ -1763,7 +1819,20 @@ export function MotoristaDetailPage() {
           </button>
         </form>
       </div>
+      )}
 
+      </>
+      )}
+
+      {mostrar("registros") && (
+      <>
+      {temCadastroAntigoAjudante && (
+        <div className="card" style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}>
+          Os pontos batidos antes de este ajudante virar colaborador estão no{" "}
+          <Link to={`/ajudantes/${motoristaId}?aba=registros`}>cadastro antigo</Link>, com a
+          verificação de integridade daquela cadeia.
+        </div>
+      )}
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Integridade da cadeia de jornada</h3>
         <button onClick={onVerificarIntegridade}>Verificar integridade</button>
@@ -2412,6 +2481,8 @@ export function MotoristaDetailPage() {
         )}
       </div>
 
+      {/* Rodada 740: CT-e/MDF-e é do motorista. */}
+      {motorista.funcao !== "AJUDANTE" && (
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Status de carga (CT-e / MDF-e)</h3>
         {statusCarga?.statusCarga ? (
@@ -2452,7 +2523,13 @@ export function MotoristaDetailPage() {
           <Link to="/documentos-carga">Documentos de carga</Link>.
         </p>
       </div>
+      )}
 
+      </>
+      )}
+
+      {mostrar("folgas") && (
+      <>
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Folgas autorrelatadas</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
@@ -2561,12 +2638,17 @@ export function MotoristaDetailPage() {
         </div>
       </div>
 
+      </>
+      )}
+
+      {mostrar("alertas") && (
+      <>
       <div className="card" ref={secaoAlertasJornadaRef}>
         <h3 style={{ marginTop: 0 }}>Alertas de jornada (Lei do Motorista)</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
-          Gerados automaticamente a cada ponto batido, direção contínua acima de
-          5h/5h30, jornada de direção acima de 8h/10h no dia, e tempo de espera
-          em carga/descarga).
+          Gerados automaticamente a cada ponto batido: direção contínua acima de
+          5h/5h30, jornada de trabalho acima do limite do dia e tempo de espera
+          em carga/descarga acima do tempo configurado pela empresa.
         </p>
         {/* Rodada 107 , mesmo padrão da Rodada 77: "mostrar N por vez" +
             popup dedicado de página quando passar disso, pra essa
@@ -2790,6 +2872,11 @@ export function MotoristaDetailPage() {
         )}
       </div>
 
+      </>
+      )}
+
+      {somente === "tratamento" && (
+      <>
       <div className="card" ref={cardTratamentoRef}>
         <h3 style={{ marginTop: 0 }}>Tratamento de ponto</h3>
         {veioParaEncerrarJornada && (
@@ -2819,6 +2906,7 @@ export function MotoristaDetailPage() {
           dataInicial={dataParaLancarJornada}
           abrirInicialmente={veioParaLancarJornada}
           onLancado={carregarTudo}
+          funcao={motorista?.funcao}
         />
         <p style={{ fontSize: 13, fontWeight: 600, margin: "8px 0 0" }}>
           Ou lance um evento isolado:
@@ -2829,7 +2917,8 @@ export function MotoristaDetailPage() {
             value={tipoEvento}
             onChange={(e) => setTipoEvento(e.target.value as TipoEvento)}
           >
-            {TIPOS_EVENTO.map((t) => (
+            {/* Rodada 740: só os eventos da função do colaborador. */}
+            {tiposEventoDaFuncao(motorista?.funcao).map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
@@ -3064,6 +3153,11 @@ export function MotoristaDetailPage() {
         </ControlesListaPaginada>
       </div>
 
+      </>
+      )}
+
+      {somente === "relatorio" && (
+      <>
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Relatório de horas apuradas (folha de ponto)</h3>
         <p style={{ fontSize: 13, color: "#000000" }}>
@@ -3100,6 +3194,7 @@ export function MotoristaDetailPage() {
                 required
               />
             </div>
+            {motorista?.funcao !== "AJUDANTE" && (
             <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <input
                 type="checkbox"
@@ -3108,6 +3203,7 @@ export function MotoristaDetailPage() {
               />
               Direção / espera
             </label>
+            )}
             <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <input
                 type="checkbox"
@@ -3174,8 +3270,8 @@ export function MotoristaDetailPage() {
             <thead>
               <tr>
                 <th>Dia</th>
-                {holeriteDirecaoEspera && <th>Direção</th>}
-                {holeriteDirecaoEspera && <th>Espera</th>}
+                {holeriteMostraDirecaoEspera && <th>Direção</th>}
+                {holeriteMostraDirecaoEspera && <th>Espera</th>}
                 {holeriteNormalExtra && <th>H. normal</th>}
                 {holeriteNormalExtra && <th>H. extra</th>}
                 {holeriteAdicionalNoturno && <th>Hora noturna</th>}
@@ -3186,10 +3282,10 @@ export function MotoristaDetailPage() {
               {holeritePrevia.dias.map((d) => (
                 <tr key={d.dia}>
                   <td>{formatarDiaHoleriteBr(d.dia)}</td>
-                  {holeriteDirecaoEspera && (
+                  {holeriteMostraDirecaoEspera && (
                     <td>{formatarHorasHolerite(d.direcaoMin)}</td>
                   )}
-                  {holeriteDirecaoEspera && (
+                  {holeriteMostraDirecaoEspera && (
                     <td>{formatarHorasHolerite(d.esperaMin)}</td>
                   )}
                   {holeriteNormalExtra && (
@@ -3216,9 +3312,8 @@ export function MotoristaDetailPage() {
         )}
       </div>
 
-      <FechamentosPeriodoPainel motoristaId={motoristaId} />
-      <BancoHorasPainel motoristaId={motoristaId} />
-      <BancoHorasRazaoPainel motoristaId={motoristaId} empresaId={motorista?.empresaId} ehAdmin={usuario?.papel === "ADMIN"} />
+      </>
+      )}
     </div>
   );
 }
