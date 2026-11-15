@@ -1,37 +1,22 @@
 import { Fragment, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
-import { AlertasPontoAjudante } from "../components/AlertasPontoAjudante";
-import { useConfirm } from "../components/ConfirmProvider";
-import { usePrompt } from "../components/PromptProvider";
+import { Link, useParams } from "react-router-dom";
 import {
-  atualizarStatusAjudante,
   baixarEspelhoAjudantePdf,
-  contarAlertasPendentesEspelho,
-  excluirAjudante,
   getAjudante,
   obterEspelhoAjudante,
-  reativarAjudante,
-  revogarDispositivoAjudante,
   verificarIntegridadeAjudante,
-  vincularDispositivoAjudante,
 } from "../api/ajudantes";
 import type { EspelhoAjudante, IntegridadeAjudante } from "../api/ajudantes";
 import { listEmpresas } from "../api/empresas";
-import type { Ajudante, Empresa, StatusMotorista } from "../api/types";
+import type { Ajudante, Empresa } from "../api/types";
 import { rotuloStatusMotorista } from "../utils/rotulos";
 import { dataLocalIso } from "../utils/mascaras";
 
 /**
- * Rodada 739: ficha do ajudante, no mesmo formato da ficha do motorista (abas no topo, na
- * linha do sino). O ajudante não tem veículo, CT-e/MDF-e, folgas nem tratamento de ponto;
- * por isso as abas são só Cadastro, Registros e Alertas.
+ * Rodada 747: ficha do cadastro ANTIGO de ajudante, só para consulta. Ajudante novo é colaborador
+ * (função Ajudante) e os antigos foram convertidos; aqui ficam os pontos antigos (espelho e PDF) e
+ * a verificação de integridade da cadeia antiga. Sem aparelho, status, exclusão nem alertas.
  */
-const ABAS_AJUDANTE: AbaDef[] = [
-  { id: "cadastro", rotulo: "Cadastro" },
-  { id: "registros", rotulo: "Registros" },
-  { id: "alertas", rotulo: "Alertas" },
-];
 
 const ROTULO_EVENTO: Record<string, string> = {
   INICIO_JORNADA: "Início de jornada",
@@ -65,18 +50,11 @@ function mensagemDoServidor(ex: unknown, padrao: string): string {
 
 export function AjudanteDetailPage() {
   const { ajudanteId = "" } = useParams();
-  const navigate = useNavigate();
-  const confirmar = useConfirm();
-  const prompt = usePrompt();
-  const aba = useAbaAtiva(ABAS_AJUDANTE);
 
   const [ajudante, setAjudante] = useState<Ajudante | null>(null);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [alterando, setAlterando] = useState(false);
-  const [chaveGerada, setChaveGerada] = useState<string | null>(null);
-  const [copiado, setCopiado] = useState(false);
 
   const [inicio, setInicio] = useState(() => {
     const d = new Date();
@@ -145,108 +123,15 @@ export function AjudanteDetailPage() {
   }
 
   useEffect(() => {
-    if (aba !== "registros") return;
     void carregarEspelho();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aba, ajudanteId, inicio, fim]);
-
-  async function onAlterarStatus(status: StatusMotorista) {
-    setAlterando(true);
-    setErro(null);
-    try {
-      await atualizarStatusAjudante(ajudanteId, status);
-      await carregar();
-    } catch (ex) {
-      setErro(mensagemDoServidor(ex, "Não foi possível alterar o status."));
-    } finally {
-      setAlterando(false);
-    }
-  }
-
-  async function onExcluir() {
-    if (!ajudante) return;
-    const confirmacao = await prompt(
-      `Para excluir o cadastro de ${ajudante.nome}, digite EXCLUIR (só é possível para quem nunca bateu ponto):`,
-      { titulo: "Excluir cadastro", perigo: true, textoConfirmar: "Excluir" },
-    );
-    if (confirmacao !== "EXCLUIR") return;
-    const motivo =
-      (await prompt("Motivo (opcional):", {
-        titulo: "Excluir cadastro",
-        placeholder: "Motivo (opcional)",
-        multilinha: true,
-      })) ?? undefined;
-    setAlterando(true);
-    try {
-      await excluirAjudante(ajudanteId, motivo || undefined);
-      navigate("/ajudantes");
-    } catch (ex) {
-      setErro(mensagemDoServidor(ex, "Não foi possível excluir o cadastro."));
-      setAlterando(false);
-    }
-  }
-
-  async function onReativarCadastro() {
-    setAlterando(true);
-    try {
-      await reativarAjudante(ajudanteId);
-      await carregar();
-    } catch (ex) {
-      setErro(mensagemDoServidor(ex, "Não foi possível reativar o cadastro."));
-    } finally {
-      setAlterando(false);
-    }
-  }
-
-  async function onVincular() {
-    if (!ajudante) return;
-    const deviceUuid = await prompt(
-      "UUID do aparelho (gerado pelo próprio app do ajudante na primeira instalação):",
-      { titulo: `Vincular dispositivo de ${ajudante.nome}` },
-    );
-    if (!deviceUuid) return;
-    try {
-      const r = await vincularDispositivoAjudante(ajudanteId, deviceUuid.trim());
-      setChaveGerada(r.deviceApiKey);
-      await carregar();
-    } catch (ex) {
-      setErro(mensagemDoServidor(ex, "Não foi possível vincular o aparelho."));
-    }
-  }
-
-  async function onRevogar() {
-    if (!ajudante) return;
-    if (
-      !(await confirmar(
-        `Revogar o vínculo de dispositivo de ${ajudante.nome}? O aparelho para de bater ponto imediatamente.`,
-        { perigo: true, textoConfirmar: "Revogar" },
-      ))
-    )
-      return;
-    try {
-      await revogarDispositivoAjudante(ajudanteId);
-      setChaveGerada(null);
-      await carregar();
-    } catch (ex) {
-      setErro(mensagemDoServidor(ex, "Não foi possível revogar o aparelho."));
-    }
-  }
+  }, [ajudanteId, inicio, fim]);
 
   async function onBaixarEspelho() {
     if (!ajudante) return;
     setBaixandoPdf(true);
     try {
       const { inicioIso, fimIso } = periodoIso();
-      const pendentes = await contarAlertasPendentesEspelho(ajudanteId, inicioIso, fimIso).catch(() => 0);
-      if (
-        pendentes > 0 &&
-        !(await confirmar(
-          `${ajudante.nome} tem ${pendentes} alerta(s) de ponto não tratado(s) neste período. As horas do espelho podem mudar depois do tratamento. Baixar o espelho assim mesmo?`,
-          { textoConfirmar: "Baixar assim mesmo" },
-        ))
-      ) {
-        return;
-      }
       await baixarEspelhoAjudantePdf(ajudanteId, ajudante.nome, inicioIso, fimIso);
     } catch {
       setErroEspelho("Não foi possível gerar o espelho de ponto agora (confira o período e tente de novo).");
@@ -266,12 +151,9 @@ export function AjudanteDetailPage() {
   }
 
   const empresa = empresas.find((e) => e.id === ajudante.empresaId);
-  const vinculo = ajudante.dispositivoVinculado;
 
   return (
     <div>
-      <AbasTopo abas={ABAS_AJUDANTE} />
-
       <p style={{ fontSize: 13, marginBottom: 4 }}>
         <Link to="/ajudantes">Ajudantes</Link> / ficha
       </p>
@@ -311,49 +193,6 @@ export function AjudanteDetailPage() {
         </span>{" "}
         · cadastrado na plataforma em{" "}
         <strong>{new Date(ajudante.createdAt).toLocaleString("pt-BR")}</strong>
-        {!ajudante.excluidoEm && !ajudante.convertidoEmColaboradorEm && (
-          <>
-            {ajudante.status !== "ATIVO" && (
-              <button
-                type="button"
-                disabled={alterando}
-                onClick={() => void onAlterarStatus("ATIVO")}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Reativar
-              </button>
-            )}
-            {ajudante.status !== "SUSPENSO" && (
-              <button
-                type="button"
-                disabled={alterando}
-                onClick={() => void onAlterarStatus("SUSPENSO")}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Suspender
-              </button>
-            )}
-            {ajudante.status !== "INATIVO" && (
-              <button
-                type="button"
-                disabled={alterando}
-                onClick={() => void onAlterarStatus("INATIVO")}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Inativar (arquivo morto)
-              </button>
-            )}
-            <button
-              type="button"
-              className="danger"
-              disabled={alterando}
-              onClick={() => void onExcluir()}
-              style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-            >
-              Excluir cadastro
-            </button>
-          </>
-        )}
       </p>
       {erro && <p className="error-text">{erro}</p>}
 
@@ -362,72 +201,13 @@ export function AjudanteDetailPage() {
           <strong style={{ color: "#b91c1c" }}>Cadastro excluído</strong>
           <p style={{ fontSize: 13, color: "#7f1d1d", margin: "4px 0 0" }}>
             Excluído em {new Date(ajudante.excluidoEm).toLocaleString("pt-BR")}
-            {ajudante.motivoExclusao && <>, motivo: {ajudante.motivoExclusao}</>}. Não aparece
-            mais na listagem normal, mas todo o histórico continua intacto.
+            {ajudante.motivoExclusao && <>, motivo: {ajudante.motivoExclusao}</>}. Todo o histórico
+            continua intacto.
           </p>
-          <button
-            type="button"
-            style={{ marginTop: 8 }}
-            disabled={alterando}
-            onClick={() => void onReativarCadastro()}
-          >
-            Reativar cadastro
-          </button>
         </div>
       )}
 
-      {aba === "cadastro" && (
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>Dispositivo vinculado</h3>
-          <p style={{ fontSize: 13, color: "#000000" }}>
-            ID do ajudante (informe ao ajudante para ele completar o vínculo no app):
-            <br />
-            <code style={{ fontSize: 13 }}>{ajudante.id}</code>{" "}
-            <button
-              type="button"
-              style={{ fontSize: 12 }}
-              onClick={() => {
-                void navigator.clipboard?.writeText(ajudante.id).then(() => {
-                  setCopiado(true);
-                  setTimeout(() => setCopiado(false), 1500);
-                });
-              }}
-            >
-              {copiado ? "Copiado" : "Copiar"}
-            </button>
-          </p>
-          {vinculo ? (
-            <>
-              <p style={{ fontSize: 13 }}>
-                Aparelho vinculado: <code>{vinculo.deviceUuid}</code>
-                {vinculo.vinculadoEm && (
-                  <> desde {new Date(vinculo.vinculadoEm).toLocaleString("pt-BR")}</>
-                )}
-              </p>
-              <button type="button" className="danger" onClick={() => void onRevogar()}>
-                Revogar aparelho
-              </button>
-            </>
-          ) : (
-            <>
-              <p style={{ fontSize: 13 }}>Nenhum aparelho vinculado.</p>
-              {!ajudante.excluidoEm && !ajudante.convertidoEmColaboradorEm && (
-                <button type="button" onClick={() => void onVincular()}>
-                  Vincular aparelho
-                </button>
-              )}
-            </>
-          )}
-          {chaveGerada && (
-            <p style={{ fontSize: 13, marginTop: 12 }}>
-              Chave do aparelho (aparece só agora, informe ao ajudante):{" "}
-              <code>{chaveGerada}</code>
-            </p>
-          )}
-        </div>
-      )}
-
-      {aba === "registros" && (
+      {(
         <>
           <div
             className="card"
@@ -564,8 +344,6 @@ export function AjudanteDetailPage() {
           </div>
         </>
       )}
-
-      {aba === "alertas" && <AlertasPontoAjudante key={ajudanteId} ajudanteId={ajudanteId} />}
     </div>
   );
 }

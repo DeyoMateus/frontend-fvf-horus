@@ -7,7 +7,7 @@ import type {
   IndicadoresDiaTendencia,
   IndicadoresPainel,
 } from "../api/indicadores";
-import { listarTodosMotoristas } from "../api/motoristas";
+import { useColaboradores } from "../hooks/useColaboradores";
 import type { Motorista } from "../api/types";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { ModalDetalheTendencia, type PontoClicado } from "./TendenciaCharts";
@@ -318,7 +318,7 @@ function GraficoLinhaSaldoBancoHoras({
 }
 
 export function PainelIndicadores() {
-  const [motoristas, setMotoristas] = useState<Motorista[]>([]);
+  const motoristas = useColaboradores();
   // Rodada 338: um ou vários motoristas; vazio = todos. A API recebe os ids separados por vírgula.
   const [motoristaIds, setMotoristaIds] = useState<string[]>([]);
   const motoristaId = motoristaIds.join(",");
@@ -392,13 +392,6 @@ export function PainelIndicadores() {
     }
   }, [graficosMinimizados]);
 
-  useEffect(() => {
-    listarTodosMotoristas()
-      .then((r) => setMotoristas(r.dados))
-      .catch(() => {
-        /* seletor fica só com "Todos" , não impede a tela de funcionar */
-      });
-  }, []);
 
   // Rodada 73 , pedido do usuário: faltava um botão de "Atualizar"
   // aqui (o painel principal já tinha o dele) , antes só reagia a

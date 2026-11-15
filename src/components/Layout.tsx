@@ -1,6 +1,6 @@
 import { obterDadosGrupo, type DadosGrupo } from "../api/empresas";
 import { obterMeuPerfil } from "../api/usuariosEmpresa";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
@@ -253,7 +253,9 @@ function LayoutInterno() {
             </div>
           )}
           <SlotAbasContext.Provider value={slotAbas}>
-            <Outlet />
+            <Suspense fallback={<p style={{ padding: 16 }}>Carregando...</p>}>
+              <Outlet />
+            </Suspense>
           </SlotAbasContext.Provider>
           <RodapeLegal />
         </div>

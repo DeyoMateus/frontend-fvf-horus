@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listarTodosMotoristas } from "../api/motoristas";
+import { useColaboradores } from "../hooks/useColaboradores";
 import { FechamentoModal } from "../components/FechamentoModal";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 import { DicaAoPassar } from "../components/DicaAoPassar";
@@ -102,18 +102,11 @@ export function IndicadoresPage() {
     ABAS_FECHAMENTO,
     params.get("secao") === "solicitacoes-pendentes" ? "solicitacoes" : undefined,
   );
-  const [motoristas, setMotoristas] = useState<Motorista[]>([]);
+  const motoristas = useColaboradores();
   const [inicio, setInicio] = useState(inicioDoMes());
   const [fim, setFim] = useState(hoje());
   const [modalFechamentoAberto, setModalFechamentoAberto] = useState(false);
 
-  useEffect(() => {
-    listarTodosMotoristas()
-      .then((r) => setMotoristas(r.dados))
-      .catch(() => {
-        /* seletor fica só com "Todos" , não impede a tela de funcionar */
-      });
-  }, []);
 
   return (
     <div>

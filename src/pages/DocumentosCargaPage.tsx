@@ -12,7 +12,7 @@ import type {
   StatusCargaViagem,
   TipoDocumentoCarga,
 } from "../api/documentosCarga";
-import { listarTodosMotoristas } from "../api/motoristas";
+import { useColaboradores } from "../hooks/useColaboradores";
 import type { Motorista } from "../api/types";
 import { ListaEmPopup } from "../components/ListaEmPopup";
 import { Paginador } from "../components/Paginador";
@@ -49,7 +49,7 @@ export function DocumentosCargaPage() {
   const confirm = useConfirm();
   const [documentos, setDocumentos] = useState<DocumentoCarga[]>([]);
   const [total, setTotal] = useState(0);
-  const [motoristas, setMotoristas] = useState<Motorista[]>([]);
+  const motoristas = useColaboradores();
   const [carregando, setCarregando] = useState(true);
   const [erroLista, setErroLista] = useState<string | null>(null);
 
@@ -98,12 +98,6 @@ export function DocumentosCargaPage() {
       setCarregando(false);
     }
   }
-
-  useEffect(() => {
-    listarTodosMotoristas()
-      .then((r) => setMotoristas(r.dados))
-      .catch(() => setMotoristas([]));
-  }, []);
 
   const primeiraCargaFeita = useRef(false);
   useEffect(() => {

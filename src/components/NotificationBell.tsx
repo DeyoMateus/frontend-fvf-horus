@@ -21,7 +21,9 @@ import type { SolicitacaoPendenteSino } from "../api/privacidade";
 // de ajuste/folga e pedidos do titular: 60 s. Radar de dias sem interacao: 5 min (e atualiza na hora
 // quando o gestor trata um dia, pelo evento "radar-sem-interacao-atualizado"). Jitter: cada aba comeca
 // o ritmo num instante diferente, para varios paineis nao baterem no servidor juntos.
-const INTERVALO_ALERTAS_MS = 15_000;
+// Rodada 746: 30 s (antes 15 s). O alerta critico tambem sai por push e WhatsApp na hora; no sino
+// aparece em ate ~40 s (30 s + ate 10 s de cache). A consulta so roda com a aba visivel.
+const INTERVALO_ALERTAS_MS = 30_000;
 // Rodada 653: ajustes, folgas e pedidos dos titulares vem numa consulta so, a cada 2 min.
 const INTERVALO_PENDENCIAS_MS = 120_000;
 const INTERVALO_RADAR_MS = 300_000;

@@ -8,7 +8,7 @@ import {
 } from "../api/relatorioEspera";
 import type { ItemRelatorioEspera } from "../api/relatorioEspera";
 import { baixarEspelhosRepPFiscalizacaoPdf } from "../api/fechamentoFiscal";
-import { listarTodosMotoristas } from "../api/motoristas";
+import { useColaboradores } from "../hooks/useColaboradores";
 import type { Empresa, Motorista } from "../api/types";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { dataLocalIso } from '../utils/mascaras';
@@ -36,7 +36,7 @@ function inicioDoMes(): string {
  */
 export function FiscalizacaoPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
-  const [motoristas, setMotoristas] = useState<Motorista[]>([]);
+  const motoristas = useColaboradores();
   const [inicio, setInicio] = useState(inicioDoMes());
   const [fim, setFim] = useState(hoje());
 
@@ -62,9 +62,6 @@ export function FiscalizacaoPage() {
         setEmpresas(lista);
         setEmpresaId((atual) => atual || (lista.length > 0 ? lista[0].id : ""));
       })
-      .catch(() => {});
-    listarTodosMotoristas()
-      .then((r) => setMotoristas(r.dados))
       .catch(() => {});
   }, []);
 

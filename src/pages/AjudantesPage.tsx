@@ -1,298 +1,62 @@
-import { Fragment, FormEvent, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { AxiosError } from "axios";
-import { TelefoneInput } from "../components/TelefoneInput";
-import { useConfirm } from "../components/ConfirmProvider";
-import { usePrompt } from "../components/PromptProvider";
-import {
-  atualizarStatusAjudante,
-  baixarEspelhoAjudantePdf,
-  contarAlertasPendentesEspelho,
-  createAjudante,
-  excluirAjudante,
-  reativarAjudante,
-  getAlertasJornadaAbertaAjudantes,
-  type AlertaJornadaAbertaAjudante,
-  listAjudantes,
-  revogarDispositivoAjudante,
-  vincularDispositivoAjudante,
-} from "../api/ajudantes";
-import { listEmpresas } from "../api/empresas";
-import { useAuth } from "../context/AuthContext";
-import { aplicarMascaraCpf, dataLocalIso, somenteDigitos } from "../utils/mascaras";
-import type { Ajudante, Empresa, StatusMotorista } from "../api/types";
-import { useListaPaginada } from "../hooks/useListaPaginada";
-import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
-import { AlertasPontoAjudante } from "../components/AlertasPontoAjudante";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { listAjudantes } from "../api/ajudantes";
+import type { Ajudante } from "../api/types";
+import { rotuloStatusMotorista } from "../utils/rotulos";
 
 /**
- * Cadastro e gestão de Ajudantes (Rodada 66) , cadastro SEPARADO do
- * Motorista (sem CNH, sem veículo , decisão confirmada com o usuário).
- * Mesma integridade legal por trás (cadeia de hash + assinatura
- * digital + device binding + soft-delete), só um conjunto de eventos
- * bem mais restrito no app: início de jornada, início de descanso, fim
- * de descanso e fim de jornada.
+ * Rodada 747: "Ajudantes (histórico)". Só consulta do cadastro antigo de ajudante: ajudante novo é
+ * colaborador com a função Ajudante, e os antigos foram convertidos (rodada 743). Cada linha abre a
+ * ficha antiga (pontos antigos, espelho e integridade) e, quando convertido, a ficha do colaborador.
  */
 export function AjudantesPage() {
-  const [alertasAbertos, setAlertasAbertos] = useState<AlertaJornadaAbertaAjudante[]>([]);
-  useEffect(() => {
-    getAlertasJornadaAbertaAjudantes().then(setAlertasAbertos).catch(() => setAlertasAbertos([]));
-  }, []);
-  const confirm = useConfirm();
-  const prompt = usePrompt();
-  const navigate = useNavigate();
-  const { usuario } = useAuth();
   const [ajudantes, setAjudantes] = useState<Ajudante[]>([]);
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [busca, setBusca] = useState("");
+  const [mostrarExcluidos, setMostrarExcluidos] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const [nome, setNome] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [empresaId, setEmpresaId] = useState("");
-  const [criando, setCriando] = useState(false);
-  const [erroForm, setErroForm] = useState<string | null>(null);
-
-  // Rodada 491: periodo do espelho de ponto (PDF) do ajudante.
-  const [espInicio, setEspInicio] = useState(() => {
-    const d = new Date();
-    return dataLocalIso(new Date(d.getFullYear(), d.getMonth(), 1));
-  });
-  const [espFim, setEspFim] = useState(() => dataLocalIso(new Date()));
-  const [espelhoBaixando, setEspelhoBaixando] = useState<string | null>(null);
-  async function onEspelho(a: Ajudante) {
-    setEspelhoBaixando(a.id);
-    try {
-      const inicioIso = new Date(`${espInicio}T00:00:00`).toISOString();
-      const fimIso = new Date(`${espFim}T23:59:59.999`).toISOString();
-      // Rodada 672: o espelho nao e bloqueado, mas o gestor e avisado se ha alertas de ponto nao tratados.
-      const pendentes = await contarAlertasPendentesEspelho(a.id, inicioIso, fimIso).catch(() => 0);
-      if (
-        pendentes > 0 &&
-        !(await confirm(
-          `${a.nome} tem ${pendentes} alerta(s) de ponto não tratado(s) neste período. As horas do espelho podem mudar depois do tratamento. Baixar o espelho assim mesmo?`,
-          { textoConfirmar: "Baixar assim mesmo" },
-        ))
-      ) {
-        return;
-      }
-      await baixarEspelhoAjudantePdf(a.id, a.nome, inicioIso, fimIso);
-    } catch {
-      setErro("Não foi possível gerar o espelho de ponto agora (confira o período e tente de novo).");
-    } finally {
-      setEspelhoBaixando(null);
-    }
-  }
-  const [busca, setBusca] = useState("");
-  const [mostrarExcluidos, setMostrarExcluidos] = useState(false);
-  const [novaChavePorAjudante, setNovaChavePorAjudante] = useState<
-    Record<string, string>
-  >({});
-
-  async function carregar() {
-    if (!usuario) return;
-    setCarregando(true);
-    try {
-      const [pagina, empresasCarregadas] = await Promise.all([
-        listAjudantes(1, 200, busca, mostrarExcluidos),
-        listEmpresas(),
-      ]);
-      setAjudantes(pagina.dados);
-      setEmpresas(empresasCarregadas);
-      setEmpresaId(
-        (atual) =>
-          atual ||
-          (empresasCarregadas.length === 1 ? empresasCarregadas[0].id : ""),
-      );
-      setErro(null);
-    } catch {
-      setErro("Não foi possível carregar os ajudantes.");
-    } finally {
-      setCarregando(false);
-    }
-  }
-
   useEffect(() => {
-    carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario?.grupoId]);
-
-  useEffect(() => {
-    const id = setTimeout(() => carregar(), 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let ativo = true;
+    const t = setTimeout(() => {
+      setCarregando(true);
+      listAjudantes(1, 200, busca, mostrarExcluidos)
+        .then((r) => {
+          if (!ativo) return;
+          setAjudantes(r.dados);
+          setErro(null);
+        })
+        .catch(() => {
+          if (ativo) setErro("Não foi possível carregar o histórico de ajudantes.");
+        })
+        .finally(() => {
+          if (ativo) setCarregando(false);
+        });
+    }, 300);
+    return () => {
+      ativo = false;
+      clearTimeout(t);
+    };
   }, [busca, mostrarExcluidos]);
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!empresaId) {
-      setErroForm("Selecione a empresa (CNPJ) a que este ajudante pertence.");
-      return;
-    }
-    setErroForm(null);
-    setCriando(true);
-    try {
-      await createAjudante({
-        nome,
-        cpf,
-        empresaId,
-        telefone: telefone.trim() || undefined,
-      });
-      setNome("");
-      setCpf("");
-      setTelefone("");
-      await carregar();
-    } catch (erro) {
-      if (
-        erro instanceof AxiosError &&
-        erro.response?.status &&
-        erro.response.status < 500
-      ) {
-        setErroForm(
-          "Não foi possível cadastrar (CPF inválido, ou CPF já cadastrado).",
-        );
-      } else {
-        setErroForm(
-          "Erro no servidor ao cadastrar. Tente novamente em instantes.",
-        );
-      }
-    } finally {
-      setCriando(false);
-    }
-  }
-
-  async function onAlterarStatus(a: Ajudante, status: StatusMotorista) {
-    await atualizarStatusAjudante(a.id, status);
-    await carregar();
-  }
-
-  async function onVincularDispositivo(a: Ajudante) {
-    const deviceUuid = await prompt(
-      "UUID do aparelho (gerado pelo próprio app do ajudante na primeira instalação):",
-      { titulo: `Vincular dispositivo de ${a.nome}` },
-    );
-    if (!deviceUuid) return;
-    const resultado = await vincularDispositivoAjudante(
-      a.id,
-      deviceUuid.trim(),
-    );
-    setNovaChavePorAjudante((prev) => ({
-      ...prev,
-      [a.id]: resultado.deviceApiKey,
-    }));
-    await carregar();
-  }
-
-  async function onRevogarDispositivo(a: Ajudante) {
-    if (
-      !(await confirm(
-        `Revogar o vínculo de dispositivo de ${a.nome}? O aparelho para de bater ponto imediatamente.`,
-        { perigo: true, textoConfirmar: "Revogar" },
-      ))
-    )
-      return;
-    await revogarDispositivoAjudante(a.id);
-    await carregar();
-  }
-
-  async function onExcluirCadastro(a: Ajudante) {
-    const confirmacao = await prompt(
-      `Para excluir o cadastro de ${a.nome}, digite EXCLUIR (só é possível para quem nunca bateu ponto):`,
-      { titulo: "Excluir cadastro", perigo: true, textoConfirmar: "Excluir" },
-    );
-    if (confirmacao !== "EXCLUIR") return;
-    const motivo =
-      (await prompt("Motivo (opcional):", {
-        titulo: "Excluir cadastro",
-        placeholder: "Motivo (opcional)",
-        multilinha: true,
-      })) ?? undefined;
-    try {
-      await excluirAjudante(a.id, motivo || undefined);
-    } catch (ex) {
-      // Rodada 724: cadastro com ponto batido nao pode ser excluido.
-      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
-      setErro(dados?.message ?? "Não foi possível excluir o cadastro.");
-      return;
-    }
-    await carregar();
-  }
-
-  /** Rodada 725: reativa um cadastro de ajudante excluido (volta ATIVO). */
-  async function onReativar(a: Ajudante) {
-    try {
-      await reativarAjudante(a.id);
-    } catch (ex) {
-      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
-      setErro(dados?.message ?? "Não foi possível reativar o cadastro.");
-      return;
-    }
-    await carregar();
-  }
-
-  // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
-  // paginar com popup dedicado em toda tabela de listagem do painel.
-  const paginacao = useListaPaginada(ajudantes, (a) => a.createdAt);
 
   return (
     <div>
       <h2>Ajudantes (histórico)</h2>
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
-        Os ajudantes agora são cadastrados e acompanhados em{" "}
-        <a href="/motoristas">Colaboradores</a>, com a função Ajudante: lá ficam tratamento de
-        ponto, folgas, banco de horas e fechamentos. Esta tela guarda o cadastro antigo e os pontos
-        batidos antes da mudança, só para consulta (nada foi apagado).
-      </p>
-
-      {alertasAbertos.length > 0 && (
-        <div className="card" style={{ borderLeft: "4px solid #b45309" }}>
-          <h3 style={{ marginTop: 0 }}>Jornada aberta há muito tempo</h3>
-          <p style={{ fontSize: 13, marginTop: -8 }}>
-            Ajudantes que iniciaram a jornada e não registraram o fim dentro do limite da regra
-            da empresa (provável esquecimento).
-          </p>
-          <ul>
-            {alertasAbertos.map((a) => (
-              <li key={a.ajudanteId}>
-                {a.nome} ({a.empresa}): aberta há {Math.floor(a.minutosAbertos / 60)} h{" "}
-                {String(a.minutosAbertos % 60).padStart(2, "0")} min, desde{" "}
-                {new Date(a.inicio).toLocaleString("pt-BR")} (limite {Math.floor(a.limiteMin / 60)} h)
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <AlertasPontoAjudante />
-
-      {/* Rodada 743: cadastro novo de ajudante é feito em Colaboradores. */}
+      <div className="card" style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}>
+        Cadastro antigo, só para consulta. Para cadastrar ou acompanhar um ajudante, use{" "}
+        <Link to="/motoristas?funcao=AJUDANTE">Colaboradores</Link> com a função Ajudante.
+      </div>
 
       <div className="card">
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-            marginBottom: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <input maxLength={80}
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+          <input
+            maxLength={80}
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome ou CPF..."
             style={{ flex: 1, minWidth: 220 }}
           />
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 13,
-              whiteSpace: "nowrap",
-            }}
-          >
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, whiteSpace: "nowrap" }}>
             <input
               type="checkbox"
               checked={mostrarExcluidos}
@@ -304,191 +68,46 @@ export function AjudantesPage() {
         {carregando && <p>Carregando...</p>}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && (
-          <>
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 8 }}>
-              <label>
-                Espelho de ponto: início
-                <br />
-                <input type="date" value={espInicio} max={espFim} onChange={(e) => setEspInicio(e.target.value)} />
-              </label>
-              <label>
-                fim
-                <br />
-                <input type="date" value={espFim} min={espInicio} onChange={(e) => setEspFim(e.target.value)} />
-              </label>
-              <span style={{ fontSize: 12 }}>Use o botão "Espelho (PDF)" na linha do ajudante.</span>
-            </div>
-            <ControlesListaPaginada
-              ordem={paginacao.ordem}
-              onAlternarOrdem={paginacao.alternarOrdem}
-              qtdPorPagina={paginacao.qtdPorPagina}
-              onMudarQtdPorPagina={paginacao.mudarQtdPorPagina}
-              pagina={paginacao.pagina}
-              totalPaginas={paginacao.totalPaginas}
-              popupAberto={paginacao.popupAberto}
-              onAbrirPopup={paginacao.abrirPopup}
-              onFecharPopup={paginacao.fecharPopup}
-              onSelecionarPagina={paginacao.irParaPagina}
-              filtroData={{
-                dataInicio: paginacao.dataInicio,
-                onDataInicio: paginacao.setDataInicio,
-                dataFim: paginacao.dataFim,
-                onDataFim: paginacao.setDataFim,
-                rotulo: "data de cadastro",
-              }}
- tituloPopup="Ajudantes"
->
-            <table>
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>CPF</th>
-                  <th>Cargo</th>
-                  <th>Status</th>
-                  <th>Dispositivo</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginacao.itensExibidos.map((a) => (
-                  <Fragment key={a.id}>
-                    <tr style={a.excluidoEm ? { opacity: 0.6 } : undefined}>
-                      <td>
-                        {a.nome}
-                        {a.convertidoEmColaboradorEm && (
-                          <button
-                            type="button"
-                            className="secondary"
-                            style={{ fontSize: 11, marginLeft: 6, padding: "2px 8px" }}
-                            onClick={() => navigate(`/motoristas/${a.id}`)}
-                            title="Este ajudante agora é colaborador; os pontos novos ficam na ficha dele."
-                          >
-                            já é colaborador: abrir ficha
-                          </button>
-                        )}
-                        {a.excluidoEm && (
-                          <span
-                            className="badge"
-                            style={{
-                              background: "#fee2e2",
-                              color: "#b91c1c",
-                              marginLeft: 6,
-                            }}
-                          >
-                            excluído
-                          </span>
-                        )}
-                      </td>
-                      <td>{a.cpf}</td>
-                      <td>{a.cargo ?? "Ajudante"}</td>
-                      <td>
-                        {a.excluidoEm ? (
-                          a.status
-                        ) : (
-                          <select
-                            value={a.status}
-                            onChange={(e) =>
-                              onAlterarStatus(
-                                a,
-                                e.target.value as StatusMotorista,
-                              )
-                            }
-                          >
-                            <option value="ATIVO">ATIVO</option>
-                            <option value="INATIVO">INATIVO</option>
-                            <option value="SUSPENSO">SUSPENSO</option>
-                          </select>
-                        )}
-                      </td>
-                      <td>
-                        <span
-                          className={`badge ${a.dispositivoVinculado ? "ok" : "neutro"}`}
-                        >
-                          {a.dispositivoVinculado ? "vinculado" : "sem vínculo"}
-                        </span>
-                      </td>
-                      <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {/* Rodada 739: ficha do ajudante em abas (Cadastro, Registros, Alertas). */}
-                        <button
-                          type="button"
-                          style={{ fontSize: 12, padding: "4px 10px" }}
-                          onClick={() => navigate(`/ajudantes/${a.id}`)}
-                        >
-                          Ver detalhes
-                        </button>
-                        <button
-                          className="secondary"
-                          disabled={espelhoBaixando === a.id}
-                          onClick={() => void onEspelho(a)}
-                        >
-                          {espelhoBaixando === a.id ? "Gerando..." : "Espelho (PDF)"}
-                        </button>
-                        {a.excluidoEm && (
-                          <button onClick={() => void onReativar(a)}>Reativar cadastro</button>
-                        )}
-                        {!a.excluidoEm && (
-                          <>
-                            {a.dispositivoVinculado ? (
-                              <button
-                                className="secondary"
-                                onClick={() => onRevogarDispositivo(a)}
-                              >
-                                Revogar dispositivo
-                              </button>
-                            ) : (
-                              <button onClick={() => onVincularDispositivo(a)}>
-                                Vincular dispositivo
-                              </button>
-                            )}
-                            <button
-                              className="danger"
-                              onClick={() => onExcluirCadastro(a)}
-                            >
-                              Excluir cadastro
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                    {novaChavePorAjudante[a.id] && (
-                      <tr>
-                        <td colSpan={6} style={{ background: "#fffbeb" }}>
-                          <div style={{ padding: "8px 12px" }}>
-                            <strong style={{ fontSize: 12 }}>
-                              Nova device key (só aparece agora):
-                            </strong>
-                            <pre
-                              style={{
-                                whiteSpace: "pre-wrap",
-                                wordBreak: "break-all",
-                                fontSize: 11,
-                              }}
-                            >
-                              {novaChavePorAjudante[a.id]}
-                            </pre>
-                            <p style={{ fontSize: 11, color: "#92400e" }}>
-                              Repasse ao ajudante agora, junto do ID {a.id}. Não
-                              aparece de novo.
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Status</th>
+                <th>Cadastrado em</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {ajudantes.map((a) => (
+                <tr key={a.id}>
+                  <td>{a.nome}</td>
+                  <td>{a.cpf}</td>
+                  <td>
+                    {a.excluidoEm ? "Excluído" : rotuloStatusMotorista(a.status)}
+                    {a.convertidoEmColaboradorEm && " · já é colaborador"}
+                  </td>
+                  <td>{new Date(a.createdAt).toLocaleDateString("pt-BR")}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <Link to={`/ajudantes/${a.id}`}>Ver histórico</Link>
+                    {a.convertidoEmColaboradorEm && (
+                      <>
+                        {" · "}
+                        <Link to={`/motoristas/${a.id}`}>Abrir ficha do colaborador</Link>
+                      </>
                     )}
-                  </Fragment>
-                ))}
-                {paginacao.itensExibidos.length === 0 && (
-                  <tr>
-                    <td colSpan={6} style={{ color: "#000000" }}>
-                      {busca
-                        ? "Nenhum ajudante encontrado para essa busca."
-                        : "Nenhum ajudante cadastrado ainda."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-</ControlesListaPaginada>
-          </>
+                  </td>
+                </tr>
+              ))}
+              {ajudantes.length === 0 && (
+                <tr>
+                  <td colSpan={5}>
+                    {busca ? "Nenhum ajudante encontrado para essa busca." : "Nenhum cadastro antigo de ajudante."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

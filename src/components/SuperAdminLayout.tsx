@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useSuperAdminAuth } from "../context/SuperAdminAuthContext";
 
@@ -35,7 +36,9 @@ export function SuperAdminLayout() {
         </div>
       </aside>
       <main className="content">
-        <Outlet />
+        <Suspense fallback={<p style={{ padding: 16 }}>Carregando...</p>}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

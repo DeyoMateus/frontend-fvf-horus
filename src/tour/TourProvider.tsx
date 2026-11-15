@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   createContext,
   useCallback,
   useContext,
@@ -17,7 +19,8 @@ import {
   PASSOS_DO_TOUR,
   type PassoDoTour,
 } from "./passosDoTour";
-import { PalcoDoTour } from "./PalcoDoTour";
+// Rodada 746: o palco (ilustrações do tour) só é baixado quando um passo usa.
+const PalcoDoTour = lazy(() => import("./PalcoDoTour").then((m) => ({ default: m.PalcoDoTour })));
 import { localizarAlvo, retanguloDe, type Retangulo } from "./localizarAlvo";
 
 // Rodada 264 , tour guiado do primeiro acesso (e botão "Refazer tour").
@@ -532,7 +535,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     <TourContext.Provider value={valor}>
       {children}
       {ativo && passo?.palco
-        ? createPortal(<PalcoDoTour tipo={passo.palco} />, document.body)
+        ? createPortal(<Suspense fallback={null}><PalcoDoTour tipo={passo.palco} /></Suspense>, document.body)
         : null}
       {ativo && passo
         ? createPortal(

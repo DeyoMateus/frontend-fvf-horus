@@ -1,22 +1,11 @@
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
+import { RelatorioHorasColaborador } from "../components/RelatorioHorasColaborador";
+import { TratamentoPontoColaborador } from "../components/TratamentoPontoColaborador";
 import { useAuth } from "../context/AuthContext";
 import { dataCalendarioBr, dataLocalIso } from "../utils/mascaras";
-import {
-  formatarRegistro,
-  offsetDoNavegador,
-  paraInputNoOffset,
-  renderizarHorarios,
-  resolverFusoDoAjuste,
-  rotuloUtc,
-  seloFusoMapa,
-} from "../utils/fusoHorario";
+import { formatarRegistro, renderizarHorarios, seloFusoMapa } from "../utils/fusoHorario";
 import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AxiosError } from "axios";
 import { usePrompt } from "../components/PromptProvider";
 import {
@@ -28,22 +17,14 @@ import {
   listarAlertasIntegridadeDispositivo,
 } from "../api/motoristas";
 import type { AlertaIntegridadeDispositivo } from "../api/motoristas";
-import {
-  revogarDispositivo,
-  statusDispositivo,
-  vincularDispositivo,
-} from "../api/dispositivos";
+import { revogarDispositivo, statusDispositivo, vincularDispositivo } from "../api/dispositivos";
 import {
   atualizarVeiculo,
   listarTrocasVeiculo,
   conferirTrocasVeiculo,
   statusVeiculo,
 } from "../api/veiculos";
-import type {
-  AtualizarVeiculoInput,
-  TrocaVeiculoAuditoria,
-  VeiculoVinculado,
-} from "../api/veiculos";
+import type { AtualizarVeiculoInput, TrocaVeiculoAuditoria, VeiculoVinculado } from "../api/veiculos";
 import {
   aceitarDivergenciaIntegridade,
   baixarAej,
@@ -59,15 +40,7 @@ import {
 } from "../api/registros";
 import type { ViagemConsolidada } from "../api/registros";
 import { rotuloStatusMotorista, rotuloSeveridade } from "../utils/rotulos";
-import {
-  anexarEvidenciaTratamento,
-  baixarEvidenciaTratamento,
-  createTratamento,
-  listTratamentos,
-  obterUrlEvidenciaTratamento,
-} from "../api/tratamentos";
-import { EvidenciasAnexo } from "../components/EvidenciasAnexo";
-import { LancarJornadaInteira } from "../components/LancarJornadaInteira";
+import { listTratamentos } from "../api/tratamentos";
 import { ListaEmPopup } from "../components/ListaEmPopup";
 import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
@@ -83,10 +56,8 @@ import {
 import type { ValoresContrato } from "../components/CamposDadosContrato";
 import { atualizarContratoMotorista } from "../api/dadosContrato";
 import { TelefoneInput } from "../components/TelefoneInput";
-import { baixarHoleritePdf, calcularHolerite } from "../api/holerite";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 import { getAjudante } from "../api/ajudantes";
-import type { OpcoesHolerite, ResultadoHolerite } from "../api/holerite";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
   BarraTratamentoEmLote,
@@ -110,10 +81,7 @@ import { FolgasLista } from "../components/FolgasLista";
 import { listEmpresas } from "../api/empresas";
 import type { Empresa } from "../api/types";
 import type { FolgaConcedida } from "../api/folgaConcedida";
-import {
-  listarDocumentosCargaPorMotorista,
-  statusAtualCargaPorMotorista,
-} from "../api/documentosCarga";
+import { listarDocumentosCargaPorMotorista, statusAtualCargaPorMotorista } from "../api/documentosCarga";
 import type { DocumentoCarga, StatusAtualCarga } from "../api/documentosCarga";
 import type {
   AlertaJornada,
@@ -121,12 +89,10 @@ import type {
   Motorista,
   RegistroJornada,
   StatusMotorista,
-  TipoEvento,
   TratamentoPonto,
   VerificacaoIntegridade,
 } from "../api/types";
-import { ROTULO_FUNCAO, tiposEventoDaFuncao } from "../api/types";
-import { TextoLongo } from "../components/TextoLongo";
+import { ROTULO_FUNCAO } from "../api/types";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 function gerarUuid() {
@@ -260,25 +226,6 @@ export function MotoristaDetailPage({
       ativo = false;
     };
   }, [motorista?.funcao, motoristaId, somente]);
-  const cardTratamentoRef = useRef<HTMLDivElement | null>(null);
-  const veioParaEncerrarJornada =
-    searchParams.get("secao") === "encerrar-jornada";
-  // Rodada 193: vindo do radar ("sem sinal ou esquecimento"), abre o
-  // lançamento de jornada inteira já com a data do dia tratado.
-  const veioParaLancarJornada = searchParams.get("secao") === "lancar-jornada";
-  const dataParaLancarJornada = /^\d{4}-\d{2}-\d{2}$/.test(
-    searchParams.get("data") ?? "",
-  )
-    ? (searchParams.get("data") ?? undefined)
-    : undefined;
-  useEffect(() => {
-    if (carregando || !(veioParaEncerrarJornada || veioParaLancarJornada))
-      return;
-    cardTratamentoRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, [carregando, veioParaEncerrarJornada, veioParaLancarJornada]);
 
   useEffect(() => {
     if (carregando) return;
@@ -323,18 +270,6 @@ export function MotoristaDetailPage({
   const [atualizandoVeiculo, setAtualizandoVeiculo] = useState(false);
   const [erroVeiculo, setErroVeiculo] = useState<string | null>(null);
 
-  const [tipoEvento, setTipoEvento] = useState<TipoEvento>("FIM_JORNADA");
-  const [timestampEvento, setTimestampEvento] = useState("");
-  const [motivo, setMotivo] = useState("");
-  const [registroReferenciaId, setRegistroReferenciaId] = useState("");
-  const [lancandoTratamento, setLancandoTratamento] = useState(false);
-  const [erroTratamento, setErroTratamento] = useState<string | null>(null);
-  // Rodada 79 , pedido do usuário: anexar evidência é escolhido JUNTO do
-  // lançamento (adicionar/tirar antes de enviar), não depois , os
-  // arquivos ficam só na memória do navegador até o "Lançar tratamento"
-  // ser enviado, quando são subidos em seguida (o backend exige que o
-  // tratamento já exista pra vincular a evidência a ele).
-  const [evidenciasParaAnexar, setEvidenciasParaAnexar] = useState<File[]>([]);
 
   const [dataFolga, setDataFolga] = useState("");
   const [motivoFolga, setMotivoFolga] = useState("");
@@ -367,17 +302,6 @@ export function MotoristaDetailPage({
   const [salvandoCadastro, setSalvandoCadastro] = useState(false);
   const [erroCadastro, setErroCadastro] = useState<string | null>(null);
 
-  const [holeriteInicio, setHoleriteInicio] = useState("");
-  const [holeriteFim, setHoleriteFim] = useState("");
-  const [holeriteDirecaoEspera, setHoleriteDirecaoEspera] = useState(true);
-  const [holeriteNormalExtra, setHoleriteNormalExtra] = useState(true);
-  const [holeriteAdicionalNoturno, setHoleriteAdicionalNoturno] =
-    useState(true);
-  const [holeritePrevia, setHoleritePrevia] =
-    useState<ResultadoHolerite | null>(null);
-  const [gerandoHolerite, setGerandoHolerite] = useState(false);
-  const [baixandoHolerite, setBaixandoHolerite] = useState(false);
-  const [erroHolerite, setErroHolerite] = useState<string | null>(null);
 
   async function onBaixarComprovante() {
     setBaixandoComprovante(true);
@@ -754,115 +678,6 @@ export function MotoristaDetailPage({
     }
   }
 
-  const MAXIMO_EVIDENCIAS_POR_TRATAMENTO = 4;
-  const TAMANHO_MAXIMO_EVIDENCIA_BYTES = 25 * 1024 * 1024;
-
-  /** Escolher arquivo no formulário só guarda na memória , nada sobe ainda (ver comentário do state). */
-  function onEscolherEvidenciaParaAnexar(arquivo: File | undefined) {
-    if (!arquivo) return;
-    setErroTratamento(null);
-    if (evidenciasParaAnexar.length >= MAXIMO_EVIDENCIAS_POR_TRATAMENTO) {
-      setErroTratamento(
-        `Limite de ${MAXIMO_EVIDENCIAS_POR_TRATAMENTO} evidências por tratamento.`,
-      );
-      return;
-    }
-    // Só imagem (JPG, PNG, WEBP, HEIC/HEIF do iPhone). O iPhone às vezes
-    // não informa o tipo do HEIC, então confere também a extensão. O
-    // servidor valida de novo pelo conteúdo do arquivo.
-    const nomeMin = arquivo.name.toLowerCase();
-    const ehImagemAceita =
-      /^image\/(jpeg|png|webp|heic|heif)$/.test(arquivo.type) ||
-      /\.(jpe?g|png|webp|heic|heif)$/.test(nomeMin);
-    if (!ehImagemAceita) {
-      setErroTratamento(
-        "Só é possível anexar imagens (JPG, PNG, WEBP ou HEIC/HEIF do iPhone). PDF e outros arquivos não são aceitos: tire um print ou uma foto do documento e anexe a imagem.",
-      );
-      return;
-    }
-    if (arquivo.size > TAMANHO_MAXIMO_EVIDENCIA_BYTES) {
-      setErroTratamento("Arquivo muito grande, o limite é 25MB por imagem.");
-      return;
-    }
-    setEvidenciasParaAnexar((atual) => [...atual, arquivo]);
-  }
-
-  function onTirarEvidenciaParaAnexar(indice: number) {
-    setEvidenciasParaAnexar((atual) => atual.filter((_, i) => i !== indice));
-  }
-
-  async function onLancarTratamento(e: FormEvent) {
-    e.preventDefault();
-    setErroTratamento(null);
-    setLancandoTratamento(true);
-    try {
-      // Rodada 150: a hora digitada vale no fuso em que o motorista estava
-      // naquele momento (não o do computador do gestor nem o de hoje).
-      const fusoDoAjuste = resolverFusoDoAjuste(timestampEvento, registros);
-      const novoTratamento = await createTratamento(motoristaId, {
-        tipoEvento,
-        timestampEvento: new Date(fusoDoAjuste.instanteMs).toISOString(),
-        motivo,
-        registroReferenciaId: registroReferenciaId || undefined,
-        fusoOffsetMin: fusoDoAjuste.doMotorista
-          ? fusoDoAjuste.offsetMin
-          : undefined,
-      });
-
-      // Rodada 79: evidências escolhidas no formulário sobem logo em
-      // seguida, já vinculadas a este tratamento recém-criado , o
-      // motorista/gestor não precisa mais achar a linha na tabela
-      // depois pra anexar. Se alguma falhar, o tratamento já foi
-      // lançado (não tem como desfazer só por causa da evidência), mas
-      // o aviso deixa claro quantas não subiram.
-      let falhasEvidencia = 0;
-      for (const arquivo of evidenciasParaAnexar) {
-        try {
-          await anexarEvidenciaTratamento(
-            motoristaId,
-            novoTratamento.id,
-            arquivo,
-          );
-        } catch {
-          falhasEvidencia++;
-        }
-      }
-
-      setMotivo("");
-      setRegistroReferenciaId("");
-      setEvidenciasParaAnexar([]);
-      await carregarTudo();
-
-      if (falhasEvidencia > 0) {
-        setErroTratamento(
-          `Tratamento lançado, mas ${falhasEvidencia} evidência(s) não subiram. Confira sua internet e lance um novo tratamento anexando de novo se precisar da prova.`,
-        );
-      }
-    } catch (erro) {
-      // Rodada 139 , mostra o motivo real devolvido pelo servidor (ex.:
-      // o tipo escolhido não encaixa na jornada do motorista naquele
-      // horário), em vez de sempre culpar o tamanho do motivo.
-      const msg = (
-        erro as { response?: { data?: { message?: string | string[] } } }
-      )?.response?.data?.message;
-      const texto = Array.isArray(msg) ? msg.join(" ") : msg;
-      setErroTratamento(
-        texto ||
-          "Não foi possível lançar (motivo precisa ter pelo menos 10 caracteres).",
-      );
-    } finally {
-      setLancandoTratamento(false);
-    }
-  }
-
-  // Rodada 155 , tratamentos: filtro por período (De/Até, pelo horário do
-  // ajuste), ordenação, "mostrar N por vez" (100 abre popup) e exportação do
-  // que está filtrado.
-  const listaTratamentos = useListaPaginada(
-    tratamentos,
-    (t) => t.timestampEvento,
-  );
-
   // Rodada 157 , integridade: a lista de divergências não pode crescer sem
   // limite na tela. Por padrão só as PENDENTES; filtro de status e de período
   // (De/Até pelo horário do evento), "mostrar N por vez" (100 abre popup) e
@@ -943,54 +758,6 @@ export function MotoristaDetailPage({
     );
   }
 
-  function linhasRelatorioTratamentos(): string[][] {
-    return listaTratamentos.itensFiltrados.map((t) => [
-      t.tipoEvento,
-      formatarRegistro(t.timestampEvento, t.fusoOffsetMin),
-      t.motivo,
-      t.usuario?.nome ?? t.usuarioId,
-      new Date(t.createdAt).toLocaleString("pt-BR"),
-      String(t.evidencias?.length ?? 0),
-    ]);
-  }
-  const CABECALHOS_RELATORIO_TRATAMENTOS = [
-    "Evento",
-    "Horário do ajuste",
-    "Motivo",
-    "Lançado por",
-    "Lançado em",
-    "Evidências",
-  ];
-  function rotuloPeriodoTratamentos() {
-    const { dataInicio, dataFim } = listaTratamentos;
-    if (!dataInicio && !dataFim) return "todos os tratamentos";
-    const f = (d: string) =>
-      new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
-    return `${dataInicio ? f(dataInicio) : "início"} a ${dataFim ? f(dataFim) : "hoje"}`;
-  }
-  function onBaixarCsvTratamentos() {
-    baixarCsvTabela(
-      `tratamentos-ponto-${motorista?.nome ?? motoristaId}.xlsx`.replace(
-        /\s+/g,
-        "-",
-      ),
-      CABECALHOS_RELATORIO_TRATAMENTOS,
-      linhasRelatorioTratamentos(),
-      {
-        titulo: `Tratamentos de ponto - ${motorista?.nome ?? ""}`,
-        subtitulo: `Período: ${rotuloPeriodoTratamentos()}`,
-      },
-    );
-  }
-  function onImprimirTratamentos() {
-    imprimirTabela(
-      `Tratamentos de ponto - ${motorista?.nome ?? ""}`,
-      `Período: ${rotuloPeriodoTratamentos()}`,
-      CABECALHOS_RELATORIO_TRATAMENTOS,
-      linhasRelatorioTratamentos(),
-    );
-  }
-
   // Rodada 107 , mais recentes primeiro (mesmo critério da Rodada 77),
   // fatiado pelo "mostrar N por vez".
   // Rodada 322: não tratados sempre primeiro, depois os mais recentes.
@@ -1019,16 +786,6 @@ export function MotoristaDetailPage({
     setQtdAlertasPorPagina(qtd);
     setPaginaAlertas(1);
   }
-
-  // Rodada 107 , pedido do usuário: "deixe os [registros] que chegou
-  // por último como o primeiro da listagem". `sequencial` é a ordem
-  // real de chegada no ledger WORM (ver registros-jornada.service.ts),
-  // critério melhor que `timestampEvento` (que é só o relógio do
-  // aparelho no momento do evento, não quando ele de fato chegou/foi
-  // processado no servidor).
-  const registrosOrdenados = [...registros].sort(
-    (a, b) => b.sequencial - a.sequencial,
-  );
 
   // Pedido do usuário (Rodada 153): a tabela "Registros de jornada" não pode
   // crescer sem limite. Filtro de período (De/Até), ordenação, "Mostrar
@@ -1114,67 +871,6 @@ export function MotoristaDetailPage({
         </td>
       </tr>
     );
-  }
-
-  // Rodada 740: ajudante não tem direção nem espera; o relatório dele sai sem essas colunas.
-  const holeriteMostraDirecaoEspera =
-    holeriteDirecaoEspera && motorista?.funcao !== "AJUDANTE";
-  const opcoesHolerite: OpcoesHolerite = {
-    direcaoEspera: holeriteMostraDirecaoEspera,
-    normalExtra: holeriteNormalExtra,
-    adicionalNoturno: holeriteAdicionalNoturno,
-  };
-
-  async function onGerarPreviaHolerite(e: FormEvent) {
-    e.preventDefault();
-    setErroHolerite(null);
-    setGerandoHolerite(true);
-    try {
-      const resultado = await calcularHolerite(
-        motoristaId,
-        inicioDoDiaLocalIso(holeriteInicio),
-        fimDoDiaLocalIso(holeriteFim),
-        opcoesHolerite,
-      );
-      setHoleritePrevia(resultado);
-    } catch {
-      setErroHolerite(
-        "Não foi possível calcular o relatório de horas (confira o período escolhido).",
-      );
-    } finally {
-      setGerandoHolerite(false);
-    }
-  }
-
-  async function onBaixarHolerite() {
-    if (!motorista) return;
-    setBaixandoHolerite(true);
-    try {
-      await baixarHoleritePdf(
-        motoristaId,
-        motorista.nome,
-        inicioDoDiaLocalIso(holeriteInicio),
-        fimDoDiaLocalIso(holeriteFim),
-        opcoesHolerite,
-      );
-    } finally {
-      setBaixandoHolerite(false);
-    }
-  }
-
-  function formatarHorasHolerite(minutos: number) {
-    const h = Math.floor(minutos / 60);
-    const m = Math.round(minutos % 60);
-    return `${h}h${String(m).padStart(2, "0")}`;
-  }
-
-  // `d.dia` vem como "AAAA-MM-DD" (chave interna do backend, usada pra
-  // ordenar) , exibir isso direto saía com a data "invertida" pro
-  // padrão brasileiro (Rodada 80, pedido do usuário). Só formata na
-  // exibição, sem mexer na chave.
-  function formatarDiaHoleriteBr(diaIso: string) {
-    const [ano, mes, dia] = diaIso.split("-");
-    return `${dia}/${mes}/${ano}`;
   }
 
   async function onConcederFolga(e: FormEvent) {
@@ -2875,444 +2571,23 @@ export function MotoristaDetailPage({
       </>
       )}
 
-      {somente === "tratamento" && (
-      <>
-      <div className="card" ref={cardTratamentoRef}>
-        <h3 style={{ marginTop: 0 }}>Tratamento de ponto</h3>
-        {veioParaEncerrarJornada && (
-          <p
-            style={{
-              fontSize: 13,
-              color: "#b91c1c",
-              fontWeight: 600,
-              border: "1px solid #fca5a5",
-              borderRadius: 6,
-              padding: 8,
-            }}
-          >
-            Esta jornada está aberta há mais de 14h. Para encerrá-la, deixe o
-            evento "FIM_JORNADA", informe o horário em que o motorista realmente
-            terminou, escreva a justificativa e anexe a evidência.
-          </p>
-        )}
-        <p style={{ fontSize: 13, color: "#000000" }}>
-          Lançado pelo RH/gestor quando o motorista esquece de bater um evento.
-          Não altera nenhum registro, é só informativo, entra na conferência da
-          folha de ponto.
-        </p>
-        <LancarJornadaInteira
+      {somente === "tratamento" && motorista && (
+        <TratamentoPontoColaborador
           motoristaId={motoristaId}
+          motorista={motorista}
           registros={registros}
-          dataInicial={dataParaLancarJornada}
-          abrirInicialmente={veioParaLancarJornada}
-          onLancado={carregarTudo}
-          funcao={motorista?.funcao}
+          tratamentos={tratamentos}
+          carregando={carregando}
+          onAtualizar={() => carregarTudo()}
         />
-        <p style={{ fontSize: 13, fontWeight: 600, margin: "8px 0 0" }}>
-          Ou lance um evento isolado:
-        </p>
-        <form onSubmit={onLancarTratamento}>
-          <label>Evento</label>
-          <select
-            value={tipoEvento}
-            onChange={(e) => setTipoEvento(e.target.value as TipoEvento)}
-          >
-            {/* Rodada 740: só os eventos da função do colaborador. */}
-            {tiposEventoDaFuncao(motorista?.funcao).map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <label>Registro de referência (opcional)</label>
-          <select
-            value={registroReferenciaId}
-            onChange={(e) => {
-              const id = e.target.value;
-              setRegistroReferenciaId(id);
-              // Rodada 88 , sugere o horário do registro escolhido como ponto
-              // de partida (o gestor ainda pode ajustar) em vez de deixar
-              // "Horário considerado" do jeito que estava (frequentemente
-              // vazio ou com "agora", que nunca corrige nada , ver comentário
-              // de formatarParaInputDatetimeLocal acima).
-              const registro = registros.find((r) => r.id === id);
-              if (registro) {
-                setTimestampEvento(
-                  paraInputNoOffset(
-                    registro.timestampEvento,
-                    registro.fusoOffsetMin ?? offsetDoNavegador(),
-                  ),
-                );
-              }
-            }}
-          >
-            <option value="">Nenhum</option>
-            {registrosOrdenados.map((r) => (
-              <option key={r.id} value={r.id}>
-                #{r.sequencial} · {r.tipoEvento} ·{" "}
-                {formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}
-              </option>
-            ))}
-          </select>
-          {registroReferenciaId && (
-            <p style={{ fontSize: 12, color: "#000000", marginTop: -4 }}>
-              "Horário considerado" foi sugerido a partir do registro escolhido.
-              Ajuste os minutos/segundos pro horário real que este evento
-              deveria ter, se precisar. Isso NÃO altera o registro original (ele
-              é permanente); só adiciona este ajuste à conferência da folha.
-            </p>
-          )}
-          <label>Horário considerado</label>
-          <input
-            type="datetime-local"
-            value={timestampEvento}
-            onChange={(e) => setTimestampEvento(e.target.value)}
-            required
-          />
-          {timestampEvento && (
-            <p style={{ fontSize: 12, color: "#000000", marginTop: -4 }}>
-              {(() => {
-                const f = resolverFusoDoAjuste(timestampEvento, registros);
-                return f.doMotorista
-                  ? `Horário no fuso em que o motorista estava nesse momento (${rotuloUtc(f.offsetMin)}), não o do seu computador.`
-                  : `Horário no fuso do seu computador (${rotuloUtc(f.offsetMin)}); o motorista ainda não tem ponto com fuso registrado.`;
-              })()}
-            </p>
-          )}
-          <label>Motivo (mínimo 10 caracteres)</label>
-          <textarea
-            maxLength={400}
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-            rows={3}
-            required
-            minLength={10}
-          />
-
-          {/* Rodada 79 , pedido do usuário: anexar evidência (adicionar/
-              tirar) acontece AQUI, junto do lançamento , depois de
-              lançado, o tratamento só permite abrir/ver a imagem (ver
-              tabela abaixo, sem opção de anexar nem remover). */}
-          <label>
-            Evidências (opcional, até {MAXIMO_EVIDENCIAS_POR_TRATAMENTO})
-          </label>
-          {evidenciasParaAnexar.length > 0 && (
-            <ul style={{ margin: "4px 0", paddingLeft: 18, fontSize: 13 }}>
-              {evidenciasParaAnexar.map((arquivo, indice) => (
-                <li
-                  key={`${arquivo.name}-${indice}`}
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
-                >
-                  {arquivo.name}
-                  <button
-                    type="button"
-                    className="secondary"
-                    style={{ fontSize: 11, padding: "2px 6px" }}
-                    onClick={() => onTirarEvidenciaParaAnexar(indice)}
-                  >
-                    Remover
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {evidenciasParaAnexar.length < MAXIMO_EVIDENCIAS_POR_TRATAMENTO && (
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
-              onChange={(e) => {
-                onEscolherEvidenciaParaAnexar(e.target.files?.[0]);
-                e.target.value = "";
-              }}
-              style={{ fontSize: 12 }}
-            />
-          )}
-
-          <p style={{ fontSize: 12, color: "#000000", margin: "4px 0" }}>
-            Evidências: somente <strong>imagens</strong> (JPG, PNG, WEBP ou
-            HEIC/HEIF, o formato das fotos do iPhone), até 25MB cada. PDF e
-            outros arquivos não são aceitos, tire um print ou uma foto e anexe a
-            imagem. HEIC não aparece na miniatura em alguns navegadores, mas é
-            salvo normalmente e pode ser baixado.
-          </p>
-          {erroTratamento && <p className="error-text">{erroTratamento}</p>}
-          <button type="submit" disabled={lancandoTratamento}>
-            {lancandoTratamento ? "Lançando..." : "Lançar tratamento"}
-          </button>
-        </form>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            flexWrap: "wrap",
-            marginTop: 16,
-            alignItems: "center",
-          }}
-        >
-          <button
-            type="button"
-            className="secondary"
-            style={{ fontSize: 13 }}
-            disabled={listaTratamentos.itensFiltrados.length === 0}
-            onClick={onBaixarCsvTratamentos}
-          >
-            Baixar relatório (CSV)
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            style={{ fontSize: 13 }}
-            disabled={listaTratamentos.itensFiltrados.length === 0}
-            onClick={onImprimirTratamentos}
-          >
-            Imprimir / PDF
-          </button>
-          <span style={{ fontSize: 12, color: "#000000" }}>
-            O relatório segue o período filtrado (agora:{" "}
-            {rotuloPeriodoTratamentos()}).
-          </span>
-        </div>
-        <ControlesListaPaginada
-          ordem={listaTratamentos.ordem}
-          onAlternarOrdem={listaTratamentos.alternarOrdem}
-          qtdPorPagina={listaTratamentos.qtdPorPagina}
-          onMudarQtdPorPagina={listaTratamentos.mudarQtdPorPagina}
-          pagina={listaTratamentos.pagina}
-          totalPaginas={listaTratamentos.totalPaginas}
-          popupAberto={listaTratamentos.popupAberto}
-          onAbrirPopup={listaTratamentos.abrirPopup}
-          onFecharPopup={listaTratamentos.fecharPopup}
-          onSelecionarPagina={listaTratamentos.irParaPagina}
-          filtroData={{
-            dataInicio: listaTratamentos.dataInicio,
-            onDataInicio: listaTratamentos.setDataInicio,
-            dataFim: listaTratamentos.dataFim,
-            onDataFim: listaTratamentos.setDataFim,
-            rotulo: "horário do ajuste",
-          }}
-          tituloPopup="Tratamentos de ponto"
-        >
-          <table style={{ marginTop: 8 }}>
-            <thead>
-              <tr>
-                <th>Evento</th>
-                <th>Horário</th>
-                <th>Motivo</th>
-                <th>Lançado por</th>
-                <th>Quando</th>
-                <th>Evidências (prova do fechamento)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listaTratamentos.itensExibidos.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.tipoEvento}</td>
-                  <td>
-                    {formatarRegistro(t.timestampEvento, t.fusoOffsetMin)}
-                  </td>
-                  <td style={{ maxWidth: 240 }}>
-                    <TextoLongo
-                      texto={t.motivo}
-                      titulo="Motivo do tratamento"
-                    />
-                  </td>
-                  <td>{t.usuario?.nome ?? t.usuarioId}</td>
-                  <td>{new Date(t.createdAt).toLocaleString("pt-BR")}</td>
-                  <td>
-                    {/* Rodada 79 , pedido do usuário: depois de lançado, evidência
-                      é só pra abrir/ver (sem `remover`, sem input de anexar ,
-                      isso agora só acontece no formulário, antes de lançar). */}
-                    <EvidenciasAnexo
-                      evidencias={t.evidencias ?? []}
-                      obterUrl={(evidenciaId) =>
-                        obterUrlEvidenciaTratamento(motoristaId, evidenciaId)
-                      }
-                      baixar={(evidenciaId, nomeArquivo) =>
-                        baixarEvidenciaTratamento(
-                          motoristaId,
-                          evidenciaId,
-                          nomeArquivo,
-                        )
-                      }
-                    />
-                  </td>
-                </tr>
-              ))}
-              {listaTratamentos.itensFiltrados.length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ color: "#000000" }}>
-                    {tratamentos.length === 0
-                      ? "Nenhum tratamento lançado."
-                      : "Nenhum tratamento no período filtrado."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </ControlesListaPaginada>
-      </div>
-
-      </>
       )}
 
-      {somente === "relatorio" && (
-      <>
-      <div className="card">
-        <h3 style={{ marginTop: 0 }}>Relatório de horas apuradas (folha de ponto)</h3>
-        <p style={{ fontSize: 13, color: "#000000" }}>
-          Junta o ledger real de pontos do motorista com os tratamentos
-          (fechamentos) lançados pelo gestor no período, pra empresa conseguir
-          pagar corretamente. Escolha o período e quais categorias entram no
-          PDF, cada empresa paga de um jeito diferente, então as 3 são
-          opcionais.
-        </p>
-        <form onSubmit={onGerarPreviaHolerite}>
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              flexWrap: "wrap",
-              alignItems: "flex-end",
-            }}
-          >
-            <div>
-              <label>Início</label>
-              <input
-                type="date"
-                value={holeriteInicio}
-                onChange={(e) => setHoleriteInicio(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label>Fim</label>
-              <input
-                type="date"
-                value={holeriteFim}
-                onChange={(e) => setHoleriteFim(e.target.value)}
-                required
-              />
-            </div>
-            {motorista?.funcao !== "AJUDANTE" && (
-            <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <input
-                type="checkbox"
-                checked={holeriteDirecaoEspera}
-                onChange={(e) => setHoleriteDirecaoEspera(e.target.checked)}
-              />
-              Direção / espera
-            </label>
-            )}
-            <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <input
-                type="checkbox"
-                checked={holeriteNormalExtra}
-                onChange={(e) => setHoleriteNormalExtra(e.target.checked)}
-              />
-              Hora normal / extra
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <input
-                type="checkbox"
-                checked={holeriteAdicionalNoturno}
-                onChange={(e) => setHoleriteAdicionalNoturno(e.target.checked)}
-              />
-              Hora noturna
-            </label>
-          </div>
-          {erroHolerite && <p className="error-text">{erroHolerite}</p>}
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button type="submit" disabled={gerandoHolerite}>
-              {gerandoHolerite ? "Calculando..." : "Ver prévia"}
-            </button>
-            <button
-              type="button"
-              onClick={onBaixarHolerite}
-              disabled={baixandoHolerite || !holeriteInicio || !holeriteFim}
-            >
-              {baixandoHolerite ? "Gerando..." : "Baixar PDF"}
-            </button>
-          </div>
-        </form>
-
-        {holeriteInicio && holeriteFim && (() => {
-          // Rodada 452: o período só fecha depois de tratar estes alertas.
-          const ini = new Date(holeriteInicio).getTime();
-          const fim = new Date(holeriteFim).getTime() + 86_400_000; // mesmo corte do backend (fim + 1 dia)
-          const pendentes = alertas.filter(
-            (a) =>
-              a.tipo === "PONTO_ACEITO_COM_FLAG" &&
-              !a.tratadoEm &&
-              new Date(a.janelaInicio).getTime() >= ini &&
-              new Date(a.janelaInicio).getTime() < fim,
-          ).length;
-          return pendentes > 0 ? (
-            <p className="error-text" style={{ marginTop: 12 }}>
-              {pendentes} ponto(s) com divergência de relógio ainda sem
-              tratamento neste período. Eles contam no cálculo, mas o período
-              só poderá ser fechado depois que o gestor tratar os alertas
-              (confirmar o horário ou corrigir a hora) na seção de alertas.
-            </p>
-          ) : null;
-        })()}
-        {holeritePrevia &&
-          (holeritePrevia.pontosSuspeitosPendentes ?? 0) > 0 && (
-            <p className="error-text" style={{ marginTop: 12 }}>
-              {holeritePrevia.pontosSuspeitosPendentes} ponto(s) com divergência
-              de relógio ficaram FORA do cálculo até o gestor corrigir a hora
-              (tela de Alertas, "Lançar ajuste e liberar aparelho"). Este
-              holerite está incompleto.
-            </p>
-          )}
-        {holeritePrevia && (
-          <table style={{ marginTop: 16 }}>
-            <thead>
-              <tr>
-                <th>Dia</th>
-                {holeriteMostraDirecaoEspera && <th>Direção</th>}
-                {holeriteMostraDirecaoEspera && <th>Espera</th>}
-                {holeriteNormalExtra && <th>H. normal</th>}
-                {holeriteNormalExtra && <th>H. extra</th>}
-                {holeriteAdicionalNoturno && <th>Hora noturna</th>}
-                <th>Obs.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {holeritePrevia.dias.map((d) => (
-                <tr key={d.dia}>
-                  <td>{formatarDiaHoleriteBr(d.dia)}</td>
-                  {holeriteMostraDirecaoEspera && (
-                    <td>{formatarHorasHolerite(d.direcaoMin)}</td>
-                  )}
-                  {holeriteMostraDirecaoEspera && (
-                    <td>{formatarHorasHolerite(d.esperaMin)}</td>
-                  )}
-                  {holeriteNormalExtra && (
-                    <td>{formatarHorasHolerite(d.normalMin)}</td>
-                  )}
-                  {holeriteNormalExtra && (
-                    <td>{formatarHorasHolerite(d.extraMin)}</td>
-                  )}
-                  {holeriteAdicionalNoturno && (
-                    <td>{formatarHorasHolerite(d.noturnoMin)}</td>
-                  )}
-                  <td>{d.teveFechamentoGestor ? "Fechado p/ gestor" : ""}</td>
-                </tr>
-              ))}
-              {holeritePrevia.dias.length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ color: "#000000" }}>
-                    Nenhum ponto no período.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      </>
+      {somente === "relatorio" && motorista && (
+        <RelatorioHorasColaborador
+          motoristaId={motoristaId}
+          motorista={motorista}
+          alertas={alertas}
+        />
       )}
     </div>
   );

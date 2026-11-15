@@ -50,16 +50,52 @@ export async function listarTodosMotoristas(
   incluirExcluidos?: boolean,
 ): Promise<PaginaMotoristas> {
   const primeira = await listMotoristas(1, 200, busca, incluirExcluidos);
-  const dados = [...primeira.dados];
   const paginas = Math.min(
     50,
     Math.ceil(primeira.total / (primeira.pageSize || 200)),
   );
-  for (let pg = 2; pg <= paginas; pg++) {
-    const proxima = await listMotoristas(pg, 200, busca, incluirExcluidos);
-    dados.push(...proxima.dados);
+  // Rodada 746: as demais páginas em paralelo, de 5 em 5 (antes uma por vez).
+  const dados = [...primeira.dados];
+  for (let pg = 2; pg <= paginas; pg += 5) {
+    const lote = [];
+    for (let p = pg; p < pg + 5 && p <= paginas; p++) {
+      lote.push(listMotoristas(p, 200, busca, incluirExcluidos));
+    }
+    for (const pagina of await Promise.all(lote)) dados.push(...pagina.dados);
   }
   return { ...primeira, dados };
+}
+
+/**
+ * Rodada 746: lista de colaboradores ativos (sem busca e sem excluídos) para seletores e filtros,
+ * guardada em memória por 60 s. Várias telas (e componentes da mesma tela) pedem a mesma lista;
+ * quem chega durante a busca espera a mesma resposta. Limpa ao entrar, ao sair e a cada alteração
+ * de cadastro feita por este painel. A tela de Colaboradores continua lendo sem cache.
+ */
+const VALIDADE_CACHE_COLABORADORES_MS = 60_000;
+let cacheColaboradores: { expiraEm: number; valor: Promise<Motorista[]> } | null = null;
+
+export function listarColaboradoresParaSeletor(): Promise<Motorista[]> {
+  const agora = Date.now();
+  if (cacheColaboradores && cacheColaboradores.expiraEm > agora) return cacheColaboradores.valor;
+  const entrada = {
+    expiraEm: agora + VALIDADE_CACHE_COLABORADORES_MS,
+    valor: listarTodosMotoristas().then((r) => r.dados),
+  };
+  cacheColaboradores = entrada;
+  entrada.valor.catch(() => {
+    if (cacheColaboradores === entrada) cacheColaboradores = null;
+  });
+  return entrada.valor;
+}
+
+export function invalidarCacheColaboradores(): void {
+  cacheColaboradores = null;
+}
+
+function aposAlterar<T>(r: T): T {
+  invalidarCacheColaboradores();
+  return r;
 }
 
 export interface AlertaIntegridadeDispositivo {
@@ -98,7 +134,7 @@ export interface CreateMotoristaInput {
 }
 
 export function createMotorista(input: CreateMotoristaInput) {
-  return api.post<Motorista>("/motoristas", input).then((r) => r.data);
+  return api.post<Motorista>("/motoristas", input).then((r) => aposAlterar(r.data));
 }
 
 export function atualizarStatusMotorista(
@@ -108,7 +144,7 @@ export function atualizarStatusMotorista(
 ) {
   return api
     .patch<Motorista>(`/motoristas/${id}/status`, { status, motivo })
-    .then((r) => r.data);
+    .then((r) => aposAlterar(r.data));
 }
 
 export interface AtualizarCadastroMotoristaInput {
@@ -130,7 +166,7 @@ export function atualizarCadastroMotorista(
   id: string,
   input: AtualizarCadastroMotoristaInput,
 ) {
-  return api.patch<Motorista>(`/motoristas/${id}`, input).then((r) => r.data);
+  return api.patch<Motorista>(`/motoristas/${id}`, input).then((r) => aposAlterar(r.data));
 }
 
 /**
@@ -140,11 +176,11 @@ export function atualizarCadastroMotorista(
  */
 /** Rodada 725: reativa um cadastro excluido (volta ATIVO). O servidor recusa se CPF/CNH foi reutilizado. */
 export function reativarMotorista(id: string) {
-  return api.post<Motorista>(`/motoristas/${id}/reativar`).then((r) => r.data);
+  return api.post<Motorista>(`/motoristas/${id}/reativar`).then((r) => aposAlterar(r.data));
 }
 
 export function excluirMotorista(id: string, motivo: string) {
   return api
     .delete<Motorista>(`/motoristas/${id}`, { data: { motivo } })
-    .then((r) => r.data);
+    .then((r) => aposAlterar(r.data));
 }

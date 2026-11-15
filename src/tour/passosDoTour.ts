@@ -25,7 +25,7 @@ export const MODULOS_DO_TOUR: ModuloDoTour[] = [
   { id: "motoristas", titulo: "Motoristas", descricao: "Cadastro e lista de motoristas." },
   { id: "ficha", titulo: "Ficha do motorista", descricao: "Tudo sobre um motorista, da jornada ao holerite." },
   { id: "folgas", titulo: "Pedidos de folga", descricao: "Aprovar ou negar as folgas pedidas pelos motoristas." },
-  { id: "ajudantes", titulo: "Ajudantes", descricao: "Cadastro dos ajudantes e vínculo com o aparelho." },
+  { id: "ajudantes", titulo: "Ajudantes (histórico)", descricao: "Consulta do cadastro antigo de ajudantes." },
   { id: "documentos", titulo: "Documentos de carga", descricao: "Envio e acompanhamento de CT-e e MDF-e." },
   { id: "regras", titulo: "Regras sindicais", descricao: "Convenção coletiva, horas extras, adicional noturno, banco de horas e feriados." },
   { id: "empresas", titulo: "Empresas", descricao: "Os CNPJs que fazem parte do seu grupo." },
@@ -104,9 +104,9 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   {
     modulo: "menu",
     alvo: nav("/ajudantes"),
-    titulo: "Ajudantes",
+    titulo: "Ajudantes (histórico)",
     texto:
-      "Cadastro dos ajudantes que acompanham os motoristas nas viagens, com o vínculo ao aparelho de cada um.",
+      "Consulta do cadastro antigo de ajudantes. Ajudante novo é cadastrado em Colaboradores, com a função Ajudante.",
   },
   {
     modulo: "menu",
@@ -715,27 +715,14 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
       "Histórico das folgas que já foram respondidas, com o resultado, a justificativa e quem decidiu.",
   },
 
-  // ===== Ajudantes =====
+  // ===== Ajudantes (histórico) =====
   {
     modulo: "ajudantes",
     rota: "/ajudantes",
-    alvo: "titulo:Ajudantes",
-    titulo: "Ajudantes",
-    texto: "Cadastro dos ajudantes da operação.",
-  },
-  {
-    modulo: "ajudantes",
-    alvo: "titulo:Cadastrar ajudante",
-    titulo: "Cadastrar ajudante",
+    alvo: "titulo:Ajudantes (histórico)",
+    titulo: "Ajudantes (histórico)",
     texto:
-      "Informe o nome, o CPF com 11 números, um telefone se quiser e a empresa do ajudante. Depois é só cadastrar.",
-  },
-  {
-    modulo: "ajudantes",
-    alvo: "coluna:Dispositivo",
-    titulo: "Lista de ajudantes",
-    texto:
-      "Veja o status de cada ajudante e se o aparelho já foi vinculado. Use o botão de vincular para gerar o código de ativação do aplicativo.",
+      "Só consulta: cada ajudante antigo tem os pontos de antes e a verificação de integridade. Os que já viraram colaboradores têm o link para a ficha nova.",
   },
 
   // ===== Documentos de carga =====

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { login as apiLogin, logout as apiLogout } from "../api/auth";
+import { invalidarCacheColaboradores } from "../api/motoristas";
 import { decodeJwt } from "../api/jwt";
 import {
   marcarSessao,
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCarregando(true);
     try {
       const tokens = await apiLogin(email, senha, codigoMfa);
+      invalidarCacheColaboradores();
       marcarSessao(true);
       setUsuario(decodeJwt(tokens.accessToken));
     } finally {
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // mesmo se a chamada falhar, limpa localmente
     }
     setAccessToken(null);
+    invalidarCacheColaboradores();
     marcarSessao(false);
     setUsuario(null);
   }

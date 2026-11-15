@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./components/ToastProvider";
@@ -8,36 +9,39 @@ import { TravaScrollDePopups } from "./components/TravaScrollDePopups";
 import { ContadorDeCaracteres } from "./components/ContadorDeCaracteres";
 import { ExpandirCamposDeTexto } from "./components/ExpandirCamposDeTexto";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { PrivacidadePublicaPage } from "./pages/PrivacidadePublicaPage";
-import { PrivacidadePainelPage } from "./pages/PrivacidadePainelPage";
 import { LoginPage } from "./pages/LoginPage";
-import { MotoristasListPage } from "./pages/MotoristasListPage";
-import { MotoristaDetailPage } from "./pages/MotoristaDetailPage";
-import { AjudantesPage } from "./pages/AjudantesPage";
-import { AjudanteDetailPage } from "./pages/AjudanteDetailPage";
-import { DocumentosCargaPage } from "./pages/DocumentosCargaPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { IndicadoresPage } from "./pages/IndicadoresPage";
-import { PedidosFolgaPage } from "./pages/PedidosFolgaPage";
-import { EmpresasPage } from "./pages/EmpresasPage";
-import { RetencaoPage } from "./pages/RetencaoPage";
-import { RegrasSindicaisPage } from "./pages/RegrasSindicaisPage";
-import { PerfilPage } from "./pages/PerfilPage";
-import { AuditoriaPage } from "./pages/AuditoriaPage";
-import { UsuariosEmpresaPage } from "./pages/UsuariosEmpresaPage";
 import { SuperAdminAuthProvider } from "./context/SuperAdminAuthContext";
 import { SuperAdminProtectedRoute } from "./components/SuperAdminProtectedRoute";
-import { SuperAdminLoginPage } from "./pages/SuperAdminLoginPage";
-import { SuperAdminDashboardPage } from "./pages/SuperAdminDashboardPage";
-import { SuperAdminSegurancaPage } from "./pages/SuperAdminSegurancaPage";
-import { SuperAdminGrupoDetailPage } from "./pages/SuperAdminGrupoDetailPage";
-import { SuperAdminAuditoriaPage } from "./pages/SuperAdminAuditoriaPage";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
-import { EventoIntegridadePage } from "./pages/EventoIntegridadePage";
-import { EsqueciSenhaPage } from "./pages/EsqueciSenhaPage";
-import { RedefinirSenhaPage } from "./pages/RedefinirSenhaPage";
-import { SuperAdminEsqueciSenhaPage } from "./pages/SuperAdminEsqueciSenhaPage";
-import { SuperAdminRedefinirSenhaPage } from "./pages/SuperAdminRedefinirSenhaPage";
+
+// Rodada 746: páginas carregadas sob demanda (cada tela vira um arquivo próprio no build);
+// o primeiro acesso baixa só o necessário. A tela de login continua no pacote principal.
+const PrivacidadePublicaPage = lazy(() => import("./pages/PrivacidadePublicaPage").then((m) => ({ default: m.PrivacidadePublicaPage })));
+const PrivacidadePainelPage = lazy(() => import("./pages/PrivacidadePainelPage").then((m) => ({ default: m.PrivacidadePainelPage })));
+const MotoristasListPage = lazy(() => import("./pages/MotoristasListPage").then((m) => ({ default: m.MotoristasListPage })));
+const MotoristaDetailPage = lazy(() => import("./pages/MotoristaDetailPage").then((m) => ({ default: m.MotoristaDetailPage })));
+const AjudantesPage = lazy(() => import("./pages/AjudantesPage").then((m) => ({ default: m.AjudantesPage })));
+const AjudanteDetailPage = lazy(() => import("./pages/AjudanteDetailPage").then((m) => ({ default: m.AjudanteDetailPage })));
+const DocumentosCargaPage = lazy(() => import("./pages/DocumentosCargaPage").then((m) => ({ default: m.DocumentosCargaPage })));
+const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const IndicadoresPage = lazy(() => import("./pages/IndicadoresPage").then((m) => ({ default: m.IndicadoresPage })));
+const PedidosFolgaPage = lazy(() => import("./pages/PedidosFolgaPage").then((m) => ({ default: m.PedidosFolgaPage })));
+const EmpresasPage = lazy(() => import("./pages/EmpresasPage").then((m) => ({ default: m.EmpresasPage })));
+const RetencaoPage = lazy(() => import("./pages/RetencaoPage").then((m) => ({ default: m.RetencaoPage })));
+const RegrasSindicaisPage = lazy(() => import("./pages/RegrasSindicaisPage").then((m) => ({ default: m.RegrasSindicaisPage })));
+const PerfilPage = lazy(() => import("./pages/PerfilPage").then((m) => ({ default: m.PerfilPage })));
+const AuditoriaPage = lazy(() => import("./pages/AuditoriaPage").then((m) => ({ default: m.AuditoriaPage })));
+const UsuariosEmpresaPage = lazy(() => import("./pages/UsuariosEmpresaPage").then((m) => ({ default: m.UsuariosEmpresaPage })));
+const SuperAdminLoginPage = lazy(() => import("./pages/SuperAdminLoginPage").then((m) => ({ default: m.SuperAdminLoginPage })));
+const SuperAdminDashboardPage = lazy(() => import("./pages/SuperAdminDashboardPage").then((m) => ({ default: m.SuperAdminDashboardPage })));
+const SuperAdminSegurancaPage = lazy(() => import("./pages/SuperAdminSegurancaPage").then((m) => ({ default: m.SuperAdminSegurancaPage })));
+const SuperAdminGrupoDetailPage = lazy(() => import("./pages/SuperAdminGrupoDetailPage").then((m) => ({ default: m.SuperAdminGrupoDetailPage })));
+const SuperAdminAuditoriaPage = lazy(() => import("./pages/SuperAdminAuditoriaPage").then((m) => ({ default: m.SuperAdminAuditoriaPage })));
+const EventoIntegridadePage = lazy(() => import("./pages/EventoIntegridadePage").then((m) => ({ default: m.EventoIntegridadePage })));
+const EsqueciSenhaPage = lazy(() => import("./pages/EsqueciSenhaPage").then((m) => ({ default: m.EsqueciSenhaPage })));
+const RedefinirSenhaPage = lazy(() => import("./pages/RedefinirSenhaPage").then((m) => ({ default: m.RedefinirSenhaPage })));
+const SuperAdminEsqueciSenhaPage = lazy(() => import("./pages/SuperAdminEsqueciSenhaPage").then((m) => ({ default: m.SuperAdminEsqueciSenhaPage })));
+const SuperAdminRedefinirSenhaPage = lazy(() => import("./pages/SuperAdminRedefinirSenhaPage").then((m) => ({ default: m.SuperAdminRedefinirSenhaPage })));
 
 // Duas áreas completamente independentes na mesma SPA: o painel do
 // grupo (AuthProvider/token/cookie de UsuarioEmpresa) e a área do
@@ -46,6 +50,10 @@ import { SuperAdminRedefinirSenhaPage } from "./pages/SuperAdminRedefinirSenhaPa
 // api/superAdminClient.ts). Os dois Providers ficam sempre montados
 // (nenhum dos dois lê/afeta o estado do outro), mas cada rota só usa
 // o Provider da própria área , nunca compartilham usuário/token.
+export function CarregandoPagina() {
+  return <p style={{ padding: 16 }}>Carregando...</p>;
+}
+
 export function App() {
   return (
     <ToastProvider>
@@ -56,6 +64,7 @@ export function App() {
         <PromptProvider>
           <AuthProvider>
             <SuperAdminAuthProvider>
+              <Suspense fallback={<CarregandoPagina />}>
               <Routes>
                 {/* ===== Painel do grupo (empresa/RH) ===== */}
                 <Route path="/login" element={<LoginPage />} />
@@ -149,6 +158,7 @@ export function App() {
                   element={<Navigate to="/dashboard" replace />}
                 />
               </Routes>
+              </Suspense>
             </SuperAdminAuthProvider>
           </AuthProvider>
         </PromptProvider>
