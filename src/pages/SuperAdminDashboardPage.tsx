@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { criarEmpresaMae, listarGrupos } from "../api/superAdmin";
@@ -243,7 +244,7 @@ export function SuperAdminDashboardPage() {
 
       {erro && <p className="error-text">{erro}</p>}
       {carregando ? (
-        <p>Carregando...</p>
+        <Esqueleto />
       ) : (
         <>
           <ControlesListaPaginada

@@ -1,3 +1,4 @@
+import { Esqueleto } from "./Esqueleto";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listarAutorrelatosFolga } from "../api/autorrelatoFolga";
@@ -177,7 +178,7 @@ export function HistoricoFolgasMotorista({
         </div>
 
         {erro && <p className="error-text">{erro}</p>}
-        {!erro && !registros && <p>Carregando...</p>}
+        {!erro && !registros && <Esqueleto />}
 
         {resumo && (
           <>

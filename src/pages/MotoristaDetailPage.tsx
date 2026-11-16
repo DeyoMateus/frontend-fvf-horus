@@ -1,3 +1,5 @@
+import { useFilaDePendencias } from "../components/penMenu";
+import { Esqueleto } from "../components/Esqueleto";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { RelatorioHorasColaborador } from "../components/RelatorioHorasColaborador";
 import { TratamentoPontoColaborador } from "../components/TratamentoPontoColaborador";
@@ -57,7 +59,6 @@ import type { ValoresContrato } from "../components/CamposDadosContrato";
 import { atualizarContratoMotorista } from "../api/dadosContrato";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
-import { getAjudante } from "../api/ajudantes";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
   BarraTratamentoEmLote,
@@ -92,7 +93,7 @@ import type {
   TratamentoPonto,
   VerificacaoIntegridade,
 } from "../api/types";
-import { ROTULO_FUNCAO } from "../api/types";
+import { ROTULO_FUNCAO, ROTULO_MOTIVO_PARADA } from "../api/types";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 function gerarUuid() {
@@ -150,13 +151,20 @@ export function MotoristaDetailPage({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Vindo de um alerta (?secao=alertas-jornada), abre direto a aba Alertas.
+  // Rodada 755: a ficha abre no que pede atenção. Com alerta pendente deste colaborador, em
+  // Alertas; sem alerta, em Registros (o ponto). Cadastro deixa de ser a primeira tela.
+  const filaDePendencias = useFilaDePendencias();
+  const abaInicial = filaDePendencias.some(
+    (i) => i.tipo === "alerta" && i.motoristaId === motoristaId,
+  )
+    ? "alertas"
+    : "registros";
   const abaAtiva = useAbaAtiva(
     ABAS_MOTORISTA,
     searchParams.get("secao") === "alertas-jornada" ? "alertas" : undefined,
+    abaInicial,
   );
   const mostrar = (aba: string) => !somente && abaAtiva === aba;
-  // Rodada 743: ajudante que veio do cadastro antigo tem os pontos de antes lá (mesmo id).
-  const [temCadastroAntigoAjudante, setTemCadastroAntigoAjudante] = useState(false);
   // Pedido do usuário: vindo de um alerta (sininho, painel de alertas,
   // card "em risco agora" etc.), o clique no nome do motorista deve
   // cair direto na seção de alertas dele, já pronta pra marcar como
@@ -215,17 +223,6 @@ export function MotoristaDetailPage({
   const [statusCarga, setStatusCarga] = useState<StatusAtualCarga | null>(null);
   const [documentosCarga, setDocumentosCarga] = useState<DocumentoCarga[]>([]);
   const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    if (motorista?.funcao !== "AJUDANTE" || somente) return;
-    let ativo = true;
-    getAjudante(motoristaId)
-      .then(() => ativo && setTemCadastroAntigoAjudante(true))
-      .catch(() => ativo && setTemCadastroAntigoAjudante(false));
-    return () => {
-      ativo = false;
-    };
-  }, [motorista?.funcao, motoristaId, somente]);
 
   useEffect(() => {
     if (carregando) return;
@@ -515,7 +512,7 @@ export function MotoristaDetailPage({
   // inteira pro topo. Antes, TODA chamada de `carregarTudo()`
   // (inclusive as de depois de salvar) ligava `carregando`, e o
   // retorno antecipado no fim do componente (`if (carregando ||
-  // !motorista) return <p>Carregando...</p>`) desmontava a tela
+  // !motorista) return <Esqueleto />`) desmontava a tela
   // inteira enquanto refazia a busca , o navegador reseta a rolagem
   // pro topo quando o conteúdo desaparece assim. Agora só a carga
   // INICIAL (mount, com `comCarregamentoTelaCheia = true`) passa por
@@ -817,7 +814,16 @@ export function MotoristaDetailPage({
     return (
       <tr key={r.id}>
         <td>{r.sequencial}</td>
-        <td>{r.tipoEvento}</td>
+        <td>
+          {r.tipoEvento}
+          {/* Rodada 748: motivo (e observação de "Outro") da parada; texto, nunca HTML. */}
+          {r.motivoParada && (
+            <div style={{ fontSize: 11 }}>
+              {ROTULO_MOTIVO_PARADA[r.motivoParada]}
+              {r.tipoEvento === "INICIO_PARADA" && r.observacao ? `: ${r.observacao}` : ""}
+            </div>
+          )}
+        </td>
         <td>
           {formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}
           {r.situacaoCalculo === "CORRIGIDO" && r.horaCorrigida && (
@@ -924,7 +930,7 @@ export function MotoristaDetailPage({
     }
   }
 
-  if (carregando || !motorista) return <p>Carregando...</p>;
+  if (carregando || !motorista) return <Esqueleto />;
 
   async function copiarTexto(texto: string, qual: "id" | "key") {
     try {
@@ -1127,6 +1133,7 @@ export function MotoristaDetailPage({
       <AbasTopo
         abas={ABAS_MOTORISTA}
         padrao={searchParams.get("secao") === "alertas-jornada" ? "alertas" : undefined}
+        inicial={abaInicial}
       />
       {editandoCadastro ? (
         <div className="card" style={{ maxWidth: 480 }}>
@@ -1522,13 +1529,6 @@ export function MotoristaDetailPage({
 
       {mostrar("registros") && (
       <>
-      {temCadastroAntigoAjudante && (
-        <div className="card" style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}>
-          Os pontos batidos antes de este ajudante virar colaborador estão no{" "}
-          <Link to={`/ajudantes/${motoristaId}?aba=registros`}>cadastro antigo</Link>, com a
-          verificação de integridade daquela cadeia.
-        </div>
-      )}
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Integridade da cadeia de jornada</h3>
         <button onClick={onVerificarIntegridade}>Verificar integridade</button>

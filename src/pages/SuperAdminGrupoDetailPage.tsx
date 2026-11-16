@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import { cpfValido } from "../utils/cpf";
 import { FormEvent, useEffect, useState } from "react";
@@ -106,7 +107,7 @@ export function SuperAdminGrupoDetailPage() {
   // "piscar" a página inteira pro topo. Antes, toda chamada de
   // `carregar()` (inclusive as de depois de salvar) ligava
   // `carregando`, e o retorno antecipado mais abaixo no componente
-  // (`if (carregando) return <p>Carregando...</p>`) desmontava a tela
+  // (`if (carregando) return <Esqueleto />`) desmontava a tela
   // inteira enquanto refazia a busca , o navegador reseta a rolagem
   // pro topo quando o conteúdo desaparece assim. Agora só a carga
   // INICIAL (mount, com `comCarregamentoTelaCheia = true`) passa por
@@ -344,7 +345,7 @@ export function SuperAdminGrupoDetailPage() {
     }
   }
 
-  if (carregando) return <p>Carregando...</p>;
+  if (carregando) return <Esqueleto />;
   if (erro) return <p className="error-text">{erro}</p>;
   if (!grupo) return <p>Empresa não encontrada.</p>;
 

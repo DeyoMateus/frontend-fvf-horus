@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { FormEvent, useEffect, useState } from "react";
 import { ParametroInativo } from "../components/ParametroInativo";
 import {
@@ -1246,7 +1247,7 @@ export function RegrasSindicaisPage() {
       )}
 
       <div className="card">
-        {carregando && <p>Carregando...</p>}
+        {carregando && <Esqueleto />}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && (
           <table>

@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { DicaAoPassar } from "../components/DicaAoPassar";
 import { FormEvent, useEffect, useState } from "react";
 import { listEmpresas } from "../api/empresas";
@@ -233,7 +234,7 @@ export function FeriadosPage() {
       )}
 
       <div className="card">
-        {carregando && <p>Carregando...</p>}
+        {carregando && <Esqueleto />}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && (
           <>

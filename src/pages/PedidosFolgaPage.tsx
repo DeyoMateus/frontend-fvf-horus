@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -153,7 +154,7 @@ export function PedidosFolgaPage() {
         <h2 style={{ marginTop: 0 }}>
           Aguardando decisão ({pendentes.length})
         </h2>
-        {carregando && <p>Carregando...</p>}
+        {carregando && <Esqueleto />}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && pendentes.length === 0 && (
           <p>Nenhum pedido pendente.</p>

@@ -26,6 +26,8 @@ const ROTULOS: Record<TipoEvento, string> = {
   FIM_CARREGAMENTO: "Fim de carregamento",
   INICIO_DESCARGA: "Início de descarga",
   FIM_DESCARGA: "Fim de descarga",
+  INICIO_PARADA: "Início de parada",
+  FIM_PARADA: "Fim de parada",
 };
 
 /** Mesma máquina de estados do app e do servidor: o que pode vir depois de cada evento. */
@@ -33,6 +35,7 @@ const PROXIMOS: Record<TipoEvento, TipoEvento[]> = {
   INICIO_JORNADA: [
     "INICIO_DIRECAO",
     "INICIO_DESCANSO",
+    "INICIO_PARADA",
     "ESPERA_CARGA_DESCARGA",
     "OUTRO",
     "FIM_JORNADA",
@@ -40,6 +43,7 @@ const PROXIMOS: Record<TipoEvento, TipoEvento[]> = {
   FIM_DIRECAO: [
     "INICIO_DIRECAO",
     "INICIO_DESCANSO",
+    "INICIO_PARADA",
     "ESPERA_CARGA_DESCARGA",
     "OUTRO",
     "FIM_JORNADA",
@@ -47,6 +51,7 @@ const PROXIMOS: Record<TipoEvento, TipoEvento[]> = {
   FIM_DESCANSO: [
     "INICIO_DIRECAO",
     "INICIO_DESCANSO",
+    "INICIO_PARADA",
     "ESPERA_CARGA_DESCARGA",
     "OUTRO",
     "FIM_JORNADA",
@@ -54,6 +59,7 @@ const PROXIMOS: Record<TipoEvento, TipoEvento[]> = {
   FIM_ESPERA_CARGA_DESCARGA: [
     "INICIO_DIRECAO",
     "INICIO_DESCANSO",
+    "INICIO_PARADA",
     "ESPERA_CARGA_DESCARGA",
     "OUTRO",
     "FIM_JORNADA",
@@ -61,15 +67,25 @@ const PROXIMOS: Record<TipoEvento, TipoEvento[]> = {
   FIM_DESCARREGAMENTO: [
     "INICIO_DIRECAO",
     "INICIO_DESCANSO",
+    "INICIO_PARADA",
     "ESPERA_CARGA_DESCARGA",
     "OUTRO",
     "FIM_JORNADA",
   ],
   INICIO_DIRECAO: ["FIM_DIRECAO"],
   INICIO_DESCANSO: ["FIM_DESCANSO"],
+  INICIO_PARADA: ["FIM_PARADA"],
+  FIM_PARADA: [
+    "INICIO_DIRECAO",
+    "INICIO_DESCANSO",
+    "INICIO_PARADA",
+    "ESPERA_CARGA_DESCARGA",
+    "OUTRO",
+    "FIM_JORNADA",
+  ],
   ESPERA_CARGA_DESCARGA: ["FIM_ESPERA_CARGA_DESCARGA", "FIM_DESCARREGAMENTO"],
   FIM_JORNADA: ["INICIO_JORNADA"],
-  OUTRO: ["INICIO_DIRECAO", "INICIO_DESCANSO", "ESPERA_CARGA_DESCARGA", "FIM_JORNADA"],
+  OUTRO: ["INICIO_DIRECAO", "INICIO_DESCANSO", "INICIO_PARADA", "ESPERA_CARGA_DESCARGA", "FIM_JORNADA"],
   INICIO_CARREGAMENTO: [],
   FIM_CARREGAMENTO: [],
   INICIO_DESCARGA: [],
@@ -93,6 +109,8 @@ const PROXIMOS_AJUDANTE: Record<TipoEvento, TipoEvento[]> = {
   FIM_ESPERA_CARGA_DESCARGA: [],
   FIM_DESCARREGAMENTO: [],
   OUTRO: [],
+  INICIO_PARADA: [],
+  FIM_PARADA: [],
 };
 
 interface Linha {

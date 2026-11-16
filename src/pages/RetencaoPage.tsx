@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { listEmpresas } from "../api/empresas";
@@ -339,7 +340,7 @@ function RetencaoConteudo() {
         eliminação ou anonimização.
       </p>
       {erro && <p className="error-text">{erro}</p>}
-      {carregando && <p>Carregando...</p>}
+      {carregando && <Esqueleto />}
 
       <CardDadosVencidos />
 

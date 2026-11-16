@@ -1,3 +1,4 @@
+import { Esqueleto } from "./components/Esqueleto";
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
@@ -20,11 +21,10 @@ const PrivacidadePublicaPage = lazy(() => import("./pages/PrivacidadePublicaPage
 const PrivacidadePainelPage = lazy(() => import("./pages/PrivacidadePainelPage").then((m) => ({ default: m.PrivacidadePainelPage })));
 const MotoristasListPage = lazy(() => import("./pages/MotoristasListPage").then((m) => ({ default: m.MotoristasListPage })));
 const MotoristaDetailPage = lazy(() => import("./pages/MotoristaDetailPage").then((m) => ({ default: m.MotoristaDetailPage })));
-const AjudantesPage = lazy(() => import("./pages/AjudantesPage").then((m) => ({ default: m.AjudantesPage })));
-const AjudanteDetailPage = lazy(() => import("./pages/AjudanteDetailPage").then((m) => ({ default: m.AjudanteDetailPage })));
 const DocumentosCargaPage = lazy(() => import("./pages/DocumentosCargaPage").then((m) => ({ default: m.DocumentosCargaPage })));
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const IndicadoresPage = lazy(() => import("./pages/IndicadoresPage").then((m) => ({ default: m.IndicadoresPage })));
+const PendenciasPage = lazy(() => import("./pages/PendenciasPage").then((m) => ({ default: m.PendenciasPage })));
 const PedidosFolgaPage = lazy(() => import("./pages/PedidosFolgaPage").then((m) => ({ default: m.PedidosFolgaPage })));
 const EmpresasPage = lazy(() => import("./pages/EmpresasPage").then((m) => ({ default: m.EmpresasPage })));
 const RetencaoPage = lazy(() => import("./pages/RetencaoPage").then((m) => ({ default: m.RetencaoPage })));
@@ -51,7 +51,7 @@ const SuperAdminRedefinirSenhaPage = lazy(() => import("./pages/SuperAdminRedefi
 // (nenhum dos dois lê/afeta o estado do outro), mas cada rota só usa
 // o Provider da própria área , nunca compartilham usuário/token.
 export function CarregandoPagina() {
-  return <p style={{ padding: 16 }}>Carregando...</p>;
+  return <Esqueleto />;
 }
 
 export function App() {
@@ -82,6 +82,7 @@ export function App() {
                     />
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/indicadores" element={<IndicadoresPage />} />
+                    <Route path="/pendencias" element={<PendenciasPage />} />
                     <Route path="/pedidos-folga" element={<PedidosFolgaPage />} />
                     <Route
                       path="/motoristas"
@@ -95,8 +96,6 @@ export function App() {
                       path="/motoristas/:motoristaId/integridade/:sequencial"
                       element={<EventoIntegridadePage />}
                     />
-                    <Route path="/ajudantes" element={<AjudantesPage />} />
-                    <Route path="/ajudantes/:ajudanteId" element={<AjudanteDetailPage />} />
                     <Route
                       path="/documentos-carga"
                       element={<DocumentosCargaPage />}

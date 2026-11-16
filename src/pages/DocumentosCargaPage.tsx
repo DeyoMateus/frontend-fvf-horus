@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -173,7 +174,7 @@ export function DocumentosCargaPage() {
   const totalPaginas = Math.max(1, Math.ceil(total / qtdPorPagina));
   const temFiltroAtivo = Object.values(filtro).some((v) => !!v);
 
-  if (carregando) return <p>Carregando...</p>;
+  if (carregando) return <Esqueleto />;
 
   return (
     <div>

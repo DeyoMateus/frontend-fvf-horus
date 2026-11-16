@@ -1,9 +1,11 @@
+import { Esqueleto } from "./Esqueleto";
 import { obterDadosGrupo, type DadosGrupo } from "../api/empresas";
 import { obterMeuPerfil } from "../api/usuariosEmpresa";
 import { Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
+import { BuscaGlobal } from "./BuscaGlobal";
 import RodapeLegal from "./RodapeLegal";
 import { BolinhaPendencia } from "./BolinhaPen";
 import { usePendenciasDoMenu } from "./penMenu";
@@ -32,14 +34,14 @@ const ITENS_NAV: {
   somenteAdmin?: boolean;
 }[] = [
   { to: "/dashboard", label: "Painel", abreviacao: "PA" },
+  // Rodada 753: fila única com tudo o que espera uma decisão do gestor.
+  { to: "/pendencias", label: "Pendências", abreviacao: "PE" },
   // Rodada 216: percurso do motorista no mapa (coordenadas + sentido), com PDF.
   { to: "/indicadores", label: "Fechamento", abreviacao: "FE" },
   // Rodada 740: motoristas e ajudantes são colaboradores (um cadastro só, com a função).
   { to: "/motoristas", label: "Colaboradores", abreviacao: "CO" },
   // Rodada 221: pedidos de folga dos motoristas (aprovar/negar com justificativa).
   { to: "/pedidos-folga", label: "Pedidos de folga", abreviacao: "PF" },
-  // Rodada 743: os ajudantes viraram colaboradores; aqui fica o cadastro antigo, só para consulta.
-  { to: "/ajudantes", label: "Ajudantes (histórico)", abreviacao: "AJ" },
   { to: "/documentos-carga", label: "Documentos de carga", abreviacao: "DC" },
   { to: "/regras-sindicais", label: "Regras sindicais", abreviacao: "RS" },
   { to: "/empresas", label: "Empresas", abreviacao: "EM" },
@@ -234,6 +236,11 @@ function LayoutInterno() {
         <div className="content-inner">
           <div className="content-topo">
             <div className="content-topo-abas" ref={setSlotAbas} />
+            <BuscaGlobal
+              telas={ITENS_NAV.filter(
+                (item) => !item.somenteAdmin || usuario?.papel === "ADMIN",
+              )}
+            />
             <NotificationBell />
           </div>
           {mfaPendente && (
@@ -253,7 +260,7 @@ function LayoutInterno() {
             </div>
           )}
           <SlotAbasContext.Provider value={slotAbas}>
-            <Suspense fallback={<p style={{ padding: 16 }}>Carregando...</p>}>
+            <Suspense fallback={<Esqueleto />}>
               <Outlet />
             </Suspense>
           </SlotAbasContext.Provider>

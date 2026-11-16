@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { FormEvent, useEffect, useState } from "react";
 import {
   atualizarEmpresa,
@@ -160,7 +161,7 @@ export function EmpresasPage() {
       )}
 
       <div className="card">
-        {carregando && <p>Carregando...</p>}
+        {carregando && <Esqueleto />}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && (
           <>

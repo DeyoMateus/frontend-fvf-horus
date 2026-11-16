@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { DicaAoPassar } from "../components/DicaAoPassar";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -263,7 +264,7 @@ export function SolicitacoesAjustePage({
       </h2>
 
       <div className="card">
-        {carregando && <p>Carregando...</p>}
+        {carregando && <Esqueleto />}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && (
           <>
@@ -424,7 +425,7 @@ export function SolicitacoesAjustePage({
         </DicaAoPassar>
       </h2>
       <div className="card">
-        {carregandoHistorico && <p>Carregando...</p>}
+        {carregandoHistorico && <Esqueleto />}
         {erroHistorico && <p className="error-text">{erroHistorico}</p>}
         {!carregandoHistorico && !erroHistorico && (
           <>

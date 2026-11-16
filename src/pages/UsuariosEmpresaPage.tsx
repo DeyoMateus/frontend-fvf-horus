@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import { cpfValido } from "../utils/cpf";
 import { FormEvent, useEffect, useState } from "react";
@@ -239,7 +240,7 @@ function UsuariosEmpresaConteudo() {
 
       {erro && <p className="error-text">{erro}</p>}
       {carregando ? (
-        <p>Carregando...</p>
+        <Esqueleto />
       ) : (
         <div className="card">
           <ControlesListaPaginada

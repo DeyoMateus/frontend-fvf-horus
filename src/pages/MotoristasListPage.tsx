@@ -1,7 +1,9 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { AxiosError } from "axios";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 import { createMotorista, listarTodosMotoristas } from "../api/motoristas";
 import { atualizarContratoMotorista } from "../api/dadosContrato";
 import {
@@ -36,6 +38,12 @@ import { rotuloStatusMotorista } from "../utils/rotulos";
 import { ROTULO_FUNCAO } from "../api/types";
 import type { FuncaoColaborador } from "../api/types";
 
+const ABAS_COLABORADORES: AbaDef[] = [
+  { id: "todos", rotulo: "Todos" },
+  { id: "motoristas", rotulo: "Motoristas" },
+  { id: "ajudantes", rotulo: "Ajudantes" },
+];
+
 export function MotoristasListPage() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
@@ -50,23 +58,16 @@ export function MotoristasListPage() {
   // Rodada 740: colaborador é motorista ou ajudante (ajudante sem CNH e sem veículo).
   const [funcaoNova, setFuncaoNova] = useState<FuncaoColaborador>("MOTORISTA");
   const ehAjudanteNovo = funcaoNova === "AJUDANTE";
-  // Rodada 745: filtro por função no topo da página, guardado na URL (?funcao=MOTORISTA|AJUDANTE).
-  // Vale para a lista, o radar de dias sem interação e as trocas de aparelho.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const funcaoUrl = searchParams.get("funcao");
+  // Rodada 749: filtro por função como abas no topo (linha do sino), no mesmo padrão do Painel e do
+  // Fechamento (`?aba=`). Vale para a lista, o radar de dias sem interação e as trocas de aparelho.
+  // Link antigo com `?funcao=` ainda abre a aba certa.
+  const [searchParams] = useSearchParams();
+  const funcaoAntiga = searchParams.get("funcao");
+  const abaPadrao =
+    funcaoAntiga === "MOTORISTA" ? "motoristas" : funcaoAntiga === "AJUDANTE" ? "ajudantes" : undefined;
+  const abaFuncao = useAbaAtiva(ABAS_COLABORADORES, abaPadrao);
   const filtroFuncao: "" | FuncaoColaborador =
-    funcaoUrl === "MOTORISTA" || funcaoUrl === "AJUDANTE" ? funcaoUrl : "";
-  function setFiltroFuncao(valor: "" | FuncaoColaborador) {
-    setSearchParams(
-      (atual) => {
-        const proximo = new URLSearchParams(atual);
-        if (valor) proximo.set("funcao", valor);
-        else proximo.delete("funcao");
-        return proximo;
-      },
-      { replace: true },
-    );
-  }
+    abaFuncao === "motoristas" ? "MOTORISTA" : abaFuncao === "ajudantes" ? "AJUDANTE" : "";
   const [telefone, setTelefone] = useState("");
   const [empresaId, setEmpresaId] = useState("");
   const [placa, setPlaca] = useState("");
@@ -309,29 +310,14 @@ export function MotoristasListPage() {
     <div>
       <h2>Colaboradores</h2>
 
-      <div
-        role="group"
-        aria-label="Filtrar por função"
-        style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}
-      >
-        {(
-          [
-            ["", `Todos (${motoristas.length})`],
-            ["MOTORISTA", `Motoristas (${qtdMotoristas})`],
-            ["AJUDANTE", `Ajudantes (${qtdAjudantes})`],
-          ] as Array<["" | FuncaoColaborador, string]>
-        ).map(([valor, rotulo]) => (
-          <button
-            key={valor || "todos"}
-            type="button"
-            className={filtroFuncao === valor ? "" : "secondary"}
-            aria-pressed={filtroFuncao === valor}
-            onClick={() => setFiltroFuncao(valor)}
-          >
-            {rotulo}
-          </button>
-        ))}
-      </div>
+      <AbasTopo
+        padrao={abaPadrao}
+        abas={[
+          { id: "todos", rotulo: `Todos (${motoristas.length})` },
+          { id: "motoristas", rotulo: `Motoristas (${qtdMotoristas})` },
+          { id: "ajudantes", rotulo: `Ajudantes (${qtdAjudantes})` },
+        ]}
+      />
 
       <div className="card">
         <div
@@ -686,7 +672,7 @@ export function MotoristasListPage() {
             Mostrar excluídos
           </label>
         </div>
-        {carregando && <p>Carregando...</p>}
+        {carregando && <Esqueleto />}
         {erro && <p className="error-text">{erro}</p>}
         {!carregando && !erro && (
           <>

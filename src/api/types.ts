@@ -27,7 +27,20 @@ export type TipoEvento =
   | "INICIO_CARREGAMENTO"
   | "FIM_CARREGAMENTO"
   | "INICIO_DESCARGA"
-  | "FIM_DESCARGA";
+  | "FIM_DESCARGA"
+  // Rodada 748: parada do motorista (manutenção, trânsito, posto fiscal, outro).
+  | "INICIO_PARADA"
+  | "FIM_PARADA";
+
+/** Rodada 748: motivo da parada (conta na jornada; não é descanso). */
+export type MotivoParada = "MANUTENCAO" | "TRANSITO_CONGESTIONADO" | "POSTO_FISCAL" | "OUTRO";
+
+export const ROTULO_MOTIVO_PARADA: Record<MotivoParada, string> = {
+  MANUTENCAO: "Manutenção",
+  TRANSITO_CONGESTIONADO: "Trânsito congestionado",
+  POSTO_FISCAL: "Posto fiscal",
+  OUTRO: "Outro",
+};
 
 export const TIPOS_EVENTO: TipoEvento[] = [
   "INICIO_JORNADA",
@@ -40,6 +53,8 @@ export const TIPOS_EVENTO: TipoEvento[] = [
   "FIM_DESCARREGAMENTO",
   "FIM_JORNADA",
   "OUTRO",
+  "INICIO_PARADA",
+  "FIM_PARADA",
 ];
 
 /** Rodada 740: motorista e ajudante são colaboradores no mesmo cadastro. */
@@ -280,6 +295,8 @@ export interface RegistroJornada {
   deviceUuidUsado: string;
   /** Fuso do motorista no toque (min a leste do UTC; Brasília = -180). Rodada 146. */
   fusoOffsetMin?: number | null;
+  /** Rodada 748: motivo da parada (INICIO_PARADA/FIM_PARADA). */
+  motivoParada?: MotivoParada | null;
   createdAt: string;
   /** Rodada 320: ponto adulterado. CORRIGIDO = o gestor informou a hora certa (`horaCorrigida`); FORA_DO_CALCULO = alerta de relógio ainda não tratado. */
   situacaoCalculo?: "CORRIGIDO" | "FORA_DO_CALCULO";
@@ -509,6 +526,8 @@ export interface DashboardResumo {
     semNenhumRegistro: number;
     emDirecao: number;
     emDescanso: number;
+    /** Rodada 748: último evento foi uma parada (manutenção, trânsito, posto fiscal, outro). */
+    emParada?: number;
     emEspera: number;
     jornadaAbertaSemSubEvento: number;
     aguardandoDocumentacao: number;
@@ -561,6 +580,7 @@ export type CardPainel =
   | "ativos"
   | "em-direcao"
   | "em-descanso"
+  | "em-parada"
   | "em-espera"
   | "jornada-aberta-sem-sub-evento"
   | "aguardando-documentacao"

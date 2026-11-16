@@ -14,15 +14,15 @@ type Escolha = TipoTratamentoDiaSemInteracao | "SEM_SINAL";
 const OPCOES: { valor: Escolha; titulo: string; explicacao: string }[] = [
   {
     valor: "FOLGA",
-    titulo: "Folga",
+    titulo: "Folga planejada",
     explicacao:
-      "O motorista estava de folga (combinado com a empresa). O dia passa a constar como folga concedida.",
+      "A folga estava planejada e a empresa sabia antes do dia. O dia passa a constar como folga concedida.",
   },
   {
     valor: "FALTA",
     titulo: "Falta",
     explicacao:
-      "O motorista não trabalhou e não tinha folga. Fica registrado como falta informada por você; a consequência trabalhista deve ser avaliada pela empresa.",
+      "O motorista não trabalhou e não havia folga planejada. Ausência sem planejamento e sem o conhecimento da empresa é falta, não folga. Fica registrado como falta informada por você; a consequência trabalhista deve ser avaliada pela empresa.",
   },
   {
     valor: "ATESTADO",

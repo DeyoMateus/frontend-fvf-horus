@@ -1,3 +1,4 @@
+import { Esqueleto } from "./Esqueleto";
 import { FormEvent, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
@@ -60,7 +61,7 @@ export function CpfPendenteGate({
     }
   }
 
-  if (estado === "carregando") return <p style={{ padding: 24 }}>Carregando...</p>;
+  if (estado === "carregando") return <Esqueleto />;
   if (estado === "erro") {
     return (
       <div style={{ padding: 24 }}>

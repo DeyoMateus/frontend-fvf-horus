@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -155,7 +156,7 @@ export function EventoIntegridadePage() {
     <Link to={`/motoristas/${motoristaId}`}>← Voltar para o motorista</Link>
   );
 
-  if (carregando) return <p>Carregando...</p>;
+  if (carregando) return <Esqueleto />;
   if (erro || !analise)
     return (
       <div>

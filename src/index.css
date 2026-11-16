@@ -1131,3 +1131,185 @@ textarea {
   margin-top: 4px;
   color: #000;
 }
+
+/* Rodada 752: busca global (Ctrl+K). */
+.busca-global-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.busca-global-botao kbd {
+  font-family: inherit;
+  font-size: 11px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.busca-global-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 21, 31, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 16px 16px;
+  z-index: 1000;
+}
+.busca-global-caixa {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.busca-global-campo {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 16px;
+  font-size: 16px;
+  outline: none;
+}
+.busca-global-lista {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.busca-global-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.busca-global-item.ativo {
+  background: #eff6ff;
+}
+.busca-global-detalhe {
+  color: #6b7280;
+  font-size: 12px;
+}
+.busca-global-vazio {
+  padding: 14px 12px;
+  color: #6b7280;
+}
+.busca-global-rodape {
+  border-top: 1px solid #e5e7eb;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: #6b7280;
+}
+@media (max-width: 640px) {
+  .busca-global-botao kbd {
+    display: none;
+  }
+}
+
+/* Rodada 753: o nome do colaborador que leva à ficha não tem cara de link (sem roxo de
+   visitado e sem sublinhado); o clique continua levando à ficha. O contorno de foco do
+   teclado é mantido. */
+a[href^="/motoristas/"],
+a[href^="/motoristas/"]:visited,
+a[href^="/motoristas/"]:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Rodada 755: carregamento com esqueleto. */
+.esqueleto {
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+.esqueleto-texto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.esqueleto-linha {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: esqueleto-pulso 1.4s ease-in-out infinite;
+}
+@keyframes esqueleto-pulso {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto-linha {
+    animation: none;
+  }
+}
+
+/* Rodada 755: decisão em lote na fila de pendências. */
+.pendencias-lote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pendencias-lote span {
+  flex: 1;
+  min-width: 200px;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+/* Rodada 755: painel no celular do gestor. Tabela larga rola de lado em vez de estourar a tela
+   (a rolagem fica na tabela, não no cartão, para não cortar listas e dicas que abrem por cima); abas e a linha do sino quebram; campos e botões ficam com altura de toque. */
+@media (max-width: 640px) {
+  .content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .content-topo {
+    flex-wrap: wrap;
+  }
+  .content-topo-abas {
+    flex-basis: 100%;
+    order: 2;
+  }
+  .abas-topo {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  h1 {
+    font-size: 22px;
+  }
+  .content button,
+  .content input,
+  .content select {
+    min-height: 40px;
+  }
+  .content input[type="checkbox"],
+  .content input[type="radio"] {
+    min-height: 0;
+  }
+}

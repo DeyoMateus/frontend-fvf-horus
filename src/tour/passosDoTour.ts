@@ -25,7 +25,6 @@ export const MODULOS_DO_TOUR: ModuloDoTour[] = [
   { id: "motoristas", titulo: "Motoristas", descricao: "Cadastro e lista de motoristas." },
   { id: "ficha", titulo: "Ficha do motorista", descricao: "Tudo sobre um motorista, da jornada ao holerite." },
   { id: "folgas", titulo: "Pedidos de folga", descricao: "Aprovar ou negar as folgas pedidas pelos motoristas." },
-  { id: "ajudantes", titulo: "Ajudantes (histórico)", descricao: "Consulta do cadastro antigo de ajudantes." },
   { id: "documentos", titulo: "Documentos de carga", descricao: "Envio e acompanhamento de CT-e e MDF-e." },
   { id: "regras", titulo: "Regras sindicais", descricao: "Convenção coletiva, horas extras, adicional noturno, banco de horas e feriados." },
   { id: "empresas", titulo: "Empresas", descricao: "Os CNPJs que fazem parte do seu grupo." },
@@ -100,13 +99,6 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     titulo: "Pedidos de folga",
     texto:
       "Quando um motorista pede uma folga pelo aplicativo, o pedido chega aqui. Você aprova ou nega e escreve uma justificativa, que o motorista recebe de volta.",
-  },
-  {
-    modulo: "menu",
-    alvo: nav("/ajudantes"),
-    titulo: "Ajudantes (histórico)",
-    texto:
-      "Consulta do cadastro antigo de ajudantes. Ajudante novo é cadastrado em Colaboradores, com a função Ajudante.",
   },
   {
     modulo: "menu",
@@ -713,16 +705,6 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     titulo: "Já decididos",
     texto:
       "Histórico das folgas que já foram respondidas, com o resultado, a justificativa e quem decidiu.",
-  },
-
-  // ===== Ajudantes (histórico) =====
-  {
-    modulo: "ajudantes",
-    rota: "/ajudantes",
-    alvo: "titulo:Ajudantes (histórico)",
-    titulo: "Ajudantes (histórico)",
-    texto:
-      "Só consulta: cada ajudante antigo tem os pontos de antes e a verificação de integridade. Os que já viraram colaboradores têm o link para a ficha nova.",
   },
 
   // ===== Documentos de carga =====

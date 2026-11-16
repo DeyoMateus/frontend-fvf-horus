@@ -11,7 +11,12 @@ import type { SolicitacaoFolga } from "../api/solicitacoesFolga";
 import { listarDiasSemInteracao } from "../api/autorrelatoFolga";
 import type { MotoristaSemInteracao } from "../api/autorrelatoFolga";
 import type { AlertaJornada, SolicitacaoAjustePonto } from "../api/types";
-import { publicarPendenciasDoMenu, type PendenciaDaAba } from "./penMenu";
+import {
+  publicarFilaDePendencias,
+  publicarPendenciasDoMenu,
+  type ItemDaFila,
+  type PendenciaDaAba,
+} from "./penMenu";
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
 import { listarPendenciasDoPainel, type AvisoBancoVencimento, type AvisoInstrumento } from "../api/painelContadores";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
@@ -497,6 +502,78 @@ export function NotificationBell() {
       };
     }
     publicarPendenciasDoMenu(mapa);
+    // Rodada 753: a mesma leitura, item a item, para a tela "Pendências".
+    const fila: ItemDaFila[] = [
+      ...alertas.map((a): ItemDaFila => {
+        const m = (a as { motorista?: { id: string; nome: string } }).motorista;
+        return {
+          chave: `alerta:${a.id}`,
+          tipo: "alerta",
+          quem: nomeDe(m),
+          motoristaId: m?.id ?? a.motoristaId,
+          descricao: a.mensagem,
+          desde: a.createdAt,
+          to:
+            a.tipo === "FOLGA_VENCIDA" || a.tipo === "FOLGA_URGENTE"
+              ? "/pedidos-folga?secao=ranking"
+              : m
+                ? `/motoristas/${m.id}?secao=alertas-jornada`
+                : "/dashboard",
+        };
+      }),
+      ...solicitacoesPendentes.map((s): ItemDaFila => ({
+        chave: `ajuste:${s.id}`,
+        tipo: "ajuste",
+        quem: nomeDe(s.motorista),
+        descricao: "Pedido de ajuste de ponto",
+        id: s.id,
+        motoristaId: s.motoristaId,
+        ordem: s.timestampEvento,
+        desde: s.createdAt,
+        to: "/indicadores?secao=solicitacoes-pendentes",
+      })),
+      ...pedidosFolga.map((p): ItemDaFila => ({
+        chave: `folga:${p.id}`,
+        tipo: "folga",
+        quem: nomeDe(p.motorista),
+        descricao: `Folga de ${new Date(p.dataInicio).toLocaleDateString("pt-BR", { timeZone: "UTC" })} a ${new Date(p.dataFim).toLocaleDateString("pt-BR", { timeZone: "UTC" })}`,
+        id: p.id,
+        motoristaId: p.motoristaId,
+        desde: p.createdAt,
+        to: "/pedidos-folga",
+      })),
+      ...pedidosTitular.map((p, i): ItemDaFila => ({
+        chave: `privacidade:${(p as { id?: string }).id ?? i}`,
+        tipo: "privacidade",
+        quem: nomeDe(p.motorista),
+        descricao: "Pedido de privacidade (prazo de resposta: 15 dias)",
+        desde: (p as { createdAt?: string }).createdAt,
+        to: "/lgpd",
+      })),
+      ...avisosBanco.map((a): ItemDaFila => ({
+        chave: `banco:${a.motoristaId}`,
+        tipo: "banco",
+        quem: a.nome,
+        descricao: textoBancoVencimento(a),
+        to: `/motoristas/${a.motoristaId}`,
+      })),
+      ...avisosInstrumento.map((a): ItemDaFila => ({
+        chave: `instrumento:${a.empresaId}`,
+        tipo: "banco",
+        quem: a.razaoSocial,
+        descricao: textoInstrumento(a),
+        to: "/regras-sindicais",
+      })),
+      ...semInteracao.map((m): ItemDaFila => ({
+        chave: `radar:${m.motoristaId}`,
+        tipo: "radar",
+        quem: m.nome,
+        descricao: `${m.diasSemInteracao.length} ${m.diasSemInteracao.length === 1 ? "dia" : "dias"} sem interação`,
+        desde: [...m.diasSemInteracao].sort()[0],
+        to: "/motoristas",
+      })),
+    ];
+    publicarFilaDePendencias(fila);
   }, [
     alertas,
     solicitacoesPendentes,

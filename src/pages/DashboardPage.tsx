@@ -652,6 +652,11 @@ export function DashboardPage() {
           onClick={() => abrir("em-descanso", "Motoristas em descanso")}
         />
         <CartaoMetrica
+          titulo="Em parada"
+          valor={motoristas.emParada ?? 0}
+          onClick={() => abrir("em-parada", "Motoristas em parada")}
+        />
+        <CartaoMetrica
           titulo="Em espera (carga/descarga)"
           valor={motoristas.emEspera}
           cor="#b45309"

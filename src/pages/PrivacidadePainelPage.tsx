@@ -1,3 +1,4 @@
+import { Esqueleto } from "../components/Esqueleto";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -217,7 +218,7 @@ function AbaCanal({ podeEditar }: { podeEditar: boolean }) {
     }
   }
 
-  if (!carregado) return <p>Carregando...</p>;
+  if (!carregado) return <Esqueleto />;
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Canal de privacidade</h3>

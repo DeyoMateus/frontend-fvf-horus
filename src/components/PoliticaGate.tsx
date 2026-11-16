@@ -1,3 +1,4 @@
+import { Esqueleto } from "./Esqueleto";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { obterMinhaPolitica } from "../api/privacidade";
@@ -44,7 +45,7 @@ export function PoliticaGate({ children }: { children: ReactNode }) {
     };
   }, [tentativa]);
 
-  if (estado === "carregando") return <p style={{ padding: 24 }}>Carregando...</p>;
+  if (estado === "carregando") return <Esqueleto />;
   if (estado === "erro") {
     return (
       <div style={{ padding: 24 }}>
