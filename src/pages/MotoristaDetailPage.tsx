@@ -79,6 +79,7 @@ import {
 import { useConfirm } from "../components/ConfirmProvider";
 import { useToast } from "../components/ToastProvider";
 import { FolgasLista } from "../components/FolgasLista";
+import { Espera235c11Card } from "../components/Espera235c11Card";
 import { listEmpresas } from "../api/empresas";
 import type { Empresa } from "../api/types";
 import type { FolgaConcedida } from "../api/folgaConcedida";
@@ -128,6 +129,7 @@ const ABAS_MOTORISTA: AbaDef[] = [
   { id: "cadastro", rotulo: "Cadastro" },
   { id: "registros", rotulo: "Registros" },
   { id: "folgas", rotulo: "Folgas" },
+  { id: "espera", rotulo: "Espera (§11)" },
   { id: "alertas", rotulo: "Alertas" },
 ];
 
@@ -2223,6 +2225,8 @@ export function MotoristaDetailPage({
 
       </>
       )}
+
+      {mostrar("espera") && <Espera235c11Card motoristaId={motoristaId} />}
 
       {mostrar("folgas") && (
       <>

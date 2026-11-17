@@ -38,7 +38,7 @@ export type MotivoParada = "MANUTENCAO" | "TRANSITO_CONGESTIONADO" | "POSTO_FISC
 export const ROTULO_MOTIVO_PARADA: Record<MotivoParada, string> = {
   MANUTENCAO: "Manutenção",
   TRANSITO_CONGESTIONADO: "Trânsito congestionado",
-  POSTO_FISCAL: "Posto fiscal",
+  POSTO_FISCAL: "Posto fiscal (fiscalização em barreira fiscal)",
   OUTRO: "Outro",
 };
 

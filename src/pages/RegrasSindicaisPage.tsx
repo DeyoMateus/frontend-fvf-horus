@@ -858,9 +858,8 @@ export function RegrasSindicaisPage() {
                   Interjornada suprimida reflete no DSR
                 </label>
                 <small>
-                  Marcado por padrão (natureza salarial, com os reflexos de hora
-                  extra). Desmarque só se a CCT disser o contrário. Sujeito a
-                  parecer.
+                  Parâmetro informativo para a folha da empresa. O Hórus não
+                  calcula valores nem define a natureza do pagamento.
                 </small>
               </div>
 
