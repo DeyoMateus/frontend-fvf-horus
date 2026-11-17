@@ -56,13 +56,12 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login-wrap">
-      <div className="login-box card">
-        <div className="marca-fvf">
-          <img src="/logo-fvf-laranja.png" alt="FVF" />
-          <span>Hórus</span>
-        </div>
-
+    <div className="login-hero">
+      <div className="login-hero-marca" aria-label="FVF Hórus">
+        <img src="/logo-fvf-laranja.png" alt="FVF" />
+        <span>Hórus</span>
+      </div>
+      <div className="login-box card login-hero-card">
         <form onSubmit={onSubmit}>
           <label>E-mail</label>
           <input
