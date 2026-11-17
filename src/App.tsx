@@ -24,7 +24,7 @@ const MotoristaDetailPage = lazy(() => import("./pages/MotoristaDetailPage").the
 const DocumentosCargaPage = lazy(() => import("./pages/DocumentosCargaPage").then((m) => ({ default: m.DocumentosCargaPage })));
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const IndicadoresPage = lazy(() => import("./pages/IndicadoresPage").then((m) => ({ default: m.IndicadoresPage })));
-const PendenciasPage = lazy(() => import("./pages/PendenciasPage").then((m) => ({ default: m.PendenciasPage })));
+const FilaPenPage = lazy(() => import("./pages/FilaPenPage").then((m) => ({ default: m.FilaPenPage })));
 const PedidosFolgaPage = lazy(() => import("./pages/PedidosFolgaPage").then((m) => ({ default: m.PedidosFolgaPage })));
 const EmpresasPage = lazy(() => import("./pages/EmpresasPage").then((m) => ({ default: m.EmpresasPage })));
 const RetencaoPage = lazy(() => import("./pages/RetencaoPage").then((m) => ({ default: m.RetencaoPage })));
@@ -82,7 +82,7 @@ export function App() {
                     />
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/indicadores" element={<IndicadoresPage />} />
-                    <Route path="/pendencias" element={<PendenciasPage />} />
+                    <Route path="/pendencias" element={<FilaPenPage />} />
                     <Route path="/pedidos-folga" element={<PedidosFolgaPage />} />
                     <Route
                       path="/motoristas"
