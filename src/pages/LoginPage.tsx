@@ -62,13 +62,12 @@ export function LoginPage() {
           <img src="/logo-fvf-laranja.png" alt="FVF" />
           <span>Hórus</span>
         </div>
-        <p style={{ color: "#000000", fontSize: 13, marginTop: -8 }}>
-          Painel da empresa
-        </p>
+
         <form onSubmit={onSubmit}>
           <label>E-mail</label>
           <input
-            type="email" maxLength={254}
+            type="email"
+            maxLength={254}
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -76,7 +75,8 @@ export function LoginPage() {
           />
           <label>Senha</label>
           <input
-            type="password" maxLength={128}
+            type="password"
+            maxLength={128}
             autoComplete="current-password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
