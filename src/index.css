@@ -1,5 +1,6 @@
 :root {
   font-family:
+    Poppins,
     system-ui,
     -apple-system,
     Segoe UI,
@@ -10,7 +11,7 @@
 
 body {
   margin: 0;
-  background: #f5f6f8;
+  background: #f8f8f8;
   color: #1a1d23;
 }
 
@@ -21,7 +22,7 @@ body {
 
 .sidebar {
   width: 220px;
-  background: #10151f;
+  background: #191714;
   color: #e6e9ef;
   padding: 20px 16px;
   flex-shrink: 0;
@@ -128,12 +129,12 @@ body {
   color: #fff;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.12);
-  border-left-color: #4da3ff;
+  border-left-color: #ec5705;
 }
 
 .sidebar-colapsada .sidebar nav a.active {
   border-left-color: transparent;
-  border-bottom: 2px solid #4da3ff;
+  border-bottom: 2px solid #ec5705;
 }
 
 .sidebar-rodape {
@@ -271,7 +272,7 @@ label {
 }
 
 button {
-  background: #1a56db;
+  background: #ec5705;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -478,7 +479,7 @@ button.danger {
   color: #111827;
   font-weight: 600;
   background: #eef4ff;
-  border-bottom-color: #4da3ff;
+  border-bottom-color: #ec5705;
 }
 
 .notif-bell {
@@ -496,7 +497,7 @@ button.danger {
 }
 
 .notif-bell-botao:hover {
-  background: #f5f6f8;
+  background: #f8f8f8;
 }
 
 .notif-bell-icone {
@@ -727,7 +728,7 @@ button.danger {
   background: #dc2626;
 }
 .toast-info {
-  background: #1a56db;
+  background: #ec5705;
 }
 
 .toast-mensagem {
@@ -888,7 +889,7 @@ textarea[maxlength] {
   font-weight: 600;
   color: #fff;
   background: rgba(77, 163, 255, 0.18);
-  border: 1px dashed #4da3ff;
+  border: 1px dashed #ec5705;
   border-left-width: 3px;
   border-radius: 4px;
 }
@@ -1024,7 +1025,7 @@ textarea {
 }
 .botao-perfil.botao-perfil-icone.active {
   background: rgba(255, 255, 255, 0.12);
-  border-color: #4da3ff;
+  border-color: #ec5705;
 }
 
 /* Engrenagem e Sair lado a lado, mesmo tamanho. */
@@ -1312,4 +1313,30 @@ a[href^="/motoristas/"]:hover {
   .content input[type="radio"] {
     min-height: 0;
   }
+}
+
+/* Marca FVF (manual de marca, nov/2026): logo + Hórus no menu e no login. */
+.marca-fvf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.marca-fvf img {
+  height: 18px;
+  width: auto;
+}
+.marca-fvf span {
+  font-size: 15px;
+  font-weight: 600;
+}
+.login-box .marca-fvf {
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.login-box .marca-fvf img {
+  height: 28px;
+}
+.login-box .marca-fvf span {
+  font-size: 22px;
+  color: #191714;
 }

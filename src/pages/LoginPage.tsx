@@ -58,7 +58,10 @@ export function LoginPage() {
   return (
     <div className="login-wrap">
       <div className="login-box card">
-        <h1>FVF Hórus</h1>
+        <div className="marca-fvf">
+          <img src="/logo-fvf-laranja.png" alt="FVF" />
+          <span>Hórus</span>
+        </div>
         <p style={{ color: "#000000", fontSize: 13, marginTop: -8 }}>
           Painel da empresa
         </p>

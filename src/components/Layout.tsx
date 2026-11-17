@@ -146,7 +146,12 @@ function LayoutInterno() {
     >
       <aside className="sidebar">
         <div className="sidebar-topo">
-          {!efetivamenteColapsada && <h1>FVF Hórus</h1>}
+          {!efetivamenteColapsada && (
+            <div className="marca-fvf">
+              <img src="/logo-fvf-laranja.png" alt="FVF" />
+              <span>Hórus</span>
+            </div>
+          )}
           <button
             className="sidebar-toggle"
             onClick={() => setColapsada((v) => !v)}
