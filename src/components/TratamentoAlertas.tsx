@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useState } from "react";
 import {
   corrigirHoraPontoAlerta,
@@ -7,7 +8,7 @@ import {
 } from "../api/alertas";
 import type { AlertaJornada } from "../api/types";
 
-// Rodada 322: tratamento de alertas unificado (sem "marcar visto"). Os
+// Tratamento de alertas unificado (sem "marcar visto"). Os
 // mesmos componentes servem ao painel geral de alertas e à ficha do
 // motorista, e como os dois gravam no mesmo alerta, tratar em um lugar dá
 // baixa no outro.
@@ -29,12 +30,6 @@ export function aplicarFiltroTratamento(
   if (filtro === "NAO_TRATADOS") return alertas.filter((a) => !a.tratadoEm);
   if (filtro === "TRATADOS") return alertas.filter((a) => !!a.tratadoEm);
   return alertas;
-}
-
-function mensagemDeErro(erro: unknown, padrao: string): string {
-  const msg = (erro as { response?: { data?: { message?: unknown } } })
-    ?.response?.data?.message;
-  return typeof msg === "string" && msg ? msg : padrao;
 }
 
 /** Só um filtro por vez: marcar um desmarca o outro; nenhum marcado = todos. */
@@ -106,7 +101,7 @@ export function FormularioTratamentoAlerta({
       await onConcluido();
     } catch (e) {
       onErro(
-        mensagemDeErro(
+        mensagemDoErro(
           e,
           "Não foi possível registrar o tratamento deste alerta.",
         ),
@@ -131,7 +126,7 @@ export function FormularioTratamentoAlerta({
       await onConcluido();
     } catch (e) {
       onErro(
-        mensagemDeErro(e, "Não foi possível corrigir a hora deste ponto."),
+        mensagemDoErro(e, "Não foi possível corrigir a hora deste ponto."),
       );
     } finally {
       setSalvando(false);
@@ -153,7 +148,7 @@ export function FormularioTratamentoAlerta({
       await onConcluido();
     } catch (e) {
       onErro(
-        mensagemDeErro(
+        mensagemDoErro(
           e,
           "Não foi possível liberar o aparelho deste motorista.",
         ),
@@ -327,7 +322,7 @@ export function BarraTratamentoEmLote({
       await onConcluido(partes.join(" "));
     } catch (e) {
       onErro(
-        mensagemDeErro(e, "Não foi possível tratar os alertas selecionados."),
+        mensagemDoErro(e, "Não foi possível tratar os alertas selecionados."),
       );
     } finally {
       setSalvando(false);

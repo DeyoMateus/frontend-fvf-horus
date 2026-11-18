@@ -56,7 +56,7 @@ export function atualizarRetencaoMotorista(
     .then((r) => r.data);
 }
 
-/** Rodada 733: dados que ja passaram do prazo fixo do sistema, por tipo. */
+/** Dados que ja passaram do prazo fixo do sistema, por tipo. */
 export interface VencidosRetencao {
   prazos: Record<string, string>;
   GPS_PERIODICO: number;

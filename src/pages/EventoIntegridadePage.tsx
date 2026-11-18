@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { Esqueleto } from "../components/Esqueleto";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
@@ -33,7 +34,7 @@ const caixaHash: React.CSSProperties = {
 };
 
 /**
- * Rodada 158: tela própria para analisar UM evento da cadeia de
+ * Tela própria para analisar UM evento da cadeia de
  * integridade (aberta pelo botão "Analisar evento" na lista de
  * divergências do motorista). Somente leitura, exceto o aceite.
  */
@@ -105,7 +106,7 @@ export function EventoIntegridadePage() {
           toast.erro(dados?.message ?? "Não foi possível aceitar a divergência.");
           return;
         }
-        // Rodada 406 (N67): sem segundo administrador, só com rompimento de vidro explícito.
+        // Sem segundo administrador, só com rompimento de vidro explícito.
         if (!(await confirmar(`${dados.message}\n\nConfirmar o rompimento de vidro?`, { perigo: true, textoConfirmar: "Romper o vidro" }))) return;
         try {
           resposta = await aceitarDivergenciaIntegridade(
@@ -116,9 +117,7 @@ export function EventoIntegridadePage() {
             true,
           );
         } catch (err2) {
-          const msg = (err2 as { response?: { data?: { message?: string } } })
-            ?.response?.data?.message;
-          toast.erro(msg ?? "Não foi possível aceitar a divergência.");
+          toast.erro(mensagemDoErro(err2, "Não foi possível aceitar a divergência."));
           return;
         }
       }
@@ -146,9 +145,7 @@ export function EventoIntegridadePage() {
       await decidirPedidoAceiteIntegridade(pedidoId, aprovar, motivoDecisao);
       await carregar();
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      toast.erro(msg ?? "Não foi possível registrar a decisão.");
+      toast.erro(mensagemDoErro(err, "Não foi possível registrar a decisão."));
     }
   }
 

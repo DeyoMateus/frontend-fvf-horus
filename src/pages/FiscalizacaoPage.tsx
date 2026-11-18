@@ -1,6 +1,7 @@
 import { DicaAoPassar } from "../components/DicaAoPassar";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useEffect, useRef, useState } from "react";
+import { useSelecao } from "../hooks/useSelecao";
 import { baixarAfd, baixarAfdAssinado, listEmpresas } from "../api/empresas";
 import {
   baixarRelatorioEsperaPdf,
@@ -22,7 +23,7 @@ function inicioDoMes(): string {
 }
 
 /**
- * "Documentos para fiscalização" (Rodada 66) , pedido do usuário:
+ * "Documentos para fiscalização" , pedido do usuário:
  *
  * 1. Relatório de espera (antes "dossiê de cobrança", renomeado na rodada 732): o motor
  *    já detecta a espera em carga/descarga acima do tempo configurado pela empresa e guarda os
@@ -50,9 +51,7 @@ export function FiscalizacaoPage() {
   const [gerandoEsperaPdf, setGerandoEsperaPdf] = useState(false);
   const [erroEspera, setErroEspera] = useState<string | null>(null);
 
-  const [selecionadosRepP, setSelecionadosRepP] = useState<Set<string>>(
-    new Set(),
-  );
+  const { selecionados: selecionadosRepP, alternar: alternarMotoristaRepP } = useSelecao();
   const [gerandoRepP, setGerandoRepP] = useState(false);
   const [erroRepP, setErroRepP] = useState<string | null>(null);
 
@@ -65,7 +64,7 @@ export function FiscalizacaoPage() {
       .catch(() => {});
   }, []);
 
-  // Rodada 99 , pedido do usuário: trocar o período (início/fim) não
+  // Pedido do usuário: trocar o período (início/fim) não
   // pode "piscar" trocando a contagem por "Carregando…" toda vez , só
   // a carga INICIAL mostra esse texto; mudanças de período depois só
   // atualizam a contagem no lugar (mesmo padrão já usado em
@@ -152,14 +151,6 @@ export function FiscalizacaoPage() {
     }
   }
 
-  function alternarMotoristaRepP(id: string) {
-    setSelecionadosRepP((atual) => {
-      const novo = new Set(atual);
-      if (novo.has(id)) novo.delete(id);
-      else novo.add(id);
-      return novo;
-    });
-  }
 
   async function onBaixarRepPLote() {
     setErroRepP(null);

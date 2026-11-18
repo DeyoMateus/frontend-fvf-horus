@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * Rodada 139 , duração digitada em HH:MM (510 min = "08:30"). O valor
+ * Duração digitada em HH:MM (510 min = "08:30"). O valor
  * que sobe/desce continua sempre em minutos (é o que a API guarda).
  */
 export function minParaHHMM(min: number): string {
@@ -21,7 +21,7 @@ interface Props {
   onChange: (min: number | undefined) => void;
   /** Permite campo vazio (opcional). */
   opcional?: boolean;
-  /** Rodada 483: nome do campo, para o formulario marcar em vermelho quando a API reprovar. */
+  /** Nome do campo, para o formulario marcar em vermelho quando a API reprovar. */
   name?: string;
 }
 

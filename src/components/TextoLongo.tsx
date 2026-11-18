@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-// Rodada 268 , texto livre (motivo, justificativa, observação) que pode
+// Texto livre (motivo, justificativa, observação) que pode
 // ser grande. Na tabela mostra só as primeiras linhas, sem vazar do campo,
 // e, quando passa do limite, oferece "Ver texto completo", que abre o
 // texto inteiro formatado (quebras de linha preservadas, palavras longas

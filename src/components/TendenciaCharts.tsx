@@ -1,3 +1,4 @@
+import { useEstadoLembrado } from "../hooks/useEstadoLembrado";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { DicaAoPassar } from "./DicaAoPassar";
@@ -146,7 +147,7 @@ const MARGEM_ESQUERDA = 36;
 const MARGEM_BAIXO = 46;
 const MARGEM_TOPO = 10;
 
-// Rodada 112 , pedido do usuário: mesma regra de horas/minutos dos
+// Pedido do usuário: mesma regra de horas/minutos dos
 // cards (Rodada 61/63, `minParaHoras`) também nos gráficos de
 // tendência, em vez de sempre mostrar hora decimal (ex.: "0.4h").
 function formatarValorIndicador(
@@ -178,7 +179,7 @@ function formatarDiaCurto(iso: string): string {
  */
 function indicesRotulos(total: number, larguraUtilPx: number): Set<number> {
   if (total <= 0) return new Set();
-  // Rótulos inclinados (Rodada 60) ocupam menos espaço HORIZONTAL entre
+  // Rótulos inclinados ocupam menos espaço HORIZONTAL entre
   // si (o texto "desce" na diagonal em vez de disputar largura com o
   // vizinho), então cabem mais rótulos no mesmo espaço sem sobrepor.
   const LARGURA_MINIMA_POR_ROTULO_PX = 28;
@@ -265,7 +266,7 @@ function BlocoGrafico({
     1,
     ...dados.flatMap((d) => indicadoresAtivos.map((ind) => d[ind.chave])),
   );
-  // Rodada 112 , o rótulo do topo do eixo Y segue a mesma regra dos
+  // O rótulo do topo do eixo Y segue a mesma regra dos
   // cards (abaixo de 60min mostra minutos, a partir de 60min mostra
   // horas) só quando a categoria é de duração (sufixo 'h'); nas outras
   // (Alertas, Registros, Risco de fraude) o número continua puro.
@@ -834,7 +835,7 @@ export function ModalDetalheTendencia({
   );
 }
 
-// Rodada 101 , pedido do usuário: a Rodada 100 minimizou os gráficos do
+// Pedido do usuário: a Rodada 100 minimizou os gráficos do
 // Painel de indicadores (PainelIndicadores.tsx, dentro de "Indicadores"),
 // mas essa é uma seção DIFERENTE , "Evolução ao longo do tempo" fica no
 // Painel da operação (DashboardPage.tsx), componente próprio
@@ -849,24 +850,8 @@ export function GraficoTendencia({
 }) {
   const [tipoGrafico, setTipoGrafico] = useState<"barras" | "linhas">("barras");
   const [pontoAberto, setPontoAberto] = useState<PontoClicado | null>(null);
-  const [minimizado, setMinimizado] = useState(() => {
-    try {
-      return localStorage.getItem(CHAVE_GRAFICOS_TENDENCIA_MINIMIZADOS) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [minimizado, setMinimizado] = useEstadoLembrado(CHAVE_GRAFICOS_TENDENCIA_MINIMIZADOS);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        CHAVE_GRAFICOS_TENDENCIA_MINIMIZADOS,
-        minimizado ? "1" : "0",
-      );
-    } catch {
-      // localStorage indisponível (modo privado, etc.) , só não persiste a preferência.
-    }
-  }, [minimizado]);
 
   return (
     <div>

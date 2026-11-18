@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState, type ReactNode } from "react";
 
-// Rodada 347 , "palco" do tour guiado.
+// "palco" do tour guiado.
 //
 // Uma empresa nova não tem motorista, alerta nem pedido nenhum, então o tour
 // não teria o que mostrar. O palco é um teatro visual: telas de exemplo com
@@ -262,7 +262,10 @@ function PalcoFicha() {
           Suspender
         </button>{" "}
         <button type="button" onClick={semAcao} style={{ fontSize: 12 }}>
-          Inativar (arquivo morto)
+          Registrar rescisão
+        </button>{" "}
+        <button type="button" onClick={semAcao} style={{ fontSize: 12 }}>
+          Readmitir
         </button>{" "}
         <button
           type="button"

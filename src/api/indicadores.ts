@@ -1,7 +1,7 @@
 import { api } from "./client";
 import { baixarArquivo } from "../utils/baixarArquivo";
 
-// Espelha IndicadoresController/IndicadoresService (Rodada 36).
+// Espelha IndicadoresController/IndicadoresService.
 // Restrição explícita do usuário: SOMENTE horas/contagens, nunca valor
 // em R$ , não existe nenhum campo de valor/hora aqui de propósito.
 export interface IndicadoresAlertas {
@@ -28,7 +28,7 @@ export interface IndicadoresMotorista {
   normalMin: number;
   extraMin: number;
   noturnoMin: number;
-  // Rodada 68 , jornada aberta sem etapa em aberto (nem direção, nem
+  // Jornada aberta sem etapa em aberto (nem direção, nem
   // descanso, nem espera, nem "aguardando documentação") , o motorista
   // não escolheu a próxima ação. Separado das demais categorias de
   // propósito: não é tempo trabalhado, é tempo sem status.
@@ -114,7 +114,7 @@ export interface PeriodoBancoHoras {
   semDados: boolean;
 }
 
-/** Rodada 490: do primeiro registro do banco de horas ate agora (sem o usuario escolher). */
+/** Do primeiro registro do banco de horas ate agora (sem o usuario escolher). */
 export function getPeriodoBancoHoras() {
   return api
     .get<PeriodoBancoHoras>("/indicadores/banco-horas/periodo")

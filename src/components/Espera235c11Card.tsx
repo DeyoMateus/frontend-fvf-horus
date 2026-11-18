@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useCallback, useEffect, useState } from "react";
 import {
   listarEspera235c11,
@@ -22,7 +23,7 @@ function duracao(min: number): string {
 }
 
 /**
- * Rodada 762: registro INFORMATIVO dos requisitos do art. 235-C §11 (espera acima de 2 h).
+ * Registro INFORMATIVO dos requisitos do art. 235-C §11 (espera acima de 2 h).
  * Não altera jornada, banco de horas, extras nem o que sai para a folha: toda espera continua
  * integrando a jornada. Serve só como evidência de que o gestor confirmou (ou não) os requisitos.
  */
@@ -70,8 +71,7 @@ export function Espera235c11Card({ motoristaId }: { motoristaId: string }) {
       setEvidencia("");
       carregar();
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-      setErro(Array.isArray(msg) ? msg.join(" ") : msg ?? "Não foi possível registrar.");
+      setErro(mensagemDoErro(err, "Não foi possível registrar."));
     } finally {
       setSalvando(false);
     }

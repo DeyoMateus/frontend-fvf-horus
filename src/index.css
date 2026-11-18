@@ -212,7 +212,7 @@ body {
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
-  /* Rodada 42 , em telas estreitas uma tabela larga rola só dentro do
+  /* Em telas estreitas uma tabela larga rola só dentro do
      card (barra de rolagem horizontal própria) em vez de espremer ou
      estourar o layout da página inteira. */
   overflow-x: auto;
@@ -450,7 +450,7 @@ button.danger {
   min-width: 0;
 }
 
-/* Rodada 626: abas no topo, no estilo do menu lateral (texto, sem botão pesado). */
+/* Abas no topo, no estilo do menu lateral (texto, sem botão pesado). */
 .abas-topo {
   display: flex;
   flex-wrap: wrap;
@@ -685,7 +685,7 @@ button.danger {
   }
 }
 
-/* ===== Toast (Rodada 95) , substitui window.alert() ===== */
+/* ===== Toast , substitui window.alert() ===== */
 .toast-container {
   position: fixed;
   bottom: 20px;
@@ -750,7 +750,7 @@ button.danger {
   opacity: 1;
 }
 
-/* ===== Modal de confirmação (Rodada 95) , substitui window.confirm() ===== */
+/* ===== Modal de confirmação , substitui window.confirm() ===== */
 .confirm-overlay {
   position: fixed;
   inset: 0;
@@ -790,7 +790,7 @@ button.danger {
   gap: 10px;
 }
 
-/* Rodada 307: o ContadorDeCaracteres.tsx desenha um "n/limite" flutuante
+/* O ContadorDeCaracteres.tsx desenha um "n/limite" flutuante
    logo abaixo de TODO textarea com maxLength, em qualquer tela do painel
    (modais inclusive). Sem esse respiro, ele fica colado no que vem a
    seguir (botões, próximo campo, etc.) , pedido do usuário depois de
@@ -799,7 +799,7 @@ textarea[maxlength] {
   margin-bottom: 20px;
 }
 
-/* ===== Botão de link externo (Rodada 95) , ex.: abrir no mapa ===== */
+/* ===== Botão de link externo , ex.: abrir no mapa ===== */
 .botao-link-externo {
   background: #e5e7eb;
   color: #000;
@@ -873,7 +873,7 @@ textarea[maxlength] {
   color: #000;
 }
 
-/* Rodada 264 , item "Tour guiado" no fim da lista do menu lateral. */
+/* Item "Tour guiado" no fim da lista do menu lateral. */
 .sidebar nav {
   min-height: 0;
   overflow-y: auto;
@@ -904,13 +904,13 @@ textarea[maxlength] {
   font-size: 13px;
 }
 
-/* Rodada 266 , popup aberto, a página de fundo fica parada. */
+/* Popup aberto, a página de fundo fica parada. */
 html.fvf-scroll-travado,
 html.fvf-scroll-travado body {
   overflow: hidden;
 }
 
-/* Rodada 268 , texto grande nunca escapa da célula da tabela.
+/* Texto grande nunca escapa da célula da tabela.
    Rodada 296: uma palavra nunca é partida no meio (só quebra de linha entre
    palavras diferentes); uma "palavra" maior que a coluna alarga a coluna e a
    tabela rola na horizontal dentro do cartão. */
@@ -920,7 +920,7 @@ th {
   word-break: normal;
 }
 
-/* Rodada 270 , campos de texto longo quebram linha e crescem, sem barra interna. */
+/* Campos de texto longo quebram linha e crescem, sem barra interna. */
 textarea {
   resize: vertical;
   min-height: 38px;
@@ -930,7 +930,7 @@ textarea {
   line-height: 1.4;
 }
 
-/* Rodada 271 , telas de acesso: todos os botões do card com a mesma largura
+/* Telas de acesso: todos os botões do card com a mesma largura
    (mais estreita que o card, centralizada), mesma altura e texto centralizado. */
 .login-box button {
   display: block;
@@ -1056,7 +1056,7 @@ textarea {
   height: 15px;
 }
 
-/* Rodada 335: bolinha de pendência no fim do botão da aba do menu lateral. */
+/* Bolinha de pendência no fim do botão da aba do menu lateral. */
 .sidebar nav a {
   position: relative;
 }
@@ -1072,7 +1072,7 @@ textarea {
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
   cursor: help;
 }
-/* Rodada 350: no menu recolhido a bolinha fica à direita, na altura das
+/* No menu recolhido a bolinha fica à direita, na altura das
    iniciais, e a aba com pendência ganha um espaço reservado para ela não
    encostar nas letras. */
 .sidebar-colapsada .sidebar nav a .nav-bolinha {
@@ -1133,7 +1133,7 @@ textarea {
   color: #000;
 }
 
-/* Rodada 752: busca global (Ctrl+K). */
+/* Busca global (Ctrl+K). */
 .busca-global-botao {
   display: inline-flex;
   align-items: center;
@@ -1220,7 +1220,7 @@ textarea {
   }
 }
 
-/* Rodada 753: o nome do colaborador que leva à ficha não tem cara de link (sem roxo de
+/* O nome do colaborador que leva à ficha não tem cara de link (sem roxo de
    visitado e sem sublinhado); o clique continua levando à ficha. O contorno de foco do
    teclado é mantido. */
 a[href^="/motoristas/"],
@@ -1229,8 +1229,30 @@ a[href^="/motoristas/"]:hover {
   color: inherit;
   text-decoration: none;
 }
+/* Nome clicavel (link ou botao) com o mesmo aspecto de texto comum; so o hover
+   indica que da para clicar (cor laranja da marca e cursor de mao). */
+a[href^="/motoristas/"],
+.nome-clicavel {
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+a[href^="/motoristas/"]:hover,
+.nome-clicavel:hover {
+  color: #eb5705;
+}
+.nome-clicavel {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  text-align: left;
+  width: auto;
+  height: auto;
+}
 
-/* Rodada 755: carregamento com esqueleto. */
+/* Carregamento com esqueleto. */
 .esqueleto {
   padding: 16px;
   display: grid;
@@ -1265,7 +1287,7 @@ a[href^="/motoristas/"]:hover {
   }
 }
 
-/* Rodada 755: decisão em lote na fila de pendências. */
+/* Decisão em lote na fila de pendências. */
 .pendencias-lote {
   display: flex;
   flex-wrap: wrap;
@@ -1280,7 +1302,7 @@ a[href^="/motoristas/"]:hover {
   font-size: 14px;
 }
 
-/* Rodada 755: painel no celular do gestor. Tabela larga rola de lado em vez de estourar a tela
+/* Painel no celular do gestor. Tabela larga rola de lado em vez de estourar a tela
    (a rolagem fica na tabela, não no cartão, para não cortar listas e dicas que abrem por cima); abas e a linha do sino quebram; campos e botões ficam com altura de toque. */
 @media (max-width: 640px) {
   .content table {
@@ -1349,15 +1371,16 @@ a[href^="/motoristas/"]:hover {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 5vh;
-  padding: 9vh 5vw 6vh;
+  gap: 4vh;
+  padding: 7vh 5vw 6vh;
   box-sizing: border-box;
   background: #cfe0f0 url("/login-fundo.webp") right center / cover no-repeat;
 }
 .login-hero-marca {
   display: flex;
-  align-items: center;
-  gap: 1.6vw;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.2vh;
   position: relative;
   z-index: 2;
 }
@@ -1368,9 +1391,9 @@ a[href^="/motoristas/"]:hover {
 .login-hero-marca span {
   font-family: "Poppins", sans-serif;
   font-weight: 700;
-  font-size: clamp(44px, 7.6vw, 120px);
+  font-size: clamp(36px, 5.2vw, 84px);
   line-height: 1;
-  color: #ec5705;
+  color: #eb5705; /* mesmo laranja da logo (RGB 235, 87, 5) */
 }
 .login-hero-card {
   position: relative;
@@ -1386,9 +1409,24 @@ a[href^="/motoristas/"]:hover {
     padding-top: 8vh;
   }
   .login-hero-marca span {
-    font-size: clamp(40px, 14vw, 72px);
+    font-size: clamp(32px, 10vw, 56px);
   }
   .login-hero-marca img {
     height: clamp(30px, 10vw, 56px);
   }
+}
+
+/* Nov/2026: botoes de acao dentro das telas ficam no mesmo padrao do "Buscar" do topo (fundo branco,
+   borda cinza, sem preenchimento laranja). So o botao de perigo (Excluir) segue vermelho. */
+.content-inner button:not([class]),
+.content-inner button.secondary {
+  background: #fff;
+  color: #191714;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+.content-inner button:not([class]):hover:not(:disabled),
+.content-inner button.secondary:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
 }

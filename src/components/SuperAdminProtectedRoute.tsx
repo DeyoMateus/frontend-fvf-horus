@@ -8,7 +8,7 @@ export function SuperAdminProtectedRoute() {
   const { superAdmin, carregando } = useSuperAdminAuth();
   if (carregando) return <Esqueleto />;
   if (!superAdmin) return <Navigate to="/super-admin/login" replace />;
-  // Rodada 537 (N136): sem CPF no cadastro, a area do super admin nao abre.
+  // Sem CPF no cadastro, a area do super admin nao abre.
   return (
     <CpfPendenteGate
       carregarPendencia={() => obterMeuPerfilSuperAdmin().then((p) => p.cpfPendente)}

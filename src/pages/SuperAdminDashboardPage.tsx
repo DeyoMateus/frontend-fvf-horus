@@ -28,7 +28,7 @@ const FORM_PADRAO: CreateEmpresaMaeInput = {
 };
 
 /**
- * Painel do super admin (Rodada 31): provisiona empresas mãe novas
+ * Painel do super admin: provisiona empresas mãe novas
  * (é o único jeito de uma empresa ganhar conta no sistema , não existe
  * auto-registro) e acompanha, pra cada empresa mãe (Grupo), quantos
  * CNPJs (Empresa), quantos gestores (UsuarioEmpresa) e quantos
@@ -90,7 +90,7 @@ export function SuperAdminDashboardPage() {
     }
   }
 
-  // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
+  // Pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
   const paginacaoGrupos = useListaPaginada(grupos, (g) => g.createdAt);
 

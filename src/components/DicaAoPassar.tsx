@@ -2,7 +2,7 @@ import { useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 /**
- * Rodada 337: "?" que, ao passar o mouse (ou focar pelo teclado), abre um
+ * "?" que, ao passar o mouse (ou focar pelo teclado), abre um
  * balão com a explicação do campo. O balão sai num portal no `<body>`, com
  * posição fixa calculada a partir do "?", então nunca é cortado por um
  * container com `overflow`.

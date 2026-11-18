@@ -108,7 +108,7 @@ export interface FolgaDashboard {
   naoRealizadas: FolgaNaoRealizadaDashboard[];
 }
 
-/** Rodada 274: indicadores do dashboard de folgas. */
+/** Indicadores do dashboard de folgas. */
 /** Periodo do historico (negados e folgas nao realizadas): ultimos N dias ou datas livres. */
 export type PeriodoFolgaDashboard =
   | { dias: number }

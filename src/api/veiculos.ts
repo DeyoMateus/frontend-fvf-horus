@@ -29,7 +29,7 @@ export interface TrocaVeiculoAuditoria {
     idRastreador: string | null;
   } | null;
   createdAt: string;
-  /** Rodada 577 (N199): conferida por algum gestor (guardado no servidor). */
+  /** Conferida por algum gestor (guardado no servidor). */
   conferida?: boolean;
 }
 

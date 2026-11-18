@@ -82,7 +82,7 @@ export function liberarRelogioAlerta(
     .then((r) => r.data);
 }
 
-// Rodada 450: corrige a hora de um ponto aceito com divergência de relógio.
+// Corrige a hora de um ponto aceito com divergência de relógio.
 export function corrigirHoraPontoAlerta(
   motoristaId: string,
   alertaId: string,
@@ -103,7 +103,7 @@ export function tratarAlerta(alertaId: string, observacao: string) {
     .then((r) => r.data);
 }
 
-// Rodada 322: tratamento coletivo (só alertas não críticos).
+// Tratamento coletivo (só alertas não críticos).
 export interface ResultadoTratamentoLote {
   tratados: string[];
   ignorados: string[];

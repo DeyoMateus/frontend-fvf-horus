@@ -68,7 +68,7 @@ function linha(m: ItemFolgaDashboard): string[] {
 }
 
 /**
- * Rodada 275: ranking dos motoristas que mais precisam de folga (mais dias
+ * Ranking dos motoristas que mais precisam de folga (mais dias
  * sem folga primeiro). 10 linhas por vez; "100 por vez" abre numa janela
  * separada, como as outras listas do painel. Exporta em Excel e PDF
  * (impressão), sempre a lista inteira, não só a página.
@@ -163,20 +163,9 @@ export function RankingFolgas({ dados }: { dados: FolgaDashboard }) {
             <td>
               <button
                 type="button"
-                className="link-button"
+                className="nome-clicavel"
                 title="Ver o histórico de folgas deste motorista"
                 onClick={() => setHistorico(m)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  color: "#1d4ed8",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                  font: "inherit",
-                  width: "auto",
-                  height: "auto",
-                }}
               >
                 {m.nome}
               </button>

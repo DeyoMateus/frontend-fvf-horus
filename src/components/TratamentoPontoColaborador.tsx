@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import {
   formatarRegistro,
   offsetDoNavegador,
@@ -23,7 +24,7 @@ import { tiposEventoDaFuncao } from "../api/types";
 import { TextoLongo } from "../components/TextoLongo";
 
 /**
- * Rodada 747: "Tratamento de ponto" do colaborador, tirado de MotoristaDetailPage (era a seção
+ * "Tratamento de ponto" do colaborador, tirado de MotoristaDetailPage (era a seção
  * `somente="tratamento"`, usada só no Fechamento). Mesmo comportamento; o formulário, as evidências
  * e a lista de tratamentos vivem aqui. `onAtualizar` relê os dados da ficha depois de lançar.
  */
@@ -46,7 +47,7 @@ export function TratamentoPontoColaborador({
   const cardTratamentoRef = useRef<HTMLDivElement | null>(null);
   const veioParaEncerrarJornada =
     searchParams.get("secao") === "encerrar-jornada";
-  // Rodada 193: vindo do radar ("sem sinal ou esquecimento"), abre o
+  // Vindo do radar ("sem sinal ou esquecimento"), abre o
   // lançamento de jornada inteira já com a data do dia tratado.
   const veioParaLancarJornada = searchParams.get("secao") === "lancar-jornada";
   const dataParaLancarJornada = /^\d{4}-\d{2}-\d{2}$/.test(
@@ -69,7 +70,7 @@ export function TratamentoPontoColaborador({
   const [registroReferenciaId, setRegistroReferenciaId] = useState("");
   const [lancandoTratamento, setLancandoTratamento] = useState(false);
   const [erroTratamento, setErroTratamento] = useState<string | null>(null);
-  // Rodada 79 , pedido do usuário: anexar evidência é escolhido JUNTO do
+  // Pedido do usuário: anexar evidência é escolhido JUNTO do
   // lançamento (adicionar/tirar antes de enviar), não depois , os
   // arquivos ficam só na memória do navegador até o "Lançar tratamento"
   // ser enviado, quando são subidos em seguida (o backend exige que o
@@ -118,7 +119,7 @@ export function TratamentoPontoColaborador({
     setErroTratamento(null);
     setLancandoTratamento(true);
     try {
-      // Rodada 150: a hora digitada vale no fuso em que o motorista estava
+      // A hora digitada vale no fuso em que o motorista estava
       // naquele momento (não o do computador do gestor nem o de hoje).
       const fusoDoAjuste = resolverFusoDoAjuste(timestampEvento, registros);
       const novoTratamento = await createTratamento(motoristaId, {
@@ -131,7 +132,7 @@ export function TratamentoPontoColaborador({
           : undefined,
       });
 
-      // Rodada 79: evidências escolhidas no formulário sobem logo em
+      // Evidências escolhidas no formulário sobem logo em
       // seguida, já vinculadas a este tratamento recém-criado , o
       // motorista/gestor não precisa mais achar a linha na tabela
       // depois pra anexar. Se alguma falhar, o tratamento já foi
@@ -161,23 +162,16 @@ export function TratamentoPontoColaborador({
         );
       }
     } catch (erro) {
-      // Rodada 139 , mostra o motivo real devolvido pelo servidor (ex.:
+      // Mostra o motivo real devolvido pelo servidor (ex.:
       // o tipo escolhido não encaixa na jornada do motorista naquele
       // horário), em vez de sempre culpar o tamanho do motivo.
-      const msg = (
-        erro as { response?: { data?: { message?: string | string[] } } }
-      )?.response?.data?.message;
-      const texto = Array.isArray(msg) ? msg.join(" ") : msg;
-      setErroTratamento(
-        texto ||
-          "Não foi possível lançar (motivo precisa ter pelo menos 10 caracteres).",
-      );
+      setErroTratamento(mensagemDoErro(erro, "Não foi possível lançar (motivo precisa ter pelo menos 10 caracteres)."));
     } finally {
       setLancandoTratamento(false);
     }
   }
 
-  // Rodada 155 , tratamentos: filtro por período (De/Até, pelo horário do
+  // Tratamentos: filtro por período (De/Até, pelo horário do
   // ajuste), ordenação, "mostrar N por vez" (100 abre popup) e exportação do
   // que está filtrado.
   const listaTratamentos = useListaPaginada(
@@ -233,7 +227,7 @@ export function TratamentoPontoColaborador({
     );
   }
 
-  // Rodada 107 , pedido do usuário: "deixe os [registros] que chegou
+  // Pedido do usuário: "deixe os [registros] que chegou
   // por último como o primeiro da listagem". `sequencial` é a ordem
   // real de chegada no ledger WORM (ver registros-jornada.service.ts),
   // critério melhor que `timestampEvento` (que é só o relógio do
@@ -286,7 +280,7 @@ export function TratamentoPontoColaborador({
             value={tipoEvento}
             onChange={(e) => setTipoEvento(e.target.value as TipoEvento)}
           >
-            {/* Rodada 740: só os eventos da função do colaborador. */}
+            {/* Só os eventos da função do colaborador. */}
             {tiposEventoDaFuncao(motorista?.funcao).map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -299,7 +293,7 @@ export function TratamentoPontoColaborador({
             onChange={(e) => {
               const id = e.target.value;
               setRegistroReferenciaId(id);
-              // Rodada 88 , sugere o horário do registro escolhido como ponto
+              // Sugere o horário do registro escolhido como ponto
               // de partida (o gestor ainda pode ajustar) em vez de deixar
               // "Horário considerado" do jeito que estava (frequentemente
               // vazio ou com "agora", que nunca corrige nada , ver comentário
@@ -358,7 +352,7 @@ export function TratamentoPontoColaborador({
             minLength={10}
           />
 
-          {/* Rodada 79 , pedido do usuário: anexar evidência (adicionar/
+          {/* Pedido do usuário: anexar evidência (adicionar/
               tirar) acontece AQUI, junto do lançamento , depois de
               lançado, o tratamento só permite abrir/ver a imagem (ver
               tabela abaixo, sem opção de anexar nem remover). */}
@@ -489,7 +483,7 @@ export function TratamentoPontoColaborador({
                   <td>{t.usuario?.nome ?? t.usuarioId}</td>
                   <td>{new Date(t.createdAt).toLocaleString("pt-BR")}</td>
                   <td>
-                    {/* Rodada 79 , pedido do usuário: depois de lançado, evidência
+                    {/* Pedido do usuário: depois de lançado, evidência
                       é só pra abrir/ver (sem `remover`, sem input de anexar ,
                       isso agora só acontece no formulário, antes de lançar). */}
                     <EvidenciasAnexo

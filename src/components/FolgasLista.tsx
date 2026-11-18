@@ -16,7 +16,7 @@ export interface LinhaFolga {
 }
 
 /**
- * Rodada 277: lista de folgas com busca por período (De/Até), mais recentes
+ * Lista de folgas com busca por período (De/Até), mais recentes
  * primeiro, 5 linhas por vez (10/20/50/100 disponíveis; 100 abre em janela
  * separada) e exportação em Excel e PDF do que está filtrado. Usada nas
  * seções de folga da ficha do motorista e no histórico do ranking de folgas.

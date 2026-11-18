@@ -1,7 +1,7 @@
 import { api } from "./client";
 import { baixarArquivo } from "../utils/baixarArquivo";
 
-/** Rodada 712 (N529): fechamentos de periodo por motorista no painel. Espelha FechamentoPeriodoController. */
+/** Fechamentos de periodo por motorista no painel. Espelha FechamentoPeriodoController. */
 export interface FechamentoPeriodo {
   id: string;
   periodoInicio: string;

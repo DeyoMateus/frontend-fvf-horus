@@ -1,4 +1,4 @@
-// Rodada 264 , encontra, na tela, o elemento que um passo do tour destaca.
+// Encontra, na tela, o elemento que um passo do tour destaca.
 //
 // Expressões aceitas (tipo:valor, com sufixo opcional @n para o n-ésimo)
 //   css:<seletor>      qualquer seletor CSS
@@ -51,12 +51,12 @@ export function localizarAlvo(expressao: string): HTMLElement[] | null {
   }
   const alvo = normalizar(valor);
 
-  // Rodada 340: nunca considera o que está dentro do próprio tour (balão,
+  // Nunca considera o que está dentro do próprio tour (balão,
   // escolha de módulo). Antes só o tipo "texto" fazia isso; os demais podiam
   // achar o título do balão ("Fechamento de ponto") quando o campo real ainda
   // não estava na tela, e o balão passava a apontar para si mesmo, pulando de
   // lugar a cada quadro.
-  // Rodada 347: com uma tela de exemplo (palco) aberta, só o que está dentro
+  // Com uma tela de exemplo (palco) aberta, só o que está dentro
   // dela conta; a página real fica escondida por baixo.
   const palco = document.querySelector("[data-tour-palco]");
   const todos = (seletor: string) =>

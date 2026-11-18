@@ -11,6 +11,7 @@ import axios, { AxiosError, type AxiosRequestConfig, type AxiosResponse } from "
 // consegue mais roubar uma sessão de 7 dias, só o access token de 15
 // min que já estiver em memória no momento do ataque.
 import { API_URL } from "./apiUrl";
+import { gravarLocal } from "../utils/armazenamentoLocal";
 
 // Header que identifica a chamada como vinda deste próprio frontend ,
 // mitigação de CSRF pros endpoints que dependem do cookie (ver o
@@ -27,13 +28,13 @@ export function setAccessToken(token: string | null) {
 
 export const api = axios.create({
   baseURL: API_URL,
-  // Rodada 501 (N197): nenhuma chamada fica pendurada para sempre.
+  // Nenhuma chamada fica pendurada para sempre.
   timeout: 120_000,
   withCredentials: true,
   headers: { [HEADER_ANTI_CSRF]: "1" },
 });
 
-// Rodada 637: GETs IDENTICOS feitos ao mesmo tempo (ex.: o sino de notificacoes e a tela pedindo os
+// GETs IDENTICOS feitos ao mesmo tempo (ex.: o sino de notificacoes e a tela pedindo os
 // mesmos alertas ao abrir) compartilham uma unica chamada ao servidor. Quem chega depois recebe uma
 // COPIA dos dados, para um nao alterar a lista do outro. Fora disso nada muda: chamadas com cancelamento
 // (signal) ou arquivo (blob/arraybuffer) seguem sozinhas, e o compartilhamento termina quando a
@@ -77,7 +78,7 @@ api.get = ((url: string, config?: AxiosRequestConfig) => {
 
 api.interceptors.request.use((config) => {
   config.headers = config.headers ?? {};
-  // Rodada 148: fuso do computador de quem acessa (min a leste do UTC).
+  // Fuso do computador de quem acessa (min a leste do UTC).
   config.headers["x-fuso-offset-min"] = String(-new Date().getTimezoneOffset());
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -93,12 +94,7 @@ let refrescando: Promise<string | null> | null = null;
 const CHAVE_SESSAO = "horus_sessao";
 
 export function marcarSessao(ativa: boolean): void {
-  try {
-    if (ativa) localStorage.setItem(CHAVE_SESSAO, "1");
-    else localStorage.removeItem(CHAVE_SESSAO);
-  } catch {
-    // armazenamento indisponível: segue sem o marcador
-  }
+  gravarLocal(CHAVE_SESSAO, ativa ? "1" : null);
 }
 
 export function temSessaoMarcada(): boolean {
@@ -163,7 +159,7 @@ api.interceptors.response.use(
         return api(original);
       }
     }
-    // Rodada 493: o prazo do MFA venceu: leva ao cadastro (perfil ou segurança do super admin).
+    // O prazo do MFA venceu: leva ao cadastro (perfil ou segurança do super admin).
     if (
       error.response?.status === 403 &&
       (error.response.data as { codigo?: string } | undefined)?.codigo === "MFA_EXPIRADO"
@@ -173,7 +169,7 @@ api.interceptors.response.use(
         : "/perfil";
       if (!window.location.pathname.startsWith(destino)) window.location.assign(destino);
     }
-    // Rodada 392: a empresa exige MFA e este ADMIN ainda não cadastrou: leva ao perfil.
+    // A empresa exige MFA e este ADMIN ainda não cadastrou: leva ao perfil.
     if (
       error.response?.status === 403 &&
       (error.response.data as { codigo?: string } | undefined)?.codigo ===
@@ -182,7 +178,7 @@ api.interceptors.response.use(
     ) {
       window.location.assign("/perfil");
     }
-    // Rodada 577 (N164): senha definida por outra pessoa; só a troca de senha fica liberada.
+    // Senha definida por outra pessoa; só a troca de senha fica liberada.
     if (
       error.response?.status === 403 &&
       (error.response.data as { codigo?: string } | undefined)?.codigo === "SENHA_PROVISORIA" &&

@@ -1,4 +1,4 @@
-/** Rodada 537 (N136): mesma conferencia de digitos do servidor (11 digitos, nao repetidos, dois verificadores). */
+/** Mesma conferencia de digitos do servidor (11 digitos, nao repetidos, dois verificadores). */
 export function cpfValido(cpf: string): boolean {
   if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
   for (const t of [9, 10]) {

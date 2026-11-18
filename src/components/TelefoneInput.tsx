@@ -3,7 +3,7 @@ import { PAISES_TELEFONE, montarTelefone, separarTelefone } from '../data/paises
 import type { PaisTelefone } from '../data/paisesTelefone';
 
 /**
- * Rodada 500 (N149): a bandeira agora é o emoji do país (letras regionais),
+ * A bandeira agora é o emoji do país (letras regionais),
  * sem nenhuma requisição a CDN de terceiro. Onde o sistema não desenha
  * bandeiras (ex.: Windows), aparecem as duas letras da sigla.
  */

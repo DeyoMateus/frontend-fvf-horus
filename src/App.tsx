@@ -15,7 +15,7 @@ import { SuperAdminAuthProvider } from "./context/SuperAdminAuthContext";
 import { SuperAdminProtectedRoute } from "./components/SuperAdminProtectedRoute";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
 
-// Rodada 746: páginas carregadas sob demanda (cada tela vira um arquivo próprio no build);
+// Páginas carregadas sob demanda (cada tela vira um arquivo próprio no build);
 // o primeiro acesso baixa só o necessário. A tela de login continua no pacote principal.
 const PrivacidadePublicaPage = lazy(() => import("./pages/PrivacidadePublicaPage").then((m) => ({ default: m.PrivacidadePublicaPage })));
 const PrivacidadePainelPage = lazy(() => import("./pages/PrivacidadePainelPage").then((m) => ({ default: m.PrivacidadePainelPage })));
@@ -108,13 +108,13 @@ export function App() {
                     <Route path="/perfil" element={<PerfilPage />} />
                     <Route path="/auditoria" element={<AuditoriaPage />} />
                     <Route path="/lgpd" element={<PrivacidadePainelPage />} />
-                    {/* Rodada 109 , só ADMIN consegue entrar; GESTOR que digitar a URL direto cai no dashboard (ver ProtectedRoute/Layout). */}
+                    {/* Só ADMIN consegue entrar; GESTOR que digitar a URL direto cai no dashboard (ver ProtectedRoute/Layout). */}
                     <Route path="/usuarios" element={<UsuariosEmpresaPage />} />
                     <Route path="/retencao" element={<RetencaoPage />} />
                   </Route>
                 </Route>
 
-                {/* ===== Super admin da plataforma (Rodada 31) ===== */}
+                {/* ===== Super admin da plataforma ===== */}
                 <Route
                   path="/super-admin/login"
                   element={<SuperAdminLoginPage />}

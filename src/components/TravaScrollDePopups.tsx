@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-// Rodada 266 , quando um popup (modal) está aberto, a página de fundo
+// Quando um popup (modal) está aberto, a página de fundo
 // não pode rolar: só o conteúdo de dentro do popup. Detecta sozinho
 // qualquer camada fixa que cobre a tela inteira (os popups do sistema,
 // o modal de confirmação e o tour), então vale para todos os popups

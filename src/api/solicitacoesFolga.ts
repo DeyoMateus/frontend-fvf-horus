@@ -1,3 +1,4 @@
+import { avisarPendenciasMudaram } from "../utils/avisarPendenciasMudaram";
 import { api } from "./client";
 
 export type StatusSolicitacaoFolga = "PENDENTE" | "APROVADA" | "NEGADA";
@@ -23,7 +24,7 @@ export interface PaginaHistoricoFolga {
   pageSize: number;
 }
 
-/** Rodada 221: pedidos de folga dos motoristas esperando decisão do RH. */
+/** Pedidos de folga dos motoristas esperando decisão do RH. */
 export function listarPedidosFolgaPendentes() {
   return api
     .get<SolicitacaoFolga[]>("/solicitacoes-folga/pendentes")
@@ -43,7 +44,10 @@ export function aprovarPedidoFolga(id: string, motivoDecisao?: string) {
     .patch<SolicitacaoFolga>(`/solicitacoes-folga/${id}/aprovar`, {
       motivoDecisao: motivoDecisao || undefined,
     })
-    .then((r) => r.data);
+    .then((r) => {
+      avisarPendenciasMudaram();
+      return r.data;
+    });
 }
 
 export function negarPedidoFolga(id: string, motivoDecisao: string) {
@@ -51,5 +55,8 @@ export function negarPedidoFolga(id: string, motivoDecisao: string) {
     .patch<SolicitacaoFolga>(`/solicitacoes-folga/${id}/negar`, {
       motivoDecisao,
     })
-    .then((r) => r.data);
+    .then((r) => {
+      avisarPendenciasMudaram();
+      return r.data;
+    });
 }

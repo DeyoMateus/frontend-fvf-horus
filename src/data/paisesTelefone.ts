@@ -1,4 +1,4 @@
-// Lista de países pro seletor de telefone (Rodada 41) , o usuário
+// Lista de países pro seletor de telefone , o usuário
 // escolhe o país (bandeira + código de discagem) e digita só o DDD +
 // número; o valor final enviado ao backend é sempre a concatenação em
 // formato E.164 ("+<código><resto>"). Não é uma lista exaustiva dos

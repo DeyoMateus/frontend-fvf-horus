@@ -10,14 +10,14 @@ export interface FiltroAuditoria {
   page?: number;
   pageSize?: number;
   actorType?: ActorType;
-  /** Rodada 347: pessoas específicas (ids). */
+  /** Pessoas específicas (ids). */
   actorIds?: string[];
   acoes?: string[];
   entidade?: string;
   entidadeId?: string;
   dataInicio?: string;
   dataFim?: string;
-  /** Rodada 108 , ordenar do mais recente pro mais antigo, ou o inverso. Default (não informado): 'desc'. */
+  /** Ordenar do mais recente pro mais antigo, ou o inverso. Default (não informado): 'desc'. */
   ordem?: "asc" | "desc";
 }
 
@@ -77,7 +77,7 @@ export interface AtorBuscado {
   detalhe: string;
 }
 
-// Rodada 347: busca automática de pessoas (nome ou CPF) para o filtro "Quem fez".
+// Busca automática de pessoas (nome ou CPF) para o filtro "Quem fez".
 export function buscarAtoresAuditoria(busca: string) {
   return api
     .get<AtorBuscado[]>("/auditoria/atores", { params: { busca } })

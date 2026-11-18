@@ -7,7 +7,7 @@ import { lerCsvContrato } from "../utils/csvContrato";
 const TAMANHO_LOTE = 500;
 
 /**
- * Rodada 389: importação em lote dos dados de contrato (admissão, cargo,
+ * Importação em lote dos dados de contrato (admissão, cargo,
  * matrícula, matrícula eSocial, horário) a partir de um CSV. Só ADMIN.
  * Campo vazio no arquivo não apaga o dado já cadastrado.
  */

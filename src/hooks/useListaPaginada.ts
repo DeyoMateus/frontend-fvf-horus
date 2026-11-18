@@ -23,7 +23,7 @@ export interface ListaPaginadaResultado<T> {
 }
 
 /**
- * Hook genérico (Rodada 108) , pedido do usuário: "coloque essa lógica
+ * Hook genérico , pedido do usuário: "coloque essa lógica
  * de pop up dedicado para todos os recursos que tragam informação em
  * tabelas, e dê a ele a opção de ordenar do mais recente para o mais
  * antigo além dos filtros de data". Antes disso cada tela reimplementava
@@ -50,7 +50,7 @@ export function useListaPaginada<T>(
     desempate?: (a: T, b: T) => number;
     /** Itens que ficam sempre no topo da lista, independente da ordem por data. */
     fixarNoTopo?: (item: T) => boolean;
-    /** Rodada 309: ordem FIXA própria (substitui a ordenação por data). */
+    /** Ordem FIXA própria (substitui a ordenação por data). */
     comparador?: (a: T, b: T) => number;
   },
 ): ListaPaginadaResultado<T> {

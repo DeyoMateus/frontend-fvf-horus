@@ -74,12 +74,12 @@ export async function baixarHoleritePdf(
 }
 
 /**
- * Fechamento em lote (Rodada 36) , "janela de fechamento": o gestor
+ * Fechamento em lote , "janela de fechamento": o gestor
  * escolhe um conjunto de motoristas (ou nenhum = frota inteira) e
  * baixa tudo de uma vez. Com 1 motorista só, o backend devolve o
  * mesmo PDF individual de sempre.
  *
- * Rodada 82 , pedido do usuário: com mais de um motorista, o backend
+ * Pedido do usuário: com mais de um motorista, o backend
  * não combina mais tudo num PDF só , devolve um .zip com um PDF
  * separado por motorista (cada um com o relatório completo dele).
  * O Content-Type da resposta que o backend manda decide a extensão
@@ -121,7 +121,7 @@ export async function baixarFechamentoPdf(
   } catch {
     bloqueados = [];
   }
-  // Rodada 88 , corrigido erro de tipo: em versões mais novas do axios,
+  // Corrigido erro de tipo: em versões mais novas do axios,
   // o valor de um header pode ser tipado como string | number | boolean |
   // AxiosHeaders | string[], não só string , `.includes` direto quebra a
   // checagem de tipos. `String(...)` normaliza pra sempre poder chamar
@@ -143,7 +143,7 @@ export async function baixarFechamentoPdf(
 }
 
 /**
- * Rodada 589: horas apuradas por evento (direção, espera, normais, extras, noturno, interjornada)
+ * Horas apuradas por evento (direção, espera, normais, extras, noturno, interjornada)
  * em CSV para a folha de pagamento do cliente. Mesmos filtros e bloqueios do PDF do fechamento.
  */
 export async function baixarEventosFolhaCsv(

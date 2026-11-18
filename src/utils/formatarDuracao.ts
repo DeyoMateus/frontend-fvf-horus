@@ -1,5 +1,5 @@
 /**
- * Rodada 61 , pedido do usuário: os cards de horas mostravam sempre
+ * Pedido do usuário: os cards de horas mostravam sempre
  * hora decimal (ex.: "0.4h"), formato que confunde quem não está
  * acostumado a converter fração de hora pra minutos de cabeça. Agora:
  * - abaixo de 1 hora: "MM:SS" (ex.: 21min30s → "21:30")
@@ -9,7 +9,7 @@
  * real (direção/espera), não só valores inteiros , convertendo pra
  * segundos antes de formatar, sem perder a precisão.
  *
- * Rodada 63 , o próprio formato "MM:SS" gerou confusão real: um
+ * O próprio formato "MM:SS" gerou confusão real: um
  * card de "26 minutos e 0 segundos" de espera aparecia como "26:00",
  * e foi lido como "26 horas" (formato HH:MM), abrindo uma investigação
  * de bug que não existia , o dado sempre esteve correto, só a leitura
@@ -20,7 +20,7 @@
  */
 export function minParaHoras(minutos: number): string {
   const sinal = minutos < 0 ? "-" : "";
-  // Rodada 159: abaixo de 1h mostra só o número de minutos ("55 m", nunca
+  // Abaixo de 1h mostra só o número de minutos ("55 m", nunca
   // "55:00 m"); a partir de 1h, "HH:MM h".
   const totalMin = Math.round(Math.abs(minutos));
   if (totalMin >= 60) {
@@ -29,4 +29,13 @@ export function minParaHoras(minutos: number): string {
     return `${sinal}${String(horas).padStart(2, "0")}:${String(resto).padStart(2, "0")} h`;
   }
   return `${sinal}${totalMin} m`;
+}
+
+/** Segundos como HH:MM:SS (ex.: 5430 -> "01:30:30"). */
+export function segParaHms(segundos: number): string {
+  const total = Math.max(0, Math.round(segundos));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }

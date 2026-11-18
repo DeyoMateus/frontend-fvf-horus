@@ -1,5 +1,5 @@
 /**
- * Rodada 691: cidade, UF e fuso da empresa, definidos pelo super admin no cadastro e editáveis
+ * Cidade, UF e fuso da empresa, definidos pelo super admin no cadastro e editáveis
  * nas empresas já cadastradas. Cidade e UF são informativos; os feriados seguem o cadastro manual.
  */
 export const UFS_BRASIL = [

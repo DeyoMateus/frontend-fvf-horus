@@ -1,3 +1,4 @@
+import { avisarPendenciasMudaram } from "../utils/avisarPendenciasMudaram";
 import { api } from "./client";
 import type { SolicitacaoAjustePonto } from "./types";
 import { baixarArquivo } from "../utils/baixarArquivo";
@@ -35,7 +36,10 @@ export function aprovarSolicitacao(id: string, motivoDecisao?: string) {
     .patch<SolicitacaoAjustePonto>(`/solicitacoes-ajuste-ponto/${id}/aprovar`, {
       motivoDecisao,
     })
-    .then((r) => r.data);
+    .then((r) => {
+      avisarPendenciasMudaram();
+      return r.data;
+    });
 }
 
 export function rejeitarSolicitacao(id: string, motivoDecisao: string) {
@@ -44,7 +48,10 @@ export function rejeitarSolicitacao(id: string, motivoDecisao: string) {
       `/solicitacoes-ajuste-ponto/${id}/rejeitar`,
       { motivoDecisao },
     )
-    .then((r) => r.data);
+    .then((r) => {
+      avisarPendenciasMudaram();
+      return r.data;
+    });
 }
 
 export async function baixarEvidenciaSolicitacao(

@@ -5,7 +5,7 @@ import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import { cpfValido } from "../utils/cpf";
 
 /**
- * Rodada 537 (N136): quem altera dados que vao no AFD (empresa, cadastro de motorista) precisa ter
+ * Quem altera dados que vao no AFD (empresa, cadastro de motorista) precisa ter
  * CPF no cadastro; ele vai no campo "CPF do responsavel". Quem ja existia e ainda nao informou fica
  * preso nesta tela no proximo acesso ate informar. O servidor tambem recusa essas alteracoes sem CPF,
  * entao a tela e so a forma de resolver. Se o servidor nao responder, o painel nao abre (falha fechada).

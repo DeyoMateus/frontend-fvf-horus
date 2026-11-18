@@ -1,6 +1,6 @@
 import type { SuperAdminAutenticado, UsuarioAutenticado } from "./types";
 
-/** Rodada 555 (N197): payload em UTF-8 (atob sozinho devolve latin1 e estraga acentos). */
+/** Payload em UTF-8 (atob sozinho devolve latin1 e estraga acentos). */
 function lerPayload(token: string): unknown {
   const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
   const binario = atob(base64);

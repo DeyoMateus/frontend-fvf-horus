@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-// Rodada 270 , todo campo de texto de várias linhas (textarea) cresce em
+// Todo campo de texto de várias linhas (textarea) cresce em
 // altura conforme o texto, nunca esconde o que foi digitado. Quando o
 // campo fica maior que a tela, é a própria página (ou o popup) que rola.
 // Vale para os textareas atuais e futuros, sem mexer em cada um.
@@ -26,7 +26,7 @@ export function ExpandirCamposDeTexto() {
       ajustar(el);
     }
 
-    // Rodada 512 (N200): antes era um requestAnimationFrame permanente (60 varreduras por
+    // Antes era um requestAnimationFrame permanente (60 varreduras por
     // segundo). Agora: resposta imediata ao digitar (evento input) e uma conferencia a cada
     // 300 ms para valores trocados por codigo (ex.: limpar o campo apos salvar); pausa com a aba oculta.
     function ciclo() {

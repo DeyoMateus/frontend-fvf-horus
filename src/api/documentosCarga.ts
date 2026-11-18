@@ -15,14 +15,6 @@ export interface DocumentoCarga {
   // Quando o motorista bateu "Fim de descarregamento" e este foi o
   // CT-e desvinculado (FIFO) , null enquanto ainda está CARREGADO.
   entregueEm: string | null;
-  // Endereço do destinatário extraído do XML (best-effort) e as
-  // coordenadas resolvidas automaticamente por geocodificação , base
-  // da cerca virtual (geofence) de 500m avaliada em "Fim de
-  // descarregamento". Qualquer um pode vir null (extração/geocodificação
-  // sem sucesso) sem afetar o resto do fluxo.
-  enderecoDestinatario: string | null;
-  destinatarioLatitude: string | null;
-  destinatarioLongitude: string | null;
   createdAt: string;
   motorista?: { nome: string } | null;
 }

@@ -40,7 +40,7 @@ export async function redefinirSenhaSuperAdmin(
   });
 }
 
-// Rodada 384: MFA (TOTP) do próprio super admin.
+// MFA (TOTP) do próprio super admin.
 export function obterEstadoMfaSuperAdmin() {
   return superAdminApi
     .get<{ mfaAtivo: boolean; codigosReservaRestantes: number; mfaValidoAte?: string | null; mfaExpirado?: boolean }>("/super-admin/auth/mfa/estado")

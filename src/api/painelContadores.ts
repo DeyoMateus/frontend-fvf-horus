@@ -4,10 +4,10 @@ import type { SolicitacaoFolga } from "./solicitacoesFolga";
 import type { SolicitacaoPendenteSino } from "./privacidade";
 
 /**
- * Rodada 653: as pendencias do sino (ajustes de ponto, pedidos de folga e pedidos dos titulares) numa so
+ * As pendencias do sino (ajustes de ponto, pedidos de folga e pedidos dos titulares) numa so
  * consulta. Cada parte e `null` quando falhou no servidor; o painel mantem o que ja tinha dela.
  */
-/** Rodada 702: instrumento do banco de horas vencido ou perto de vencer. */
+/** Instrumento do banco de horas vencido ou perto de vencer. */
 export interface AvisoInstrumento {
   empresaId: string;
   razaoSocial: string;
@@ -16,7 +16,7 @@ export interface AvisoInstrumento {
   diasParaFim: number | null;
 }
 
-/** Rodada 711: motorista com credito do banco de horas vencido e nao baixado, ou a vencer em ate 15 dias. */
+/** Motorista com credito do banco de horas vencido e nao baixado, ou a vencer em ate 15 dias. */
 export interface AvisoBancoVencimento {
   motoristaId: string;
   nome: string;

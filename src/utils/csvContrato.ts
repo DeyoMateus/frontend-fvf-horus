@@ -1,7 +1,7 @@
 import type { LinhaContratoImportacao } from "../api/dadosContrato";
 
 /**
- * Rodada 389: lê o CSV de dados de contrato (separador ";" ou ","; primeira
+ * Lê o CSV de dados de contrato (separador ";" ou ","; primeira
  * linha com os nomes das colunas). Colunas aceitas: cpf, admissao, cargo,
  * matricula, matricula_esocial, horario. Datas em AAAA-MM-DD ou DD/MM/AAAA.
  * Função pura: devolve as linhas válidas e os problemas de leitura.

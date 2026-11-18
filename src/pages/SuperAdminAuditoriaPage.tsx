@@ -1,5 +1,6 @@
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useSelecao } from "../hooks/useSelecao";
 import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
 import { rotuloAcaoAuditoria, rotuloPermissaoAusente } from "../utils/rotuloAcaoAuditoria";
 import {
@@ -35,7 +36,7 @@ function formatarValorDetalhe(valor: unknown): string {
 }
 
 /**
- * Versão SUPER_ADMIN do painel visual de auditoria (Rodada 66) , ver
+ * Versão SUPER_ADMIN do painel visual de auditoria , ver
  * `AuditoriaPage` (irmã, painel ADMIN/GESTOR do grupo). Diferença
  * central: sem restrição de grupo por padrão (vê a plataforma inteira,
  * grupoId nulo , eventos de sistema/login antes de saber o grupo ,
@@ -46,20 +47,20 @@ export function SuperAdminAuditoriaPage() {
   const [grupos, setGrupos] = useState<GrupoResumo[]>([]);
   const [grupoId, setGrupoId] = useState("");
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaAuditoria[]>([]);
-  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const { selecionados: selecionadas, setSelecionados: setSelecionadas, alternar: alternarSelecao } = useSelecao();
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [actorType, setActorType] = useState<ActorType | "">("");
   const [registros, setRegistros] = useState<RegistroAuditoria[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  // Rodada 94 , faltava o seletor "mostrar N por vez" que as outras
+  // Faltava o seletor "mostrar N por vez" que as outras
   // páginas paginadas já têm (ver qtdTratamentosPorPagina em
   // MotoristaDetailPage.tsx) , aqui é paginação de servidor (manda
   // page/pageSize pro backend), não fatiamento no cliente, mas o
   // controle visual é o mesmo.
   const [pageSize, setPageSize] = useState<10 | 20 | 50 | 100>(50);
-  // Rodada 108 , ver comentário equivalente em AuditoriaPage.tsx.
+  // Ver comentário equivalente em AuditoriaPage.tsx.
   const [ordem, setOrdem] = useState<"asc" | "desc">("desc");
   const [popupPaginacaoAberto, setPopupPaginacaoAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
@@ -80,7 +81,7 @@ export function SuperAdminAuditoriaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId]);
 
-  // Rodada 99 , mesmo bug/correção de AuditoriaPage.tsx: ver comentário
+  // Mesmo bug/correção de AuditoriaPage.tsx: ver comentário
   // completo lá. Só a carga INICIAL passa pela tela cheia; filtro,
   // página, grupo ou itens por página só trocam os dados no lugar.
   async function carregar(comCarregamentoTelaCheia = false) {
@@ -128,17 +129,9 @@ export function SuperAdminAuditoriaPage() {
     return mapa;
   }, [ocorrencias]);
 
-  function alternarSelecao(chave: string) {
-    setSelecionadas((prev) => {
-      const novo = new Set(prev);
-      if (novo.has(chave)) novo.delete(chave);
-      else novo.add(chave);
-      return novo;
-    });
-  }
 
   function aplicarFiltros() {
-    // Rodada 94 , ver o mesmo comentário em AuditoriaPage.tsx.
+    // Ver o mesmo comentário em AuditoriaPage.tsx.
     if (page === 1) {
       carregar();
     } else {

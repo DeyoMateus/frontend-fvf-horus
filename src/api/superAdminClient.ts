@@ -19,7 +19,7 @@ export function setSuperAdminAccessToken(token: string | null) {
 
 export const superAdminApi = axios.create({
   baseURL: API_URL,
-  // Rodada 501 (N197): nenhuma chamada fica pendurada para sempre.
+  // Nenhuma chamada fica pendurada para sempre.
   timeout: 120_000,
   withCredentials: true,
   headers: { [HEADER_ANTI_CSRF]: "1" },
@@ -76,7 +76,7 @@ superAdminApi.interceptors.response.use(
         return superAdminApi(original);
       }
     }
-    // Rodada 555 (N197): prazo do MFA vencido leva ao cadastro de seguranca (como no painel de grupo).
+    // Prazo do MFA vencido leva ao cadastro de seguranca (como no painel de grupo).
     if (
       error.response?.status === 403 &&
       (error.response.data as { codigo?: string } | undefined)?.codigo === "MFA_EXPIRADO" &&

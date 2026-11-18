@@ -2,7 +2,7 @@ import { api } from "./client";
 import type { Feriado } from "./types";
 
 // Espelha FeriadosController: rotas /feriados. Cadastro de feriados
-// aceitos pela empresa (Rodada 29) , o RH decide, cidade por cidade,
+// aceitos pela empresa , o RH decide, cidade por cidade,
 // o que conta como feriado (e se paga com percentual equivalente ao
 // domingo, ou não). Vale para o grupo inteiro por padrão, ou só para
 // um CNPJ específico quando `empresaId` é informado.

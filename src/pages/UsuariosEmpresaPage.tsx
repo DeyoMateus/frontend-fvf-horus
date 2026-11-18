@@ -19,16 +19,16 @@ import { ControlesListaPaginada } from "../components/ControlesListaPaginada";
 import { rotuloPapel } from "../utils/rotulos";
 
 /**
- * Gestão do time do próprio grupo (Rodada 31). O ADMIN só ativa/desativa
+ * Gestão do time do próprio grupo. O ADMIN só ativa/desativa
  * acesso de quem já existe , GESTOR só vê a lista, pra saber quem mais
  * tem acesso ao painel do grupo.
  *
- * Rodada 110 , pedido do usuário: tirou o formulário de "convidar
+ * Pedido do usuário: tirou o formulário de "convidar
  * usuário" daqui; criar um novo usuário do grupo continua sendo feito
  * pelo super admin da plataforma (`SuperAdminGrupoDetailPage.tsx`).
  */
 /**
- * Rodada 496 (N126): o redirect fica num componente-casca, antes de qualquer hook do conteudo
+ * O redirect fica num componente-casca, antes de qualquer hook do conteudo
  * (return antecipado entre hooks quebra as Rules of Hooks).
  */
 export function UsuariosEmpresaPage() {
@@ -40,7 +40,7 @@ export function UsuariosEmpresaPage() {
 function UsuariosEmpresaConteudo() {
   const { usuario } = useAuth();
   const confirm = useConfirm();
-  // Rodada 109 , tela é exclusiva do ADMIN (GESTOR nem tem acesso às
+  // Tela é exclusiva do ADMIN (GESTOR nem tem acesso às
   // rotas de listar/ativar no backend); quem digitar a URL direto sem
   // ser ADMIN volta pro dashboard, sem nem chamar a API.
   const [usuarios, setUsuarios] = useState<UsuarioEmpresaListado[]>([]);
@@ -149,7 +149,7 @@ function UsuariosEmpresaConteudo() {
     }
   }
 
-  // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
+  // Pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
   const paginacao = useListaPaginada(usuarios, (u) => u.createdAt);
 

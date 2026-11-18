@@ -8,7 +8,7 @@ import { Paginador } from "./Paginador";
 export const LINHAS_POR_PAGINA_JORNADAS_ABERTAS = 10;
 
 /**
- * Rodada 641: "Jornadas aguardando encerramento pelo gestor". A lista nao cresce mais sem limite na tela:
+ * "Jornadas aguardando encerramento pelo gestor". A lista nao cresce mais sem limite na tela:
  * a 1a pagina e o total vem no resumo do painel (atualizado a cada 30 s); as demais paginas sao buscadas
  * so quando o gestor navega ate elas.
  */

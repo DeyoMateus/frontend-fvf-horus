@@ -41,7 +41,7 @@ export function listMotoristas(
 }
 
 /**
- * Rodada 500 (N127): busca TODAS as páginas (200 por vez), para telas que
+ * Busca TODAS as páginas (200 por vez), para telas que
  * precisam da frota inteira (seletores, filtros) não truncarem em silêncio.
  * Teto de 50 páginas (10.000 motoristas) como trava de segurança.
  */
@@ -54,7 +54,7 @@ export async function listarTodosMotoristas(
     50,
     Math.ceil(primeira.total / (primeira.pageSize || 200)),
   );
-  // Rodada 746: as demais páginas em paralelo, de 5 em 5 (antes uma por vez).
+  // As demais páginas em paralelo, de 5 em 5 (antes uma por vez).
   const dados = [...primeira.dados];
   for (let pg = 2; pg <= paginas; pg += 5) {
     const lote = [];
@@ -67,7 +67,7 @@ export async function listarTodosMotoristas(
 }
 
 /**
- * Rodada 746: lista de colaboradores ativos (sem busca e sem excluídos) para seletores e filtros,
+ * Lista de colaboradores ativos (sem busca e sem excluídos) para seletores e filtros,
  * guardada em memória por 60 s. Várias telas (e componentes da mesma tela) pedem a mesma lista;
  * quem chega durante a busca espera a mesma resposta. Limpa ao entrar, ao sair e a cada alteração
  * de cadastro feita por este painel. A tela de Colaboradores continua lendo sem cache.
@@ -121,7 +121,7 @@ export function getMotorista(id: string) {
 export interface CreateMotoristaInput {
   nome: string;
   cpf: string;
-  /** Rodada 740: obrigatória só para motorista. */
+  /** Obrigatória só para motorista. */
   cnh?: string;
   funcao?: FuncaoColaborador;
   empresaId: string;
@@ -129,7 +129,7 @@ export interface CreateMotoristaInput {
   placa?: string;
   idRastreador?: string;
   tecnologiaRastreador?: TecnologiaRastreador;
-  /** Telefone de contato , obrigatório (Rodada 74), formato E.164 (ver TelefoneInput). */
+  /** Telefone de contato , obrigatório, formato E.164 (ver TelefoneInput). */
   telefone: string;
 }
 
@@ -151,12 +151,12 @@ export interface AtualizarCadastroMotoristaInput {
   nome?: string;
   /** Formato E.164 (ver TelefoneInput). */
   telefone?: string;
-  /** Rodada 278: CNPJ (empresa do grupo) ao qual o motorista fica vinculado. */
+  /** CNPJ (empresa do grupo) ao qual o motorista fica vinculado. */
   empresaId?: string;
 }
 
 /**
- * Edição dos dados cadastrais (Rodada 74) , de propósito só nome e
+ * Edição dos dados cadastrais , de propósito só nome e
  * telefone. CPF/CNH não entram: são a âncora do hash genesis da
  * cadeia de jornada e o CPF também está gravado no certificado
  * digital já emitido no cadastro , ver comentário completo em
@@ -170,11 +170,11 @@ export function atualizarCadastroMotorista(
 }
 
 /**
- * "Excluir cadastro" (Rodada 65) , NÃO apaga a linha do motorista no
+ * "Excluir cadastro" , NÃO apaga a linha do motorista no
  * banco, só tira da listagem normal do painel. Ver comentário completo
  * em MotoristasService.excluir (backend).
  */
-/** Rodada 725: reativa um cadastro excluido (volta ATIVO). O servidor recusa se CPF/CNH foi reutilizado. */
+/** Reativa um cadastro excluido (volta ATIVO). O servidor recusa se CPF/CNH foi reutilizado. */
 export function reativarMotorista(id: string) {
   return api.post<Motorista>(`/motoristas/${id}/reativar`).then((r) => aposAlterar(r.data));
 }
@@ -182,5 +182,19 @@ export function reativarMotorista(id: string) {
 export function excluirMotorista(id: string, motivo: string) {
   return api
     .delete<Motorista>(`/motoristas/${id}`, { data: { motivo } })
+    .then((r) => aposAlterar(r.data));
+}
+
+/** Rescisão (desligamento) pela ficha: grava a data, inativa o cadastro e mantém todo o histórico. */
+export function rescindirMotorista(id: string, dataDesligamento: string, motivo: string) {
+  return api
+    .post<Motorista>(`/motoristas/${id}/rescisao`, { dataDesligamento, motivo })
+    .then((r) => aposAlterar(r.data));
+}
+
+/** Readmissão de quem teve a rescisão registrada: volta a ATIVO e encerra o desligamento. */
+export function readmitirMotorista(id: string, dataReadmissao: string, motivo: string) {
+  return api
+    .post<Motorista>(`/motoristas/${id}/readmissao`, { dataReadmissao, motivo })
     .then((r) => aposAlterar(r.data));
 }

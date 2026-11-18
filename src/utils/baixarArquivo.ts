@@ -1,5 +1,5 @@
 /**
- * Rodada 557 (N202): um unico lugar para "baixar este conteudo como arquivo". Antes o mesmo bloco
+ * Um unico lugar para "baixar este conteudo como arquivo". Antes o mesmo bloco
  * (createObjectURL + link + click + revoke) estava repetido em ~14 funcoes.
  */
 export function baixarArquivo(conteudo: Blob, nomeArquivo: string): void {

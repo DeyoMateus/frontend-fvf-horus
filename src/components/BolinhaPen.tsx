@@ -5,7 +5,7 @@ import type { PendenciaDaAba } from "./penMenu";
 const LINHAS_VISIVEIS = 6;
 
 /**
- * Rodada 335: bolinha no fim do botão da aba do menu lateral. Ao passar o
+ * Bolinha no fim do botão da aba do menu lateral. Ao passar o
  * cursor, lista as pendências de forma resumida. O resumo é desenhado fora do
  * menu portal para não ser cortado pela rolagem da barra lateral t
  */

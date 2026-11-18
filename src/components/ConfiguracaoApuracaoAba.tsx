@@ -1,5 +1,5 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useCallback, useEffect, useState } from "react";
-import { AxiosError } from "axios";
 import {
   atualizarChaveApuracao,
   listarConfiguracaoApuracao,
@@ -15,13 +15,8 @@ const ROTULO_REGIME: Record<string, string> = {
   COMPENSACAO_NO_MES: "Compensação no mesmo mês",
 };
 
-function mensagemDeErro(ex: unknown, padrao: string) {
-  const m = ex instanceof AxiosError ? ex.response?.data?.message : null;
-  return Array.isArray(m) ? String(m[0]) : typeof m === "string" ? m : padrao;
-}
-
 /**
- * Rodada 692: apuração, alertas e regime do banco de horas são decisão da própria empresa,
+ * Apuração, alertas e regime do banco de horas são decisão da própria empresa,
  * junto com as regras sindicais (antes ficavam com o super admin). Só ADMIN altera; GESTOR consulta.
  */
 export function ConfiguracaoApuracaoAba({ podeAlterar }: { podeAlterar: boolean }) {
@@ -39,7 +34,7 @@ export function ConfiguracaoApuracaoAba({ podeAlterar }: { podeAlterar: boolean 
       setEmpresas(await listarConfiguracaoApuracao());
       setErro(null);
     } catch (ex) {
-      setErro(mensagemDeErro(ex, "Não foi possível carregar as configurações."));
+      setErro(mensagemDoErro(ex, "Não foi possível carregar as configurações."));
     } finally {
       setCarregando(false);
     }
@@ -70,7 +65,7 @@ export function ConfiguracaoApuracaoAba({ podeAlterar }: { podeAlterar: boolean 
       setAviso(`"${c.rotulo}" ${c.ligada ? "desligada" : "ligada"} em ${emp.razaoSocial}.`);
       await carregar();
     } catch (ex) {
-      setErro(mensagemDeErro(ex, "Não foi possível alterar."));
+      setErro(mensagemDoErro(ex, "Não foi possível alterar."));
     } finally {
       setOcupada(null);
     }

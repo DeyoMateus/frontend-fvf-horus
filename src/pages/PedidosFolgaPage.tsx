@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { Esqueleto } from "../components/Esqueleto";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -32,7 +33,7 @@ function totalDias(s: SolicitacaoFolga): number {
 }
 
 /**
- * Rodada 221: o motorista PEDE folga pelo app, o RH decide aqui. Aprovar
+ * O motorista PEDE folga pelo app, o RH decide aqui. Aprovar
  * cria uma folga por dia do período; negar exige justificativa (o
  * motorista vê a resposta no app). O lançamento direto de folga pelo RH
  * (quando não há pedido) continua na tela do motorista.
@@ -88,10 +89,7 @@ export function PedidosFolgaPage() {
       setJustificativas((j) => ({ ...j, [s.id]: "" }));
       await carregar();
     } catch (e) {
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "Não foi possível registrar a decisão.";
-      toast.erro(msg);
+      toast.erro(mensagemDoErro(e, "Não foi possível registrar a decisão."));
     } finally {
       setProcessandoId(null);
     }

@@ -1,4 +1,5 @@
 import { notificacoesDesktopAtivas } from "../utils/notificacoesDesktop";
+import { EVENTO_PENDENCIAS_ATUALIZADAS } from "../utils/avisarPendenciasMudaram";
 import { useToast } from "./ToastProvider";
 import { useEffect, useRef, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
@@ -20,16 +21,17 @@ import {
 import { listarSolicitacoesTitularPendentes } from "../api/privacidade";
 import { listarPendenciasDoPainel, type AvisoBancoVencimento, type AvisoInstrumento } from "../api/painelContadores";
 import type { SolicitacaoPendenteSino } from "../api/privacidade";
+import { gravarJsonLocal, lerJsonLocal } from "../utils/armazenamentoLocal";
 
-// Rodada 647: cada consulta do sino tem o ritmo que a urgencia dela pede (antes tudo a cada 30 s).
+// Cada consulta do sino tem o ritmo que a urgencia dela pede (antes tudo a cada 30 s).
 // Alertas: 15 s (o critico aparece em ate ~15 s, mais ate 10 s de cache no servidor). Solicitacoes
 // de ajuste/folga e pedidos do titular: 60 s. Radar de dias sem interacao: 5 min (e atualiza na hora
 // quando o gestor trata um dia, pelo evento "radar-sem-interacao-atualizado"). Jitter: cada aba comeca
 // o ritmo num instante diferente, para varios paineis nao baterem no servidor juntos.
-// Rodada 746: 30 s (antes 15 s). O alerta critico tambem sai por push e WhatsApp na hora; no sino
+// 30 s (antes 15 s). O alerta critico tambem sai por push e WhatsApp na hora; no sino
 // aparece em ate ~40 s (30 s + ate 10 s de cache). A consulta so roda com a aba visivel.
 const INTERVALO_ALERTAS_MS = 30_000;
-// Rodada 653: ajustes, folgas e pedidos dos titulares vem numa consulta so, a cada 2 min.
+// Ajustes, folgas e pedidos dos titulares vem numa consulta so, a cada 2 min.
 const INTERVALO_PENDENCIAS_MS = 120_000;
 const INTERVALO_RADAR_MS = 300_000;
 const JITTER_MS = 5_000;
@@ -55,7 +57,7 @@ const ROTULOS_SEVERIDADE: Record<string, string> = {
  * "visualizado" já é persistido no backend (marcarAlertaVisualizado) e
  * o polling seguinte só traz o que ainda estiver não-visualizado.
  *
- * Rodada 73 , pedido do usuário: "acrescentar notificação na aba de
+ * Pedido do usuário: "acrescentar notificação na aba de
  * notificação do telefone e desktop quando chega algum alerta." Isso
  * era só polling in-app (sininho + badge) , nada aparecia na bandeja de
  * notificações do sistema operacional/navegador. Agora, quando o
@@ -115,7 +117,7 @@ function notificarSolicitacaoNoDesktop(solicitacao: SolicitacaoAjustePonto) {
   }
 }
 
-/** Rodada 711: cada etapa (a vencer, vence hoje, vencido) gera um aviso novo, uma vez por motorista. */
+/** Cada etapa (a vencer, vence hoje, vencido) gera um aviso novo, uma vez por motorista. */
 function notificarBancoVencimentoNoDesktop(titulo: string, texto: string, tag: string) {
   if (!notificacoesDesktopAtivas()) return;
   if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -132,19 +134,12 @@ function notificarBancoVencimentoNoDesktop(titulo: string, texto: string, tag: s
 }
 
 function etapasBancoJaAvisadas(): Set<string> {
-  try {
-    return new Set<string>(JSON.parse(localStorage.getItem("fvf:banco-venc-avisado") ?? "[]"));
-  } catch {
-    return new Set<string>();
-  }
+  const lista = lerJsonLocal<unknown>("fvf:banco-venc-avisado", []);
+  return new Set<string>(Array.isArray(lista) ? lista : []);
 }
 
 function lembrarEtapasBanco(s: Set<string>) {
-  try {
-    localStorage.setItem("fvf:banco-venc-avisado", JSON.stringify([...s].slice(-500)));
-  } catch {
-    // Não é crítico.
-  }
+  gravarJsonLocal("fvf:banco-venc-avisado", [...s].slice(-500));
 }
 
 function notificarPedidoTitularNoDesktop(nome: string) {
@@ -153,7 +148,7 @@ function notificarPedidoTitularNoDesktop(nome: string) {
   if (Notification.permission !== "granted") return;
   try {
     const n = new Notification("Novo pedido de privacidade (LGPD)", {
-      body: `${nome} fez um pedido sobre os próprios dados. Prazo de resposta: 15 dias.`,
+      body: `${nome} fez um pedido sobre os próprios dados.`,
       tag: "pedido-titular",
     });
     n.onclick = () => {
@@ -165,7 +160,7 @@ function notificarPedidoTitularNoDesktop(nome: string) {
   }
 }
 
-/** Rodada 702: texto do aviso de fim de vigência do instrumento do banco de horas. */
+/** Texto do aviso de fim de vigência do instrumento do banco de horas. */
 function textoInstrumento(a: AvisoInstrumento): string {
   if (a.situacao === "VENCIDO") {
     return "o instrumento do banco de horas venceu; as horas extras novas estão indo para pagamento.";
@@ -182,7 +177,7 @@ function fmtMin(min: number): string {
   return `${h}h${String(m).padStart(2, "0")}`;
 }
 
-/** Rodada 711: texto do aviso de credito do banco de horas vencido ou a vencer. */
+/** Texto do aviso de credito do banco de horas vencido ou a vencer. */
 function textoBancoVencimento(a: AvisoBancoVencimento): string {
   if (a.vencidoMin > 0) {
     return `${fmtMin(a.vencidoMin)} de banco de horas vencido, aguardando conferência e baixa.`;
@@ -206,7 +201,7 @@ export function NotificationBell() {
   >([]);
   // Radar "dias sem interação" (Motoristas): também avisa no sininho até o
   // gestor tratar cada dia (botão "Tratar" na lista de Motoristas).
-  // Rodada 221: pedidos de folga dos motoristas esperando decisão.
+  // Pedidos de folga dos motoristas esperando decisão.
   const [pedidosFolga, setPedidosFolga] = useState<SolicitacaoFolga[]>([]);
   const [semInteracao, setSemInteracao] = useState<MotoristaSemInteracao[]>([]);
   const idsConhecidosRadarRef = useRef<Set<string> | null>(null);
@@ -215,7 +210,7 @@ export function NotificationBell() {
     SolicitacaoPendenteSino[]
   >([]);
   const idsConhecidosPedidosRef = useRef<Set<string> | null>(null);
-  // Rodada 702: instrumento do banco de horas vencido ou perto de vencer.
+  // Instrumento do banco de horas vencido ou perto de vencer.
   const [avisosInstrumento, setAvisosInstrumento] = useState<AvisoInstrumento[]>([]);
   const [avisosBanco, setAvisosBanco] = useState<AvisoBancoVencimento[]>([]);
   const [aberto, setAberto] = useState(false);
@@ -275,7 +270,7 @@ export function NotificationBell() {
     setPedidosTitular(dados);
   }
 
-  // Rodada 653: uma consulta so; se ela nao existir (servidor mais antigo) ou falhar,
+  // Uma consulta so; se ela nao existir (servidor mais antigo) ou falhar,
   // cai nas tres consultas separadas de antes.
   async function buscarPendencias() {
     try {
@@ -394,11 +389,18 @@ export function NotificationBell() {
 
   useEffect(() => {
     void buscarPendencias();
-    return intervaloVisivel(
+    const parar = intervaloVisivel(
       () => void buscarPendencias(),
       INTERVALO_PENDENCIAS_MS,
       { jitterMs: JITTER_MS },
     );
+    // Uma decisao (folga, ajuste, pedido do titular) atualiza o sino na hora.
+    const aoDecidir = () => void buscarPendencias();
+    window.addEventListener(EVENTO_PENDENCIAS_ATUALIZADAS, aoDecidir);
+    return () => {
+      parar();
+      window.removeEventListener(EVENTO_PENDENCIAS_ATUALIZADAS, aoDecidir);
+    };
   }, []);
 
   function pedirPermissaoDeNotificacao() {
@@ -437,7 +439,7 @@ export function NotificationBell() {
     avisosInstrumento.length +
     avisosBanco.length +
     (diasRadar > 0 ? 1 : 0);
-  // Rodada 335: resumo por aba para as bolinhas do menu lateral.
+  // Resumo por aba para as bolinhas do menu lateral.
   useEffect(() => {
     const mapa: Record<string, PendenciaDaAba> = {};
     const nomeDe = (m?: { nome: string } | null) => m?.nome ?? "Motorista";
@@ -502,7 +504,7 @@ export function NotificationBell() {
       };
     }
     publicarPendenciasDoMenu(mapa);
-    // Rodada 753: a mesma leitura, item a item, para a tela "Pendências".
+    // A mesma leitura, item a item, para a tela "Pendências".
     const fila: ItemDaFila[] = [
       ...alertas.map((a): ItemDaFila => {
         const m = (a as { motorista?: { id: string; nome: string } }).motorista;
@@ -546,7 +548,7 @@ export function NotificationBell() {
         chave: `privacidade:${(p as { id?: string }).id ?? i}`,
         tipo: "privacidade",
         quem: nomeDe(p.motorista),
-        descricao: "Pedido de privacidade (prazo de resposta: 15 dias)",
+        descricao: "Pedido de privacidade",
         desde: (p as { createdAt?: string }).createdAt,
         to: "/lgpd",
       })),

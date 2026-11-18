@@ -76,7 +76,7 @@ export function PrivacidadePainelPage() {
 }
 
 /**
- * Rodada 734: pedidos de eliminacao, bloqueio ou anonimizacao chegam pelo canal de
+ * Pedidos de eliminacao, bloqueio ou anonimizacao chegam pelo canal de
  * privacidade (e-mail, RH), nao pelo app. O RH registra aqui para ter protocolo, prazo e a
  * decisao por tipo de dado.
  */

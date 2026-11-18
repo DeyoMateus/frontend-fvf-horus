@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -102,12 +103,7 @@ export function TratarDiaSemInteracaoModal({
     try {
       setPendencia(await solicitarJustificativaDia(motoristaId, dia.slice(0, 10)));
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string | string[] } } })
-        ?.response?.data?.message;
-      setErro(
-        (Array.isArray(msg) ? msg.join(" ") : msg) ||
-          "Não foi possível solicitar a justificativa.",
-      );
+      setErro(mensagemDoErro(err, "Não foi possível solicitar a justificativa."));
     } finally {
       setSolicitando(false);
     }
@@ -146,12 +142,7 @@ export function TratarDiaSemInteracaoModal({
       });
       onTratado();
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string | string[] } } })
-        ?.response?.data?.message;
-      setErro(
-        (Array.isArray(msg) ? msg.join(" ") : msg) ||
-          "Não foi possível tratar este dia. Tente novamente.",
-      );
+      setErro(mensagemDoErro(err, "Não foi possível tratar este dia. Tente novamente."));
     } finally {
       setEnviando(false);
     }

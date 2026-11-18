@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { Esqueleto } from "../components/Esqueleto";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
@@ -18,19 +19,14 @@ import { useListaPaginada } from "../hooks/useListaPaginada";
 import { usePrompt } from "../components/PromptProvider";
 import { rotuloStatusMotorista } from "../utils/rotulos";
 
-function mensagemErro(e: unknown): string {
-  const m = (e as { response?: { data?: { message?: string | string[] } } })
-    ?.response?.data?.message;
-  if (Array.isArray(m)) return m.join(" ");
-  return m ?? "Não foi possível concluir a operação.";
-}
+const mensagemErro = (e: unknown) => mensagemDoErro(e, "Não foi possível concluir a operação.");
 
 function numOuNull(v: string): number | null {
   return v.trim() === "" ? null : Number(v);
 }
 
 /**
- * Passo 45 (rodada 399): retenção de dados. Parâmetros por empresa (vazio =
+ * Passo 45: retenção de dados. Parâmetros por empresa (vazio =
  * mínimo da lei; nunca abaixo dele), data de desligamento do motorista,
  * bloqueio por processo (legal hold) e relatório informativo. Esta tela não
  * apaga nem anonimiza nada: registros de ponto e jornadas são sempre mantidos
@@ -135,7 +131,7 @@ function ParametrosEmpresa({
 const SEM_MOTORISTAS: RelatorioRetencao["motoristas"] = [];
 
 /**
- * Rodada 733: retencao por tipo de dado com prazos fixos do sistema. Mostra o que ja passou
+ * Retencao por tipo de dado com prazos fixos do sistema. Mostra o que ja passou
  * do prazo e deixa o ADMIN eliminar (nada roda sozinho). Marcacoes, ajustes, auditoria e
  * alertas nunca sao apagados; motorista com bloqueio por processo fica de fora.
  */
@@ -233,7 +229,7 @@ function RetencaoConteudo() {
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [datas, setDatas] = useState<Record<string, string>>({});
-  // Rodada 678: a tabela de motoristas passa a ter "mostrar 10/20/50/100 por vez" como as demais telas.
+  // A tabela de motoristas passa a ter "mostrar 10/20/50/100 por vez" como as demais telas.
   // Ordem fixa por nome (esta lista não tem uma data útil para ordenar ou filtrar).
   const lista = useListaPaginada(rel?.motoristas ?? SEM_MOTORISTAS, () => null, {
     qtdInicial: 10,

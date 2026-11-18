@@ -3,7 +3,7 @@ import { isAxiosError } from "axios";
 export type TipoErroRedefinicao = "link" | "senha" | "limite" | "servidor";
 
 /**
- * Rodada 293: a tela de redefinir senha dizia "Link inválido ou expirado" para
+ * A tela de redefinir senha dizia "Link inválido ou expirado" para
  * QUALQUER erro, inclusive falha do servidor. Aqui cada caso tem sua mensagem.
  */
 export function classificarErroRedefinicao(erro: unknown): {

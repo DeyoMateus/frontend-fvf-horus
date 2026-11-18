@@ -1,7 +1,7 @@
 import type { ChangeEvent, TextareaHTMLAttributes } from "react";
 
 /**
- * Rodada 270: campo de texto que cresce conforme a pessoa digita e quebra
+ * Campo de texto que cresce conforme a pessoa digita e quebra
  * linha, em vez de esconder o que passou da largura. Substitui o
  * `<input type="text">` nos campos de texto longo. Por padrão é "linha
  * única" (Enter não cria linha nova e envia o formulário, e quebras

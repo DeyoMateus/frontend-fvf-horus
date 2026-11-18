@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { useConfirm } from "./ConfirmProvider";
 
 /**
- * Rodada 73 , pedido do usuário: "add a opção de vê as imagens anexadas
+ * Pedido do usuário: "add a opção de vê as imagens anexadas
  * em miniatura e clicar para expandir e baixar e a opção de remover que
  * tbm deve remover do banco de dados."
  *

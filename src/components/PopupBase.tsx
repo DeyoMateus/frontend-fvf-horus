@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /**
- * Rodada 680 , base dos popups: o título e o botão de fechar ficam FIXOS
+ * Base dos popups: o título e o botão de fechar ficam FIXOS
  * no topo (não rolam junto com o conteúdo), os botões de ação ficam fixos
  * embaixo e só o miolo rola, se não couber. Usar em popups novos e ao
  * mexer nos antigos, para o botão de sair estar sempre no mesmo lugar.

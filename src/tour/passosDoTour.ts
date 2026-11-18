@@ -1,4 +1,4 @@
-// Rodada 264 , tour guiado do primeiro acesso ao painel.
+// Tour guiado do primeiro acesso ao painel.
 //
 // Cada passo aponta para um elemento da tela por uma "expressão de alvo"
 // (ver localizarAlvo.ts). Se o elemento não existir naquele momento (por
@@ -42,7 +42,7 @@ export interface PassoDoTour {
   /** Passo da ficha de um motorista (abre o primeiro motorista da lista). */
   detalheMotorista?: boolean;
   /**
-   * Rodada 347: tela de exemplo (teatro com dados inventados) desenhada por
+   * Tela de exemplo (teatro com dados inventados) desenhada por
    * cima da página real durante o passo, para o tour funcionar mesmo em
    * empresa nova, sem nenhum motorista ou pedido cadastrado.
    */
@@ -538,10 +538,18 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
   {
     modulo: "ficha",
     palco: "ficha",
-    alvo: "botao:Inativar",
-    titulo: "Botão Inativar",
+    alvo: "botao:Registrar rescisão",
+    titulo: "Botão Registrar rescisão",
     texto:
-      "Move o motorista para o arquivo morto, indicado quando ele deixou a empresa. O histórico completo continua guardado e consultável.",
+      "Use quando o colaborador deixa a empresa. Informe a data e o motivo: o cadastro fica inativo e a data inicia o prazo de guarda dos dados. O histórico completo continua guardado e consultável.",
+  },
+  {
+    modulo: "ficha",
+    palco: "ficha",
+    alvo: "botao:Readmitir",
+    titulo: "Botão Readmitir",
+    texto:
+      "Aparece no lugar de Reativar quando o colaborador tem rescisão registrada e volta a trabalhar. Informe a data e o motivo: o cadastro volta a ativo e a rescisão anterior fica na auditoria.",
   },
   {
     modulo: "ficha",
@@ -549,7 +557,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "botao:Excluir cadastro",
     titulo: "Botão Excluir cadastro",
     texto:
-      "Tira o motorista das listas do dia a dia. O sistema pede um motivo e nada do histórico é perdido, porque os registros de jornada não podem ser apagados.",
+      "Só aparece para quem nunca bateu ponto, por exemplo um cadastro feito por engano. Tira o cadastro das listas e o sistema pede um motivo. Quem já tem registro não pode ser excluído: use Registrar rescisão.",
   },
   {
     modulo: "ficha",
@@ -768,7 +776,7 @@ export const PASSOS_DO_TOUR: PassoDoTour[] = [
     alvo: "titulo:Documentos enviados",
     titulo: "Documentos enviados",
     texto:
-      "Lista de tudo o que já foi enviado, com tipo, número, chave de acesso, status, motorista, data de envio e de entrega. A coluna de cerca virtual mostra se a entrega aconteceu no local previsto.",
+      "Lista de tudo o que já foi enviado, com tipo, número, chave de acesso, status, motorista, data de envio e de entrega.",
   },
 
   // ===== Regras sindicais =====

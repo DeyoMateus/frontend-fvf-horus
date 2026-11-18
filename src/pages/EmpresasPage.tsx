@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { Esqueleto } from "../components/Esqueleto";
 import { FormEvent, useEffect, useState } from "react";
 import {
@@ -81,12 +82,6 @@ export function EmpresasPage() {
     setErroLinha(null);
   }
 
-  function mensagemDeErro(err: unknown, padrao: string) {
-    const m = (err as { response?: { data?: { message?: string | string[] } } })
-      ?.response?.data?.message;
-    return Array.isArray(m) ? m.join(" ") : (m ?? padrao);
-  }
-
   async function salvarEdicao(id: string) {
     setErroLinha(null);
     setSalvandoEdit(true);
@@ -96,7 +91,7 @@ export function EmpresasPage() {
       await carregar();
     } catch (err) {
       setErroLinha(
-        mensagemDeErro(err, "Não foi possível salvar (verifique os dados)."),
+        mensagemDoErro(err, "Não foi possível salvar (verifique os dados)."),
       );
     } finally {
       setSalvandoEdit(false);
@@ -114,11 +109,11 @@ export function EmpresasPage() {
       await excluirEmpresa(emp.id);
       await carregar();
     } catch (err) {
-      setErroLinha(mensagemDeErro(err, "Não foi possível excluir a empresa."));
+      setErroLinha(mensagemDoErro(err, "Não foi possível excluir a empresa."));
     }
   }
 
-  // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
+  // Pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
   const paginacao = useListaPaginada(empresas, (e) => e.createdAt, {
     fixarNoTopo: (e) => !!e.ehMatriz,

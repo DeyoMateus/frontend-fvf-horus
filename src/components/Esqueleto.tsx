@@ -1,5 +1,5 @@
 /**
- * Rodada 755: carregamento com "esqueleto" (barras cinzas pulsando) no lugar do texto solto
+ * Carregamento com "esqueleto" (barras cinzas pulsando) no lugar do texto solto
  * "Carregando...". O texto continua existindo para leitor de tela.
  */
 export function Esqueleto({ linhas = 4 }: { linhas?: number }) {

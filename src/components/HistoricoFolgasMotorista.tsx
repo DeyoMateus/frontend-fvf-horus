@@ -23,7 +23,7 @@ interface Registro {
 const DIA_MS = 86_400_000;
 
 /**
- * Rodada 277: janela aberta ao clicar num motorista do ranking de folgas.
+ * Janela aberta ao clicar num motorista do ranking de folgas.
  * Mostra quantas folgas ele teve ao longo do tempo (concedidas pelo RH e
  * autorrelatadas), o maior intervalo entre folgas e a lista completa com
  * busca por período e exportação em Excel/PDF.

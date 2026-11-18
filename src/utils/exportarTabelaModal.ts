@@ -56,7 +56,7 @@ function baixarCsvSimples(
 }
 
 /**
- * Rodada 233: o nome da função foi mantido (dezenas de chamadas), mas o
+ * O nome da função foi mantido (dezenas de chamadas), mas o
  * arquivo agora é uma planilha Excel (.xlsx) no mesmo modelo visual dos
  * PDFs. Se a biblioteca de planilha não carregar (ex.: sem rede), cai no
  * CSV antigo para o usuário nunca ficar sem o arquivo.

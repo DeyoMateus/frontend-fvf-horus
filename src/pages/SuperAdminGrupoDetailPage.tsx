@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { Esqueleto } from "../components/Esqueleto";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import { cpfValido } from "../utils/cpf";
@@ -42,7 +43,7 @@ type FormEmpresa = {
 type FormUsuario = { nome: string; email: string };
 type FormNovoUsuario = {
   nome: string;
-  /** Rodada 537 (N136): 11 digitos, obrigatorio. */
+  /** 11 digitos, obrigatorio. */
   cpf: string;
   email: string;
   senha: string;
@@ -103,7 +104,7 @@ export function SuperAdminGrupoDetailPage() {
   const [salvando, setSalvando] = useState(false);
   const [erroEdicao, setErroEdicao] = useState<string | null>(null);
 
-  // Rodada 77 , pedido do usuário: salvar algo nesta tela não pode
+  // Pedido do usuário: salvar algo nesta tela não pode
   // "piscar" a página inteira pro topo. Antes, toda chamada de
   // `carregar()` (inclusive as de depois de salvar) ligava
   // `carregando`, e o retorno antecipado mais abaixo no componente
@@ -229,12 +230,7 @@ export function SuperAdminGrupoDetailPage() {
       setEmpresaEditandoId(null);
       await carregar();
     } catch (err) {
-      const m = (err as { response?: { data?: { message?: string | string[] } } })
-        ?.response?.data?.message;
-      setErroEdicao(
-        (Array.isArray(m) ? m.join(" ") : m) ??
-          "Não foi possível salvar (confira se o CNPJ já não está em uso por outra empresa).",
-      );
+      setErroEdicao(mensagemDoErro(err, "Não foi possível salvar (confira se o CNPJ já não está em uso por outra empresa)."));
     } finally {
       setSalvando(false);
     }

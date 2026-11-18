@@ -9,7 +9,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  // Rodada 375: com MFA ativo o servidor pede o código do autenticador.
+  // Com MFA ativo o servidor pede o código do autenticador.
   const [pedeCodigo, setPedeCodigo] = useState(false);
   const [codigoMfa, setCodigoMfa] = useState("");
   const [erro, setErro] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export function LoginPage() {
     setEnviando(true);
     try {
       await entrar(email, senha, pedeCodigo ? codigoMfa.trim() : undefined);
-      // Rodada 42: estava indo pra /motoristas (resquício de antes do
+      // Estava indo pra /motoristas (resquício de antes do
       // dashboard existir) , o destino certo depois do login é o Painel.
       navigate("/dashboard");
     } catch (erro) {

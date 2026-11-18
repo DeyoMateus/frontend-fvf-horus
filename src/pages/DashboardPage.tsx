@@ -54,10 +54,10 @@ const TIPOS_FRAUDE: TipoAlertaJornada[] = [
   "INTEGRIDADE_DISPOSITIVO_SUSPEITA",
   "OCIOSIDADE_DIRECAO_SUSPEITA",
   "SEQUENCIA_EVENTOS_INCONSISTENTE",
-  // Rodada 87 , mesma categoria (antifraude), evento sincronizado com
+  // Mesma categoria (antifraude), evento sincronizado com
   // atraso suspeito demais pra ser só "ficou sem sinal".
   "SINCRONIZACAO_TARDIA_SUSPEITA",
-  // Rodada 92 , divergência de relógio confirmada retroativamente
+  // Divergência de relógio confirmada retroativamente
   // contra uma amostra de hora confiável do mesmo boot do aparelho.
   "RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE",
   "INTEGRIDADE_CADEIA_VIOLADA",
@@ -113,7 +113,6 @@ const ROTULO_TIPO_ALERTA: Record<TipoAlertaJornada, string> = {
   ODOMETRO_REGRESSIVO: "Odômetro regressivo",
   INTEGRIDADE_DISPOSITIVO_SUSPEITA: "Integridade do aparelho a conferir",
   PONTO_REGISTRADO_EM_DIA_DE_FOLGA: "Ponto batido em dia de folga concedida",
-  ENTREGA_FORA_DA_CERCA_VIRTUAL: "Entrega fora da cerca virtual (500m)",
   TEMPO_INDEFINIDO_PROXIMO_LIMITE: "Tempo indefinido (sem etapa escolhida)",
   TEMPO_INDEFINIDO_PROLONGADO:
     "Tempo indefinido prolongado (sem etapa escolhida)",
@@ -664,7 +663,7 @@ export function DashboardPage() {
             abrir("em-espera", "Motoristas em espera de carga/descarga")
           }
         />
-        {/* Rodada 68 , pedido do usuário: "esse tempo... precisa
+        {/* Pedido do usuário: "esse tempo... precisa
             direcionar o usuário a escolher alguma ação". Este número já
             existia no backend (jornadaAbertaSemSubEvento) desde antes,
             mas nunca tinha card nenhum aqui , é a contagem, agora
@@ -682,7 +681,7 @@ export function DashboardPage() {
             )
           }
         />
-        {/* Rodada 336: motoristas parados em "Aguardando documentação"
+        {/* Motoristas parados em "Aguardando documentação"
             (antes contavam em "Tempo indefinido"). */}
         <CartaoMetrica
           titulo="Aguardando documentação"

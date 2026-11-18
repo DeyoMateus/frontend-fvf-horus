@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { responderSolicitacaoTitular } from "../api/privacidade";
@@ -8,7 +9,7 @@ import type {
   StatusSolicitacaoTitular,
 } from "../api/privacidade";
 
-/** Rodada 733: pedidos que passam pela decisao por tipo de dado. */
+/** Pedidos que passam pela decisao por tipo de dado. */
 const TIPOS_ELIMINACAO = ["ELIMINACAO", "BLOQUEIO_ANONIMIZACAO", "ANONIMIZACAO_ELIMINACAO"];
 const CATEGORIAS: { categoria: CategoriaDadoTitular; rotulo: string; podeEliminar: boolean }[] = [
   { categoria: "GPS_PERIODICO", rotulo: "GPS periódico (localização de hora em hora)", podeEliminar: true },
@@ -137,12 +138,7 @@ export function TratarPedidoTitularModal({
       );
       onTratado();
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string | string[] } } })
-        ?.response?.data?.message;
-      setErro(
-        (Array.isArray(msg) ? msg.join(" ") : msg) ||
-          "Não foi possível salvar. Tente novamente.",
-      );
+      setErro(mensagemDoErro(err, "Não foi possível salvar. Tente novamente."));
     } finally {
       setEnviando(false);
     }
@@ -178,7 +174,7 @@ export function TratarPedidoTitularModal({
             <strong>Aberto em:</strong> {fmt(pedido.createdAt)}
           </div>
           <div>
-            <strong>Prazo de resposta (15 dias):</strong> {fmt(pedido.prazoEm)}
+            <strong>Previsão de atendimento (padrão do painel):</strong> {fmt(pedido.prazoEm)}
           </div>
           <div style={{ marginTop: 6 }}>
             <strong>O que o motorista escreveu:</strong>{" "}

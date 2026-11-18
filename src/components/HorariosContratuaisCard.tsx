@@ -46,7 +46,7 @@ const LIVRE = "Jornada livre";
 const FIXA = "Jornada fixa";
 
 /**
- * Rodada 609: cadastro dos horarios contratuais NA EMPRESA (CNPJ), nao no motorista.
+ * Cadastro dos horarios contratuais NA EMPRESA (CNPJ), nao no motorista.
  * O contrato e igual para todos; a empresa trabalha com jornada livre (sem entrada/saida fixas),
  * respeitando o descanso minimo de 11 h entre jornadas (CLT art. 66), conferido na apuracao.
  * Um horario marcado como "padrao da empresa" vale para todo motorista sem horario proprio.

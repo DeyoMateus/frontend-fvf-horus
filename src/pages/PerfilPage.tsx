@@ -11,13 +11,13 @@ import type { UsuarioEmpresaListado } from "../api/types";
 import { alterarMinhaSenha } from "../api/usuariosEmpresa";
 import { useAuth } from "../context/AuthContext";
 import { TelefoneInput } from "../components/TelefoneInput";
-import { obterMinhaPolitica } from "../api/privacidade";
+import { obterMinhaPolitica, obterTermoGestor } from "../api/privacidade";
 import type { MinhaPolitica } from "../api/privacidade";
 import { PoliticaPrivacidadeModal } from "../components/PoliticaPrivacidadeModal";
 import { MfaCard } from "../components/MfaCard";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 
-/** Rodada 715: Configuração dividida em abas no topo (mesma linha do sino), como o Painel. */
+/** Configuração dividida em abas no topo (mesma linha do sino), como o Painel. */
 const ABAS_CONFIGURACAO: AbaDef[] = [
   { id: "usuario", rotulo: "Dados do usuário" },
   { id: "gr", rotulo: "Gerenciamento de Risco (GR)" },
@@ -25,7 +25,7 @@ const ABAS_CONFIGURACAO: AbaDef[] = [
 ];
 
 /**
- * "Meu perfil" (Rodada 38) , o próprio ADMIN/GESTOR logado edita seu
+ * "Meu perfil" , o próprio ADMIN/GESTOR logado edita seu
  * nome, contato (WhatsApp) e e-mail. Criado junto com a remoção da
  * tela de Usuários do painel da empresa: agora cada usuário só edita
  * o PRÓPRIO cadastro, quem cria/ativa/desativa funcionário é o super
@@ -52,6 +52,14 @@ export function PerfilPage() {
   const [politica, setPolitica] = useState<MinhaPolitica | null>(null);
   const [politicaAberta, setPoliticaAberta] = useState(false);
   const [politicaFalhou, setPoliticaFalhou] = useState(false);
+  // Termo de responsabilidade do usuario do painel (leitura).
+  const [termo, setTermo] = useState<MinhaPolitica | null>(null);
+  const [termoAberto, setTermoAberto] = useState(false);
+  useEffect(() => {
+    obterTermoGestor()
+      .then(setTermo)
+      .catch(() => setTermo(null));
+  }, []);
   useEffect(() => {
     obterMinhaPolitica()
       .then(setPolitica)
@@ -78,7 +86,7 @@ export function PerfilPage() {
   const [sucessoGr, setSucessoGr] = useState<string | null>(null);
   const { sair } = useAuth();
   const [senhaAtual, setSenhaAtual] = useState("");
-  // Rodada 530 (N141): senha atual exigida so quando o e-mail muda.
+  // Senha atual exigida so quando o e-mail muda.
   const [senhaParaEmail, setSenhaParaEmail] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
@@ -523,6 +531,20 @@ export function PerfilPage() {
             modo="leitura"
             onFechar={() => setPoliticaAberta(false)}
           />
+        )}
+      </div>
+
+      <div className="card" style={{ maxWidth: 480, margin: "0 auto 20px" }}>
+        <h3 style={{ marginTop: 0 }}>Termo de responsabilidade</h3>
+        <p style={{ fontSize: 13, marginTop: 0 }}>
+          Veja o termo de responsabilidade do usuário do painel que você aceitou.
+          {termo?.aceitaEm && ` Aceito em ${new Date(termo.aceitaEm).toLocaleDateString("pt-BR")}.`}
+        </p>
+        <button type="button" disabled={!termo} onClick={() => setTermoAberto(true)}>
+          {termo ? "Ler termo" : "Carregando…"}
+        </button>
+        {termoAberto && termo && (
+          <PoliticaPrivacidadeModal politica={termo} modo="leitura" onFechar={() => setTermoAberto(false)} />
         )}
       </div>
 

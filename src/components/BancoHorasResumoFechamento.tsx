@@ -5,11 +5,11 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { intervaloVisivel } from "../hooks/intervaloVisivel";
 
 /**
- * Rodada 489: indicadores-chave do banco de horas no topo do Fechamento, para decidir
+ * Indicadores-chave do banco de horas no topo do Fechamento, para decidir
  * (pagar, compensar, ajustar) antes de fechar a folha. Usa os mesmos dados do Painel
  * (`/indicadores`), so horas, nunca valor em R$.
  */
-// Rodada 648: tela de apuracao do fechamento; 5 min bastam (antes 30 s, como o painel de operacoes).
+// Tela de apuracao do fechamento; 5 min bastam (antes 30 s, como o painel de operacoes).
 const INTERVALO_ATUALIZACAO_MS = 300_000;
 const JITTER_MS = 20_000;
 
@@ -188,7 +188,7 @@ export function BancoHorasResumoFechamento() {
               titulo="Crédito de hora extra"
               valor={minParaHoras(resumo.credito)}
               subtitulo={`+ ${minParaHoras(resumo.correcao)} de correções`}
-              ajuda="Extra apurado no período que entrou no banco (na unidade da regra: fictas ou reais)."
+              ajuda="Extra apurado no período que entrou no banco (na unidade da regra: minutos computáveis ou de relógio)."
             />
             <Kpi
               titulo="Já compensado ou pago"

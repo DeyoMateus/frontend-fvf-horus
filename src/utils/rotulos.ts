@@ -1,4 +1,4 @@
-/** Rodada 512 (N198): rotulos em portugues para valores tecnicos que apareciam crus na tela. */
+/** Rotulos em portugues para valores tecnicos que apareciam crus na tela. */
 const SEVERIDADE: Record<string, string> = { CRITICO: "Crítico", ATENCAO: "Atenção", INFO: "Informativo" };
 const PAPEL: Record<string, string> = { ADMIN: "Administrador", GESTOR: "Gestor", SUPER_ADMIN: "Super admin" };
 const STATUS_MOTORISTA: Record<string, string> = { ATIVO: "Ativo", INATIVO: "Inativo", SUSPENSO: "Suspenso" };

@@ -8,7 +8,7 @@ import './index.css';
 import { iniciarRecuperacaoDeAba } from './utils/recuperacaoDeAba';
 import { limparEvento } from './utils/sentryLimpeza';
 
-// Rodada 292: monitoramento de erros do painel (só liga com VITE_SENTRY_DSN).
+// Monitoramento de erros do painel (só liga com VITE_SENTRY_DSN).
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,

@@ -1,4 +1,4 @@
-// Rodada 324: nomes de campo legíveis nos "Detalhes" (auditoria e alertas).
+// Nomes de campo legíveis nos "Detalhes" (auditoria e alertas).
 // O `detalhes` é um JSON livre gravado pelo backend com chaves em camelCase
 // (ex.: "deltaParedeMs"), que apareciam coladas na tela. Aqui há rótulos para
 // os campos conhecidos e, para qualquer outro, uma conversão automática que

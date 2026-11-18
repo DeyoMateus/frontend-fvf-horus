@@ -45,7 +45,7 @@ export function excluirEmpresa(id: string) {
 export function vincularRegraSindical(
   empresaId: string,
   regraSindicalId: string | null,
-  // Rodada 719: dia (AAAA-MM-DD) em que a regra passa a valer; vazio = hoje. Data passada = retroativa.
+  // Dia (AAAA-MM-DD) em que a regra passa a valer; vazio = hoje. Data passada = retroativa.
   opcoes?: { vigenciaInicio?: string; confirmarRetroatividade?: boolean },
 ) {
   return api
@@ -66,7 +66,7 @@ export interface VinculoRegraHistorico {
   registradoEm: string;
 }
 
-// Rodada 720: historico de regras do CNPJ (mais recente primeiro).
+// Historico de regras do CNPJ (mais recente primeiro).
 export function historicoRegraSindical(empresaId: string) {
   return api
     .get<VinculoRegraHistorico[]>(`/empresas/${empresaId}/regra-sindical/historico`)
@@ -97,7 +97,7 @@ export async function baixarAfd(
 }
 
 /**
- * Rodada 623: AFD oficial acompanhado da assinatura CAdES destacada (.p7s) da FVF.
+ * AFD oficial acompanhado da assinatura CAdES destacada (.p7s) da FVF.
  * Baixa os dois arquivos juntos. Devolve o aviso quando o certificado for de teste.
  */
 export async function baixarAfdAssinado(

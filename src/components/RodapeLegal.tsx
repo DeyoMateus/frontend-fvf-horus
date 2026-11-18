@@ -1,5 +1,5 @@
 /**
- * Rodada 584: rodapé fixo das telas. Redação provisória, a revisar pela assessoria
+ * Rodapé fixo das telas. Redação provisória, a revisar pela assessoria
  * jurídica (não afirma conformidade total com a Portaria MTP 671/2021).
  * VITE_AMBIENTE_PILOTO=true liga a marca de piloto.
  */

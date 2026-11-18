@@ -4,7 +4,7 @@ import type { MinhaPolitica } from "../api/privacidade";
 import { travarRolagemFundo } from "../utils/exportarTabelaModal";
 
 /**
- * Rodada 281: Política de Privacidade para o usuário do painel.
+ * Política de Privacidade para o usuário do painel.
  * Modo "aceite" (primeiro acesso ou texto novo): não fecha sem aceitar.
  * Modo "leitura" (Configuração): só mostra o texto e a data do aceite.
  */
@@ -13,11 +13,18 @@ export function PoliticaPrivacidadeModal({
   modo,
   onAceita,
   onFechar,
+  aceitar: aceitarFn = aceitarMinhaPolitica,
+  textoIntro = "Leia a política abaixo e confirme o aceite para usar o painel.",
+  textoCheckbox = "Li e aceito a Política de Privacidade.",
 }: {
   politica: MinhaPolitica;
   modo: "aceite" | "leitura";
   onAceita?: (aceitaEm: string) => void;
   onFechar?: () => void;
+  /** O mesmo modal serve ao termo do gestor (outra rota de aceite e outros textos). */
+  aceitar?: (versao: string) => Promise<{ aceitaEm: string }>;
+  textoIntro?: string;
+  textoCheckbox?: string;
 }) {
   const [li, setLi] = useState(false);
   const [enviando, setEnviando] = useState(false);
@@ -29,7 +36,7 @@ export function PoliticaPrivacidadeModal({
     setEnviando(true);
     setErro(null);
     try {
-      const r = await aceitarMinhaPolitica(politica.versao);
+      const r = await aceitarFn(politica.versao);
       onAceita?.(r.aceitaEm);
     } catch (err: any) {
       setErro(
@@ -76,7 +83,7 @@ export function PoliticaPrivacidadeModal({
         </h3>
         {aceite && (
           <p style={{ fontSize: 13, marginTop: 0 }}>
-            Leia a política abaixo e confirme o aceite para usar o painel.
+            {textoIntro}
           </p>
         )}
         <div
@@ -110,7 +117,7 @@ export function PoliticaPrivacidadeModal({
                 onChange={(e) => setLi(e.target.checked)}
                 style={{ width: "auto" }}
               />
-              Li e aceito a Política de Privacidade.
+              {textoCheckbox}
             </label>
             {erro && <p className="error-text">{erro}</p>}
             <div style={{ marginTop: 12 }}>

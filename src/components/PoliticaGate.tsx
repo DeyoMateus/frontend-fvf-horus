@@ -7,12 +7,12 @@ import { liberarPerfilParaResolverPendencia } from "../utils/bloqueioDeAcessoPen
 import { PoliticaPrivacidadeModal } from "./PoliticaPrivacidadeModal";
 
 /**
- * Rodada 281: no primeiro acesso ao painel (e sempre que o texto da política
+ * No primeiro acesso ao painel (e sempre que o texto da política
  * mudar) o usuário precisa aceitar a Política de Privacidade. Enquanto não
  * aceita, o painel (e o tour) não abre. Rodada 513 (N201): se o servidor não
  * responder, o painel NÃO abre (falhar aberto deixaria o usuário usar o
  * sistema sem ter aceitado a política); mostra erro com "Tentar novamente".
- * Rodada 687: exceção só para a tela de perfil quando o servidor bloqueia tudo por senha provisória
+ * Exceção só para a tela de perfil quando o servidor bloqueia tudo por senha provisória
  * ou MFA pendente (senão a pessoa nunca chega ao formulário que resolve isso).
  */
 export function PoliticaGate({ children }: { children: ReactNode }) {

@@ -8,7 +8,7 @@ export function ProtectedRoute() {
   const { usuario, carregando } = useAuth();
   if (carregando) return <Esqueleto />;
   if (!usuario) return <Navigate to="/login" replace />;
-  // Rodada 537 (N136): sem CPF no cadastro, o painel nao abre.
+  // Sem CPF no cadastro, o painel nao abre.
   return (
     <CpfPendenteGate
       carregarPendencia={() => obterMeuPerfil().then((p) => !!p.cpfPendente)}

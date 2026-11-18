@@ -5,7 +5,7 @@ import { PaginacaoPopup } from "./PaginacaoPopup";
 import type { OrdemData, QtdPorPagina } from "../hooks/useListaPaginada";
 
 /**
- * Barra de controles (Rodada 108) , ordenar (mais recente/mais antigo
+ * Barra de controles , ordenar (mais recente/mais antigo
  * primeiro), "mostrar N por vez", botão que abre o popup dedicado de
  * página (`PaginacaoPopup`) e, opcionalmente, filtro de período
  * (De/Até). Companheiro visual do hook `useListaPaginada`: a tela que
@@ -33,7 +33,7 @@ interface ControlesListaPaginadaProps {
     rotulo?: string;
   };
   /**
-   * Rodada 154: a tabela da tela. Quando passada e o usuário escolhe "100 por
+   * A tabela da tela. Quando passada e o usuário escolhe "100 por
    * vez", controles + tabela abrem numa janela separada (ver `ListaEmPopup`).
    */
   children?: ReactNode;

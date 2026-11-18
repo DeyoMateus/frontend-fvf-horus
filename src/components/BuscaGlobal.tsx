@@ -26,7 +26,7 @@ function normalizar(texto: string): string {
 }
 
 /**
- * Rodada 752: busca global do painel (Ctrl+K ou o botão ao lado do sino). Leva direto a uma
+ * Busca global do painel (Ctrl+K ou o botão ao lado do sino). Leva direto a uma
  * tela do menu ou à ficha de um colaborador, por nome ou CPF. A lista de colaboradores é a
  * mesma dos seletores (já filtrada pelo grupo no servidor) e só é pedida ao abrir a busca.
  */

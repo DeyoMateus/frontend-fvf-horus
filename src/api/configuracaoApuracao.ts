@@ -1,7 +1,7 @@
 import { api } from "./client";
 import type { RegimeBancoHorasEmpresa } from "./types";
 
-// Espelha ConfiguracaoApuracaoController (rodada 692): apuração, alertas e regime do banco de horas
+// Espelha ConfiguracaoApuracaoController: apuração, alertas e regime do banco de horas
 // são decisão da própria empresa. Só ADMIN altera; GESTOR consulta.
 export interface ChaveApuracaoEstado {
   chave: string;

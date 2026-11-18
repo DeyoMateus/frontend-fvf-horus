@@ -1,5 +1,5 @@
 /**
- * Rodada 233: planilha Excel (.xlsx) no MESMO modelo visual dos PDFs do
+ * Planilha Excel (.xlsx) no MESMO modelo visual dos PDFs do
  * FVF Hórus (ver backend/src/common/pdf/relatorio-pdf.ts): marca pequena,
  * título grande, subtítulo cinza, pares "Rótulo: valor", faixa de cabeçalho
  * escura, linhas zebradas com filete cinza e nota final em cinza.

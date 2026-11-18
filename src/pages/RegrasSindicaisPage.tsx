@@ -92,12 +92,12 @@ export function RegrasSindicaisPage() {
 
   const [form, setForm] = useState<RegraSindicalInput>(REGRA_PADRAO);
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  // Rodada 588: data de inicio de vigencia da alteracao (vazio = hoje) e historico de versoes.
+  // Data de inicio de vigencia da alteracao (vazio = hoje) e historico de versoes.
   const [vigenciaEdicao, setVigenciaEdicao] = useState("");
   const [versoes, setVersoes] = useState<VersaoRegraSindical[] | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
-  // Rodada 483: campos reprovados pela API (ficam em vermelho no formulario).
+  // Campos reprovados pela API (ficam em vermelho no formulario).
   const [camposComErro, setCamposComErro] = useState<string[]>([]);
   // Campo obrigatorio vazio (validacao do navegador): depois da 1a tentativa de salvar, fica vermelho.
   const [tentouSalvar, setTentouSalvar] = useState(false);
@@ -161,7 +161,6 @@ export function RegrasSindicaisPage() {
           ? Number(regra.percentualAdicionalInterjornada)
           : 50,
       incideReflexoDsrInterjornada: regra.incideReflexoDsrInterjornada ?? true,
-      interjornadaNoBancoPermitida: regra.interjornadaNoBancoPermitida ?? false,
       bancoGuarda: regra.bancoGuarda ?? "fictos",
       percentualHoraEspera: regra.percentualHoraEspera ?? null,
       acordoColetivo: regra.acordoColetivo ?? false,
@@ -863,33 +862,9 @@ export function RegrasSindicaisPage() {
                 </small>
               </div>
 
-              <div>
-                <label>
-                  <input
-                    name="interjornadaNoBancoPermitida"
-                    type="checkbox"
-                    checked={form.interjornadaNoBancoPermitida ?? false}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        interjornadaNoBancoPermitida: e.target.checked,
-                      }))
-                    }
-                  />{" "}
-                  Convenção coletiva permite compensar a interjornada pelo banco
-                  de horas
-                  <ParametroInativo campo="interjornadaNoBancoPermitida" />
-                </label>
-                <small>
-                  Desmarcado por padrão: a supressão do descanso entre
-                  jornadas é registrada separadamente, em evento próprio, fora
-                  do banco de horas; o tratamento financeiro segue a legislação
-                  e a orientação aplicável. Marque só com acordo ou convenção
-                  coletiva registrada (informe o número do Mediador acima) que
-                  preveja a compensação. Isso não afasta o período mínimo de
-                  descanso exigido.
-                </small>
-              </div>
+              <p style={{ fontSize: 12, margin: "0 0 12px" }}>
+                A interjornada suprimida é sempre registrada em evento próprio, fora do banco de horas.
+              </p>
 
               <div>
                 <label>
@@ -1062,14 +1037,15 @@ export function RegrasSindicaisPage() {
                   }
                 >
                   <option value="fictos">
-                    Horas fictas (hora noturna reduzida)
+                    Minutos computáveis (hora noturna reduzida de 52min30s)
                   </option>
-                  <option value="reais">Horas reais (relógio)</option>
+                  <option value="reais">Minutos de relógio (tempo real trabalhado)</option>
                 </select>
                 <small>
-                  Padrão: horas fictas, as mesmas pagas no holerite. Em "reais"
-                  o banco credita só o tempo de relógio. Sujeito a parecer
-                  jurídico.
+                  Padrão: minutos computáveis, os mesmos apurados no holerite. O
+                  tempo real trabalhado fica sempre guardado em cada lançamento.
+                  Em "minutos de relógio" o banco credita só o tempo de relógio.
+                  Sujeito a validação jurídica.
                 </small>
               </div>
               <div>

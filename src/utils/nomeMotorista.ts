@@ -1,7 +1,7 @@
 const PARTICULAS = new Set(["da", "de", "di", "do", "du", "das", "dos", "e"]);
 
 /**
- * Rodada 296: nome curto para tabelas, sempre com primeiro e segundo nome.
+ * Nome curto para tabelas, sempre com primeiro e segundo nome.
  * "Karen Cristina Lima" -> "Karen Cristina"; "Maria da Silva Souza" ->
  * "Maria da Silva" (a partícula "da/de/do..." não conta como nome).
  */

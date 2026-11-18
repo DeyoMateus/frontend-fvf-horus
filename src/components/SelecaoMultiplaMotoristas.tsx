@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
- * Rodada 338: seleção de um ou vários motoristas (lista com caixas e busca).
+ * Seleção de um ou vários motoristas (lista com caixas e busca).
  * Nenhum marcado = todos os motoristas.
  */
 export function SelecaoMultiplaMotoristas({

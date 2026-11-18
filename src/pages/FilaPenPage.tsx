@@ -1,8 +1,13 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useState } from "react";
+import { useSelecao } from "../hooks/useSelecao";
 import { Link } from "react-router-dom";
 import { aprovarSolicitacao, rejeitarSolicitacao } from "../api/solicitacoesAjuste";
 import { aprovarPedidoFolga, negarPedidoFolga } from "../api/solicitacoesFolga";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
+import { processarVencidosDoGrupo } from "../api/bancoHoras";
+import { useAuth } from "../context/AuthContext";
+import { minParaHoras } from "../utils/formatarDuracao";
 import { useConfirm } from "../components/ConfirmProvider";
 import { usePrompt } from "../components/PromptProvider";
 import { useToast } from "../components/ToastProvider";
@@ -56,17 +61,13 @@ function ordenarParaDecidir(itens: ItemDaFila[]): ItemDaFila[] {
   );
 }
 
-function mensagemDoErro(e: unknown): string {
-  return (
-    (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-    "não foi possível registrar a decisão"
-  );
-}
+const mensagemDoErroDaDecisao = (e: unknown) =>
+  mensagemDoErro(e, "não foi possível registrar a decisão");
 
 /**
- * Rodada 753: fila única de pendências (arquivo chamado "FilaPen" porque o .gitignore do projeto
+ * Fila única de pendências (arquivo chamado "FilaPen" porque o .gitignore do projeto
  * ignora nomes com "pendencia", de propósito), lida do que o sino já buscou (nenhuma consulta nova).
- * Rodada 755: pedidos de ajuste e de folga podem ser aprovados ou negados em lote. Cada pedido
+ * Pedidos de ajuste e de folga podem ser aprovados ou negados em lote. Cada pedido
  * continua sendo uma decisão separada no servidor (mesma rota, mesma permissão, mesma trilha de
  * auditoria); aqui só se evita abrir um por um. Se um falhar, os outros seguem e o erro aparece.
  */
@@ -76,7 +77,9 @@ export function FilaPenPage() {
   const confirm = useConfirm();
   const prompt = usePrompt();
   const toast = useToast();
-  const [marcados, setMarcados] = useState<Set<string>>(new Set());
+  const { usuario } = useAuth();
+  const ehAdmin = usuario?.papel === "ADMIN";
+  const { selecionados: marcados, setSelecionados: setMarcados, alternar } = useSelecao();
   // Já decididos nesta tela: somem na hora, sem esperar a próxima consulta do sino.
   const [decididos, setDecididos] = useState<Set<string>>(new Set());
   const [processando, setProcessando] = useState(false);
@@ -91,13 +94,28 @@ export function FilaPenPage() {
   const selecionados = selecionaveis.filter((i) => marcados.has(i.chave));
   const todosMarcados = selecionaveis.length > 0 && selecionados.length === selecionaveis.length;
 
-  function alternar(chave: string) {
-    setMarcados((atual) => {
-      const novo = new Set(atual);
-      if (novo.has(chave)) novo.delete(chave);
-      else novo.add(chave);
-      return novo;
-    });
+
+  async function processarVencidos() {
+    if (processando) return;
+    const ok = await confirm(
+      "Processar créditos vencidos? O saldo vencido e não compensado de cada colaborador recebe uma baixa por vencimento no banco de horas. O lançamento é imutável e fica no arquivo de horas para a folha. Repetir não duplica.",
+    );
+    if (!ok) return;
+    setProcessando(true);
+    try {
+      const r = await processarVencidosDoGrupo();
+      if (r.motoristas === 0) toast.sucesso("Nenhum crédito vencido para baixar.");
+      else
+        toast.sucesso(
+          `${r.motoristas} ${r.motoristas === 1 ? "colaborador" : "colaboradores"} com baixa por vencimento, ${minParaHoras(r.totalMin)} no total.`,
+        );
+      if (r.falhas.length > 0)
+        toast.erro(`Não foi possível baixar: ${r.falhas.slice(0, 3).map((x) => x.nome).join(", ")}.`);
+    } catch (e) {
+      toast.erro(mensagemDoErroDaDecisao(e));
+    } finally {
+      setProcessando(false);
+    }
   }
 
   async function decidirEmLote(aprovar: boolean) {
@@ -140,7 +158,7 @@ export function FilaPenPage() {
         }
         feitos.push(item.chave);
       } catch (e) {
-        falhas.push(`${item.quem}: ${mensagemDoErro(e)}`);
+        falhas.push(`${item.quem}: ${mensagemDoErroDaDecisao(e)}`);
       }
     }
     setDecididos((atual) => new Set([...atual, ...feitos]));
@@ -165,6 +183,16 @@ export function FilaPenPage() {
         }))}
       />
       <h1>Pendências</h1>
+      {ehAdmin && aba === "banco" && (
+        <div className="card" style={{ marginBottom: 12 }}>
+          <p style={{ marginTop: 0 }}>
+            Baixa, de uma vez, o saldo do banco de horas que venceu sem compensação. Cada colaborador recebe um lançamento de baixa por vencimento.
+          </p>
+          <button type="button" disabled={processando} onClick={() => void processarVencidos()}>
+            {processando ? "Processando..." : "Processar créditos vencidos"}
+          </button>
+        </div>
+      )}
       <div className="card">
         {itens.length === 0 ? (
           <p style={{ margin: 0 }}>

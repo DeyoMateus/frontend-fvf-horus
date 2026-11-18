@@ -5,7 +5,7 @@ import type { OpcoesHolerite, ResultadoHolerite } from "../api/holerite";
 import type { AlertaJornada, Motorista } from "../api/types";
 
 /**
- * Rodada 747: "Relatório de horas apuradas (folha de ponto)" do colaborador, tirado de
+ * "Relatório de horas apuradas (folha de ponto)" do colaborador, tirado de
  * MotoristaDetailPage (era a seção `somente="relatorio"`, usada só no Fechamento). Mesmo
  * comportamento; o estado do relatório vive aqui.
  */
@@ -30,7 +30,7 @@ export function RelatorioHorasColaborador({
   const [baixandoHolerite, setBaixandoHolerite] = useState(false);
   const [erroHolerite, setErroHolerite] = useState<string | null>(null);
 
-  // Rodada 740: ajudante não tem direção nem espera; o relatório dele sai sem essas colunas.
+  // Ajudante não tem direção nem espera; o relatório dele sai sem essas colunas.
   const holeriteMostraDirecaoEspera =
     holeriteDirecaoEspera && motorista?.funcao !== "AJUDANTE";
   const opcoesHolerite: OpcoesHolerite = {
@@ -171,7 +171,7 @@ export function RelatorioHorasColaborador({
         </form>
 
         {holeriteInicio && holeriteFim && (() => {
-          // Rodada 452: o período só fecha depois de tratar estes alertas.
+          // O período só fecha depois de tratar estes alertas.
           const ini = new Date(holeriteInicio).getTime();
           const fim = new Date(holeriteFim).getTime() + 86_400_000; // mesmo corte do backend (fim + 1 dia)
           const pendentes = alertas.filter(

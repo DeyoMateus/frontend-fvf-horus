@@ -25,7 +25,7 @@ export interface ResumoEventoVizinho {
   criadoEm: string;
 }
 
-/** Rodada 158: análise detalhada de um único evento da cadeia de integridade. */
+/** Análise detalhada de um único evento da cadeia de integridade. */
 export interface AnaliseEventoIntegridade {
   motoristaId: string;
   divergente: boolean;
@@ -215,7 +215,7 @@ export async function baixarEspelhoRepP(
 }
 
 /** Baixa o AEJ no leiaute oficial (leiaute vigente do AEJ publicado pelo MTE, texto ISO 8859-1). */
-/** Rodada 722: o periodo ja tem AEJ emitido com conteudo diferente; o servidor exige o motivo do retificador. */
+/** O periodo ja tem AEJ emitido com conteudo diferente; o servidor exige o motivo do retificador. */
 export class AejExigeMotivoError extends Error {
   constructor(message: string) {
     super(message);
@@ -254,7 +254,7 @@ export async function baixarAej(
     new Blob([resposta.data], { type: "text/plain;charset=iso-8859-1" }),
     versao > 1 ? `AEJ-${motoristaId}-v${versao}-retificador.txt` : `AEJ-${motoristaId}.txt`,
   );
-  // Rodada 629: avisos de conformidade do MTE (marcações ímpares etc.).
+  // Avisos de conformidade do MTE (marcações ímpares etc.).
   try {
     const bruto = resposta.headers?.["x-aej-avisos"];
     const lista = bruto ? (JSON.parse(decodeURIComponent(String(bruto))) as string[]) : [];
@@ -272,7 +272,7 @@ function base64ParaBlob(b64: string, tipo: string) {
 }
 
 /**
- * Rodada 613: baixa o AEJ e a assinatura CAdES destacada (.p7s) da FVF, gerados juntos para a assinatura
+ * Baixa o AEJ e a assinatura CAdES destacada (.p7s) da FVF, gerados juntos para a assinatura
  * bater com o arquivo. Devolve o aviso quando o certificado for de teste (sem validade legal).
  */
 export async function baixarAejAssinado(
@@ -297,7 +297,7 @@ export async function baixarAejAssinado(
   return [data.aviso, avisos].filter(Boolean).join(" ") || null;
 }
 
-/** Rodada 589: relatório complementar de direção e espera (o AEJ oficial não tem esses registros). */
+/** Relatório complementar de direção e espera (o AEJ oficial não tem esses registros). */
 export async function baixarDirecaoEsperaCsv(
   motoristaId: string,
   periodo?: { inicio?: string; fim?: string },

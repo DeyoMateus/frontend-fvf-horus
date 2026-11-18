@@ -1,6 +1,7 @@
+import { avisarPendenciasMudaram } from "../utils/avisarPendenciasMudaram";
 import { api } from './client';
 
-// Espelha BancoHorasController (Rodada 37): /motoristas/:id/banco-horas.
+// Espelha BancoHorasController: /motoristas/:id/banco-horas.
 export type TipoAjusteBancoHoras = 'COMPENSACAO' | 'PAGAMENTO' | 'CORRECAO_CREDITO' | 'CORRECAO_DEBITO';
 
 export interface SaldoBancoHoras {
@@ -57,6 +58,9 @@ export interface LancamentoBanco {
   minutosBrutos: number;
   fator: string;
   minutosEquivalentes: number;
+  /** Precisao em segundos do credito vindo da apuracao (nulo nos demais lancamentos). */
+  segundosBrutos?: number | null;
+  segundosEquivalentes?: number | null;
   saldoAposMin: number;
   venceEm: string | null;
   observacao: string | null;
@@ -119,3 +123,16 @@ export const listarContestacoesBanco = (id: string) =>
   api.get<ContestacaoBanco[]>(`${base(id)}/contestacoes`).then((r) => r.data);
 export const responderContestacaoBanco = (id: string, contestacaoId: string, texto: string) =>
   api.post(`${base(id)}/contestacoes/${contestacaoId}/resposta`, { texto }).then((r) => r.data);
+
+/** Baixa em lote dos creditos vencidos de todos os motoristas (ADMIN). */
+export interface ResultadoProcessarVencidos {
+  motoristas: number;
+  totalMin: number;
+  baixados: Array<{ motoristaId: string; nome: string; minutos: number }>;
+  falhas: Array<{ motoristaId: string; nome: string }>;
+}
+export const processarVencidosDoGrupo = () =>
+  api.post<ResultadoProcessarVencidos>("/banco-horas/vencidos/processar").then((r) => {
+    avisarPendenciasMudaram();
+    return r.data;
+  });

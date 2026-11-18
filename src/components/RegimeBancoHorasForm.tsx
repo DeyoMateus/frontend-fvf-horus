@@ -53,7 +53,7 @@ export function RegimeBancoHorasForm({
   async function salvar(e: FormEvent) {
     e.preventDefault();
     setErro(null);
-    // Rodada 556 (N201): entrada invalida nao vira "1" em silencio; mostra o erro.
+    // Entrada invalida nao vira "1" em silencio; mostra o erro.
     const fatorNum = Number(fator.replace(",", "."));
     if (!Number.isFinite(fatorNum) || fatorNum < 1 || fatorNum > 3) {
       setErro("O fator de conversão deve ser um número entre 1 e 3.");

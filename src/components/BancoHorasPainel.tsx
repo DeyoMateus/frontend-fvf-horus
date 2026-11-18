@@ -29,7 +29,7 @@ function inicioDoMes(): string {
   return dataLocalIso(new Date(d.getFullYear(), d.getMonth(), 1));
 }
 /**
- * Banco de horas do motorista (Rodada 37) , só relevante quando a CCT
+ * Banco de horas do motorista , só relevante quando a CCT
  * vinculada ao CNPJ dele tem o toggle ligado (configurado na tela de
  * Regras Sindicais). Mostra o saldo do período (crédito de hora extra
  * apurada + correções manuais - débitos) e deixa o gestor registrar um
@@ -53,7 +53,7 @@ export function BancoHorasPainel({ motoristaId }: { motoristaId: string }) {
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
 
-  // Rodada 99 , pedido do usuário: trocar o período (início/fim) não
+  // Pedido do usuário: trocar o período (início/fim) não
   // pode "piscar" trocando o painel inteiro por "Carregando…" , só a
   // carga INICIAL passa pela tela cheia (mesmo padrão já usado em
   // MotoristaDetailPage.tsx/AuditoriaPage.tsx); mudar o período depois

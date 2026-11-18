@@ -1,6 +1,6 @@
 import { api } from "./client";
 
-// Rodada 375: espelha MfaController (verificação em duas etapas, TOTP).
+// Espelha MfaController (verificação em duas etapas, TOTP).
 export function iniciarMfa() {
   return api
     .post<{ segredo: string; uri: string }>("/auth/mfa/iniciar")

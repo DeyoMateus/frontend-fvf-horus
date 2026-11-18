@@ -70,7 +70,7 @@ function formatarValorDetalhe(valor: unknown): string {
  * existia por motorista (MotoristaDetailPage). Usa o mesmo endpoint
  * que já tinha tenant isolation corrigido (GET /alertas-jornada/empresa/minha).
  *
- * Rodada 322: sem "marcar visto" (um alerta podia passar batido). O único
+ * Sem "marcar visto" (um alerta podia passar batido). O único
  * caminho é tratar, um a um (críticos) ou coletivo (atenção/info), e os
  * não tratados vêm sempre primeiro. Rodada 25: cada alerta pode ser
  * "tratado" , anexa uma observação obrigatória de quem apurou (o que foi
@@ -91,7 +91,7 @@ export function AlertasJornadaPage() {
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
 
-  // Rodada 99 , pedido do usuário: trocar o filtro "Visualização" não
+  // Pedido do usuário: trocar o filtro "Visualização" não
   // pode "piscar" a tela inteira trocando a lista por "Carregando…" ,
   // mesmo padrão já usado em AuditoriaPage.tsx/MotoristaDetailPage.tsx.
   // Só a carga INICIAL passa pela tela cheia.
@@ -145,7 +145,7 @@ export function AlertasJornadaPage() {
     [alertasFiltrados, filtroTratamento],
   );
 
-  // Rodada 108 , pedido do usuário: ordenar (mais recente/mais antigo),
+  // Pedido do usuário: ordenar (mais recente/mais antigo),
   // filtro de período e paginação com popup dedicado em toda tabela de
   // listagem do painel (ver `useListaPaginada`). Esta lista agrega
   // alertas da empresa inteira , é justamente a que mais crescia sem
@@ -153,7 +153,7 @@ export function AlertasJornadaPage() {
   const paginacao = useListaPaginada(
     alertasFiltradosPorTratamento,
     (a) => a.createdAt,
-    // Rodada 322: não tratados sempre no topo, depois a ordem por data.
+    // Não tratados sempre no topo, depois a ordem por data.
     { fixarNoTopo: (a) => !a.tratadoEm },
   );
   const idsSelecionaveisNaPagina = paginacao.itensExibidos
@@ -163,7 +163,7 @@ export function AlertasJornadaPage() {
     idsSelecionaveisNaPagina.length > 0 &&
     idsSelecionaveisNaPagina.every((id) => selecionados.includes(id));
 
-  // Rodada 324: os cards seguem o que está sendo buscado (período De/Até e
+  // Os cards seguem o que está sendo buscado (período De/Até e
   // filtro de tratamento). A severidade não entra no filtro dos cards, porque
   // cada card já é uma severidade.
   const contagens = useMemo(() => {

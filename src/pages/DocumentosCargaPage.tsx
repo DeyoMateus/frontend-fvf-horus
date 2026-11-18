@@ -32,8 +32,7 @@ import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
  * verdade no servidor (10/20/50/100 por vez, igual a AuditoriaPage.tsx) em
  * vez de carregar sempre as 200 primeiras e paginar no cliente, tem um
  * popup dedicado de busca (BuscaDocumentosCargaPopup), permite excluir um
- * documento enviado e abrir a cerca virtual (coordenadas do destinatário)
- * direto no Google Maps.
+ * documento enviado.
  */
 function cpfValido(cpf: string): boolean {
   if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -77,7 +76,7 @@ export function DocumentosCargaPage() {
   const [popupPaginacaoAberto, setPopupPaginacaoAberto] = useState(false);
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
 
-  // Rodada 77 , pedido do usuário: enviar um documento não pode "piscar" a
+  // Pedido do usuário: enviar um documento não pode "piscar" a
   // página inteira pro topo. Só a carga INICIAL (mount) passa pela tela
   // cheia de "Carregando..."; trocar filtro/página/ordem atualiza só a
   // tabela no lugar (mesmo padrão de AuditoriaPage.tsx desde a Rodada 99).
@@ -160,15 +159,6 @@ export function DocumentosCargaPage() {
     } finally {
       setExcluindoId(null);
     }
-  }
-
-  function abrirCercaVirtual(d: DocumentoCarga) {
-    if (!d.destinatarioLatitude || !d.destinatarioLongitude) return;
-    window.open(
-      `https://www.google.com/maps/search/?api=1&query=${d.destinatarioLatitude},${d.destinatarioLongitude}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
   }
 
   const totalPaginas = Math.max(1, Math.ceil(total / qtdPorPagina));
@@ -382,7 +372,6 @@ export function DocumentosCargaPage() {
               <th>Motorista</th>
               <th>Enviado em</th>
               <th>Entregue em</th>
-              <th>Cerca virtual</th>
               <th></th>
             </tr>
           </thead>
@@ -410,26 +399,6 @@ export function DocumentosCargaPage() {
                     ? new Date(d.entregueEm).toLocaleString("pt-BR")
                     : "--"}
                 </td>
-                <td style={{ fontSize: 12 }}>
-                  {/* Coordenadas do destinatário, geocodificadas automaticamente
-                      a partir do endereço extraído do XML, usadas pra conferir
-                      se "Fim de descarregamento" foi batido perto da entrega
-                      (RegistrosJornadaService.avaliarCercaVirtualEntrega, raio
-                      de 500m). Pedido do usuário: poder abrir no mapa. */}
-                  {d.destinatarioLatitude && d.destinatarioLongitude ? (
-                    <button
-                      type="button"
-                      className="secondary"
-                      style={{ fontSize: 11, padding: "2px 8px" }}
-                      title={d.enderecoDestinatario ?? undefined}
-                      onClick={() => abrirCercaVirtual(d)}
-                    >
-                      Ver cerca virtual
-                    </button>
-                  ) : (
-                    <span style={{ color: "#000000" }}>--</span>
-                  )}
-                </td>
                 <td style={{ display: "flex", gap: 6 }}>
                   <button
                     className="secondary"
@@ -455,7 +424,7 @@ export function DocumentosCargaPage() {
             ))}
             {documentos.length === 0 && (
               <tr>
-                <td colSpan={9} style={{ color: "#000000" }}>
+                <td colSpan={8} style={{ color: "#000000" }}>
                   {temFiltroAtivo
                     ? "Nenhum documento encontrado com este filtro."
                     : "Nenhum documento enviado ainda."}

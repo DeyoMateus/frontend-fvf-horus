@@ -25,7 +25,7 @@ const FERIADO_PADRAO: FeriadoInput = {
 };
 
 /**
- * Cadastro de feriados aceitos pela empresa (Rodada 29). Diferente do
+ * Cadastro de feriados aceitos pela empresa. Diferente do
  * domingo (sempre calculável por dia da semana), um feriado varia de
  * cidade para cidade , o sistema não tem nenhuma base nacional/
  * municipal embutida, então é o RH quem decide o calendário e se cada
@@ -114,7 +114,7 @@ export function FeriadosPage() {
     await carregar();
   }
 
-  // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
+  // Pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
   // Aqui a data relevante é a DATA DO FERIADO em si (`f.data`), não
   // quando o cadastro foi criado.

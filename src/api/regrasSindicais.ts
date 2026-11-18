@@ -41,7 +41,7 @@ export interface VersaoRegraSindical {
   createdAt: string;
 }
 
-/** Rodada 588: historico de versoes da regra. */
+/** Historico de versoes da regra. */
 export function listarVersoesRegraSindical(id: string) {
   return api
     .get<VersaoRegraSindical[]>(`/regras-sindicais/${id}/versoes`)

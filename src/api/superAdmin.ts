@@ -31,7 +31,7 @@ export async function obterGrupo(grupoId: string): Promise<GrupoDetalhe> {
   return data;
 }
 
-// Edição de cadastros já criados (Rodada 32) , PATCH /super-admin/grupos/:id,
+// Edição de cadastros já criados , PATCH /super-admin/grupos/:id,
 // /super-admin/empresas/:id, /super-admin/empresas/:id/status e /super-admin/usuarios/:id.
 export async function atualizarGrupo(grupoId: string, input: UpdateGrupoInput) {
   const { data } = await superAdminApi.patch(
@@ -52,7 +52,7 @@ export async function atualizarEmpresaSuperAdmin(
   return data;
 }
 
-/** Rodada 726: inativa/reativa a empresa mãe (painel bloqueado; motoristas seguem batendo ponto). */
+/** Inativa/reativa a empresa mãe (painel bloqueado; motoristas seguem batendo ponto). */
 export async function atualizarStatusGrupoSuperAdmin(
   grupoId: string,
   ativo: boolean,
@@ -76,7 +76,7 @@ export async function atualizarStatusEmpresaSuperAdmin(
   return data;
 }
 
-/** Rodada 164: quem recebe alerta por WhatsApp (padrão: só a equipe de GR). */
+/** Quem recebe alerta por WhatsApp (padrão: só a equipe de GR). */
 export async function atualizarDestinatariosWhatsapp(
   usuarioId: string,
   input: { recebeWhatsappAlertas?: boolean; recebeWhatsappEquipeGr?: boolean },
@@ -99,7 +99,7 @@ export async function atualizarUsuarioSuperAdmin(
   return data;
 }
 
-// Rodada 38: criar/ativar-desativar funcionário de um grupo já
+// Criar/ativar-desativar funcionário de um grupo já
 // existente (movido pro super admin , ver comentário de CreateUsuarioGrupoDto).
 export async function criarUsuarioGrupo(
   grupoId: string,
@@ -124,7 +124,7 @@ export async function atualizarStatusUsuarioGrupo(
   return data;
 }
 
-/** Rodada 297: exclusão lógica (o histórico do usuário continua gravado). */
+/** Exclusão lógica (o histórico do usuário continua gravado). */
 export async function excluirUsuarioGrupo(grupoId: string, usuarioId: string) {
   const { data } = await superAdminApi.delete(
     `/super-admin/grupos/${grupoId}/usuarios/${usuarioId}`,
@@ -143,7 +143,7 @@ export async function atualizarChaveLiberacaoSuperAdmin(
   return data as { alterada: boolean; chaves: import("./types").ChaveLiberacaoEstado[] };
 }
 
-// Rodada 537 (N136): CPF do proprio super admin (vai no AFD como responsavel).
+// CPF do proprio super admin (vai no AFD como responsavel).
 export async function obterMeuPerfilSuperAdmin() {
   const { data } = await superAdminApi.get<{ id: string; nome: string; email: string; cpf: string | null; cpfPendente: boolean }>(
     "/super-admin/me",

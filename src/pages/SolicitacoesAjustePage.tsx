@@ -127,9 +127,9 @@ export function SolicitacoesAjustePage({
     }
   }
 
-  // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
+  // Pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
-  // Rodada 309: a aprovação só encaixa na ordem do HORÁRIO DO EVENTO
+  // A aprovação só encaixa na ordem do HORÁRIO DO EVENTO
   // (cada aprovação depende da anterior já estar no histórico), então a
   // caixa de pendentes tem ordem fixa: por motorista e, dentro dele, do
   // evento mais antigo pro mais novo. O filtro de data continua sendo

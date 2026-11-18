@@ -15,7 +15,7 @@ export function intervaloVisivel(
   function iniciar() {
     if (id !== null || adiar !== null) return;
     if (jitterMs > 0) {
-      // Rodada 647: cada aba comeca o ritmo num instante aleatorio (0 a jitterMs), para os paineis
+      // Cada aba comeca o ritmo num instante aleatorio (0 a jitterMs), para os paineis
       // abertos ao mesmo tempo nao baterem no servidor todos juntos a cada ciclo.
       adiar = setTimeout(() => {
         adiar = null;

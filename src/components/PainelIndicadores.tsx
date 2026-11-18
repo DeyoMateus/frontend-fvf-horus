@@ -1,3 +1,4 @@
+import { useEstadoLembrado } from "../hooks/useEstadoLembrado";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -33,7 +34,7 @@ import { dataLocalIso } from '../utils/mascaras';
  * RH decide o que paga e quanto fora da plataforma. Por isso não
  * existe nenhum campo de valor/hora nesta tela nem no backend.
  *
- * Rodada 72 , pedido do usuário: "separe o fechamento de ponto e
+ * Pedido do usuário: "separe o fechamento de ponto e
  * extração de relatório da parte de indicadores... leve os
  * indicadores e métricas para aba do painel". Antes esse conteúdo
  * inteiro vivia dentro de `IndicadoresPage.tsx` (nav "Fechamento"),
@@ -59,7 +60,7 @@ type ChaveIndicador =
   | "bancoHoras"
   | "alertas";
 
-// Rodada 100 , pedido do usuário: opção de minimizar os gráficos do
+// Pedido do usuário: opção de minimizar os gráficos do
 // Painel, deixando só os cartões de indicador visíveis (a seção
 // "Evolução ao longo do período" é a mais pesada visualmente da tela ,
 // quem só quer bater o olho nos números não precisa rolar por todos os
@@ -87,7 +88,7 @@ const OPCOES_PERIODO_RAPIDO = [
   { dias: 30, rotulo: "30 dias" },
   { dias: 90, rotulo: "90 dias" },
 ];
-// Rodada 130 , mesmos atalhos, mas com 60 dias (o padrão desta seção
+// Mesmos atalhos, mas com 60 dias (o padrão desta seção
 // específica) no lugar.
 const OPCOES_PERIODO_EVOLUCAO = [
   { dias: 7, rotulo: "7 dias" },
@@ -319,14 +320,14 @@ function GraficoLinhaSaldoBancoHoras({
 
 export function PainelIndicadores() {
   const motoristas = useColaboradores();
-  // Rodada 338: um ou vários motoristas; vazio = todos. A API recebe os ids separados por vírgula.
+  // Um ou vários motoristas; vazio = todos. A API recebe os ids separados por vírgula.
   const [motoristaIds, setMotoristaIds] = useState<string[]>([]);
   const motoristaId = motoristaIds.join(",");
   const [indicador, setIndicador] = useState<ChaveIndicador>("todos");
   const [inicio, setInicio] = useState(inicioDoMes());
   const [fim, setFim] = useState(hoje());
   const [painel, setPainel] = useState<IndicadoresPainel | null>(null);
-  // Rodada 99 , pedido do usuário: trocar motorista/período/indicador
+  // Pedido do usuário: trocar motorista/período/indicador
   // não pode "piscar" a tela inteira trocando os cartões e gráficos por
   // "Carregando…" (mesmo padrão já usado em outras páginas desde a
   // Rodada 77/99). `carregando` agora só controla a tela cheia da
@@ -338,15 +339,9 @@ export function PainelIndicadores() {
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [exportando, setExportando] = useState(false);
-  const [graficosMinimizados, setGraficosMinimizados] = useState(() => {
-    try {
-      return localStorage.getItem(CHAVE_GRAFICOS_MINIMIZADOS) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [graficosMinimizados, setGraficosMinimizados] = useEstadoLembrado(CHAVE_GRAFICOS_MINIMIZADOS);
 
-  // Rodada 130 , pedido do usuário: "Evolução ao longo do período" tem
+  // Pedido do usuário: "Evolução ao longo do período" tem
   // que deixar o usuário escolher o período, mas sempre começar
   // mostrando os últimos 60 dias , independente do filtro de
   // início/fim usado pelos cartões de indicador acima (que, por
@@ -375,25 +370,15 @@ export function PainelIndicadores() {
   const [rankingCompletoAberto, setRankingCompletoAberto] = useState<
     "espera" | "indefinido" | null
   >(null);
-  // Rodada 338: "Por motorista" mostra um recorte (10/20/50/100) e tem
+  // "Por motorista" mostra um recorte (10/20/50/100) e tem
   // relatório completo com todos os motoristas e download em Excel.
   const [limitePorMotorista, setLimitePorMotorista] = useState(10);
   const [porMotoristaCompletoAberto, setPorMotoristaCompletoAberto] =
     useState(false);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        CHAVE_GRAFICOS_MINIMIZADOS,
-        graficosMinimizados ? "1" : "0",
-      );
-    } catch {
-      // localStorage indisponível (modo privado, etc.) , só não persiste a preferência.
-    }
-  }, [graficosMinimizados]);
 
 
-  // Rodada 73 , pedido do usuário: faltava um botão de "Atualizar"
+  // Pedido do usuário: faltava um botão de "Atualizar"
   // aqui (o painel principal já tinha o dele) , antes só reagia a
   // filtro trocado, sem jeito de forçar uma releitura manual dos
   // mesmos filtros (ex.: depois que um motorista acabou de bater um
@@ -434,7 +419,7 @@ export function PainelIndicadores() {
     };
   }, [carregarPainel]);
 
-  // Rodada 130 , busca independente da "Evolução ao longo do período"
+  // Busca independente da "Evolução ao longo do período"
   // , mesmo endpoint (não existe um dedicado só pra tendência), mas
   // com o período próprio desta seção, nunca o início/fim principal.
   useEffect(() => {
@@ -862,7 +847,7 @@ export function PainelIndicadores() {
                 </div>
               </div>
 
-              {/* Rodada 130 , pedido do usuário: período próprio desta
+              {/* Pedido do usuário: período próprio desta
                   seção, sempre começando nos últimos 60 dias, com
                   jeito de trocar (datas ou atalhos) sem afetar os
                   cartões de indicador acima. */}

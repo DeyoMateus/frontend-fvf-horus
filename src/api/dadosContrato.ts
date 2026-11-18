@@ -1,6 +1,6 @@
 import { api } from "./client";
 
-// Rodada 378: espelha DadosContratoController (Portaria 671, art. 84).
+// Espelha DadosContratoController (Portaria 671, art. 84).
 export type OrigemJornadaDiaria = "CONTRATO" | "CCT" | "ACT" | "REFERENCIA_LEGAL";
 
 export interface HorarioContratual {
@@ -78,7 +78,7 @@ export function atualizarEstabelecimento(
   return api.patch(`/dados-contrato/empresas/${empresaId}`, input).then((r) => r.data);
 }
 
-// Rodada 389: importação em lote (CSV lido no navegador).
+// Importação em lote (CSV lido no navegador).
 export interface LinhaContratoImportacao {
   cpf: string;
   dataAdmissao?: string;

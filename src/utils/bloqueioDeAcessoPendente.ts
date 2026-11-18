@@ -1,5 +1,5 @@
 /**
- * Rodada 687: o servidor bloqueia TODAS as rotas (inclusive a da Política de Privacidade) enquanto a
+ * O servidor bloqueia TODAS as rotas (inclusive a da Política de Privacidade) enquanto a
  * senha for provisória ou o MFA exigido não estiver cadastrado; só a tela de perfil resolve isso. O
  * `PoliticaGate` abria antes do perfil e ficava preso no erro, então a pessoa nunca chegava ao
  * formulário de trocar a senha. Nesse caso, e só na tela de perfil, o gate deixa a tela abrir. O

@@ -19,7 +19,7 @@ import { RankingFolgas } from "./RankingFolgas";
 import { RegrasDeFolga } from "./RegrasDeFolga";
 import { intervaloVisivel } from "../hooks/intervaloVisivel";
 
-// Rodada 648: dashboard de analise (indicadores, ranking, historico de 90 dias): os numeros mudam em horas,
+// Dashboard de analise (indicadores, ranking, historico de 90 dias): os numeros mudam em horas,
 // entao 5 min bastam. Aprovar/negar um pedido recarrega na hora (`versao`), e o gestor pode atualizar a mao.
 const INTERVALO_ATUALIZACAO_MS = 300_000;
 const JITTER_MS = 20_000;
@@ -547,7 +547,7 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
 
   function baixarTudo() {
     if (!dados) return;
-    // Rodada 499 (N124): pedidos, negados e nao realizadas tem colunas proprias no fim da
+    // Pedidos, negados e nao realizadas tem colunas proprias no fim da
     // planilha ("Periodo do pedido ou data" e "Motivo da decisao"), sem cair nas colunas de motorista.
     const brancos = (n: number) => Array.from({ length: n }, () => "");
     const linhas: string[][] = [

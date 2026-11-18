@@ -5,7 +5,7 @@ import { minParaHoras } from "../utils/formatarDuracao";
 import { baixarCsvTabela, travarRolagemFundo } from "../utils/exportarTabelaModal";
 
 /**
- * Rodada 338: colunas da tabela "Por motorista" (as mesmas na tela e no
+ * Colunas da tabela "Por motorista" (as mesmas na tela e no
  * relatório completo), conforme o indicador escolhido.
  */
 export interface FiltroColunasPorMotorista {

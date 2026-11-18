@@ -1,3 +1,5 @@
+import { abrirNoMapa } from "../utils/mapa";
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useFilaDePendencias } from "../components/penMenu";
 import { Esqueleto } from "../components/Esqueleto";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
@@ -15,6 +17,8 @@ import {
   atualizarStatusMotorista,
   excluirMotorista,
   reativarMotorista,
+  rescindirMotorista,
+  readmitirMotorista,
   getMotorista,
   listarAlertasIntegridadeDispositivo,
 } from "../api/motoristas";
@@ -58,6 +62,8 @@ import {
 import type { ValoresContrato } from "../components/CamposDadosContrato";
 import { atualizarContratoMotorista } from "../api/dadosContrato";
 import { TelefoneInput } from "../components/TelefoneInput";
+import { TrilhaMotorista } from "../components/TrilhaMotorista";
+import { RescisaoPopup } from "../components/RescisaoPopup";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
@@ -101,7 +107,7 @@ function gerarUuid() {
   return crypto.randomUUID();
 }
 
-// Rodada 88 , pedido do usuário: o gestor tentou corrigir um evento
+// Pedido do usuário: o gestor tentou corrigir um evento
 // problemático pelo campo "Registro de referência", mas esse campo
 // nunca preenchia "Horário considerado" , o gestor acabou deixando o
 // horário atual (agora) ali, achando que estava corrigindo o registro
@@ -121,7 +127,7 @@ type JornadaDoCiclo = {
 };
 
 /**
- * Rodada 739: a ficha do motorista em abas no topo (linha do sino). Banco de horas, tratamento
+ * A ficha do motorista em abas no topo (linha do sino). Banco de horas, tratamento
  * de ponto, relatório de horas apuradas e fechamentos de período saíram daqui e ficam só no
  * Fechamento, com seletor de motorista.
  */
@@ -131,10 +137,11 @@ const ABAS_MOTORISTA: AbaDef[] = [
   { id: "folgas", rotulo: "Folgas" },
   { id: "espera", rotulo: "Espera (§11)" },
   { id: "alertas", rotulo: "Alertas" },
+  { id: "trilha", rotulo: "Trilha" },
 ];
 
 /**
- * `somente` (rodada 739): o Fechamento reaproveita esta tela para mostrar só o tratamento de
+ * `somente`: o Fechamento reaproveita esta tela para mostrar só o tratamento de
  * ponto ou só o relatório de horas apuradas de um motorista escolhido lá.
  */
 export function MotoristaDetailPage({
@@ -145,7 +152,7 @@ export function MotoristaDetailPage({
   somente?: "tratamento" | "relatorio";
 } = {}) {
   const { usuario } = useAuth();
-  // Rodada 215: usuários do painel (ADMIN e GESTOR) veem localização; o backend audita cada consulta.
+  // Usuários do painel (ADMIN e GESTOR) veem localização; o backend audita cada consulta.
   const veLocalizacao =
     usuario?.papel === "ADMIN" || usuario?.papel === "GESTOR";
   const parametrosRota = useParams();
@@ -153,7 +160,7 @@ export function MotoristaDetailPage({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Vindo de um alerta (?secao=alertas-jornada), abre direto a aba Alertas.
-  // Rodada 755: a ficha abre no que pede atenção. Com alerta pendente deste colaborador, em
+  // A ficha abre no que pede atenção. Com alerta pendente deste colaborador, em
   // Alertas; sem alerta, em Registros (o ponto). Cadastro deixa de ser a primeira tela.
   const filaDePendencias = useFilaDePendencias();
   const abaInicial = filaDePendencias.some(
@@ -182,7 +189,7 @@ export function MotoristaDetailPage({
   );
   const [tratamentos, setTratamentos] = useState<TratamentoPonto[]>([]);
   const [alertas, setAlertas] = useState<AlertaJornada[]>([]);
-  // Rodada 322: tratamento de alertas pela ficha do motorista (mesmos
+  // Tratamento de alertas pela ficha do motorista (mesmos
   // alertas do painel geral, então tratar aqui dá baixa lá).
   const [filtroTratamentoAlertas, setFiltroTratamentoAlertas] =
     useState<FiltroTratamento>("TODOS");
@@ -192,7 +199,7 @@ export function MotoristaDetailPage({
   const [alertasSelecionados, setAlertasSelecionados] = useState<string[]>([]);
   const [avisoAlertas, setAvisoAlertas] = useState<string | null>(null);
   const [erroAlertas, setErroAlertas] = useState<string | null>(null);
-  // Rodada 107 , pedido do usuário: mesmo padrão da Rodada 77
+  // Pedido do usuário: mesmo padrão da Rodada 77
   // (tratamentos de ponto) aplicado aqui , essa lista também não pode
   // crescer sem limite na tela. "Mostrar N por vez" (10/20/50/100) +
   // popup dedicado de paginação quando passar disso.
@@ -202,7 +209,7 @@ export function MotoristaDetailPage({
   const [paginaAlertas, setPaginaAlertas] = useState(1);
   const [popupPaginacaoAlertasAberto, setPopupPaginacaoAlertasAberto] =
     useState(false);
-  // Rodada 230: popup com as jornadas que compõem o acumulado do ciclo.
+  // Popup com as jornadas que compõem o acumulado do ciclo.
   const [cicloAberto, setCicloAberto] = useState<{
     membros: JornadaDoCiclo[];
     destaqueInicio: string;
@@ -254,7 +261,7 @@ export function MotoristaDetailPage({
   const [trocasVeiculo, setTrocasVeiculo] = useState<TrocaVeiculoAuditoria[]>(
     [],
   );
-  // Rodada 577 (N199): a conferência fica no servidor (vale para todos os gestores);
+  // A conferência fica no servidor (vale para todos os gestores);
   // troca nova volta a aparecer.
   const onMarcarTrocasConferidas = () => {
     void conferirTrocasVeiculo(motoristaId)
@@ -282,6 +289,9 @@ export function MotoristaDetailPage({
   const [qtdJornadasExibidas, setQtdJornadasExibidas] = useState(7);
 
   const [alterandoStatus, setAlterandoStatus] = useState(false);
+  const [rescisaoAberta, setRescisaoAberta] = useState(false);
+  const [readmissaoAberta, setReadmissaoAberta] = useState(false);
+  const [erroRescisao, setErroRescisao] = useState<string | null>(null);
   const [copiado, setCopiado] = useState<"id" | "key" | null>(null);
   const [erroStatus, setErroStatus] = useState<string | null>(null);
 
@@ -290,7 +300,7 @@ export function MotoristaDetailPage({
     useState<ValoresContrato>(CONTRATO_VAZIO);
   const [nomeEdit, setNomeEdit] = useState("");
   const [telefoneEdit, setTelefoneEdit] = useState("");
-  // Rodada 278: CNPJ ao qual o motorista esta vinculado (editavel).
+  // CNPJ ao qual o motorista esta vinculado (editavel).
   const [empresasGrupo, setEmpresasGrupo] = useState<Empresa[]>([]);
   const [empresaEdit, setEmpresaEdit] = useState("");
   useEffect(() => {
@@ -320,7 +330,7 @@ export function MotoristaDetailPage({
     }
   }
 
-  /** Rodada 722: pede o motivo quando o periodo ja tem AEJ e o conteudo mudou (gera o retificador). */
+  /** Pede o motivo quando o periodo ja tem AEJ e o conteudo mudou (gera o retificador). */
   async function pedirMotivoRetificacao(mensagem: string): Promise<string | null> {
     return prompt(mensagem, {
       titulo: "AEJ retificador",
@@ -363,8 +373,7 @@ export function MotoristaDetailPage({
         setAvisoAejAssinado(await baixarAejAssinado(motoristaId, { ...periodoDosRegistros(), motivoRetificacao: motivo }));
       }
     } catch (ex) {
-      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
-      setAvisoAejAssinado(dados?.message ?? "Não foi possível gerar o AEJ assinado.");
+      setAvisoAejAssinado(mensagemDoErro(ex, "Não foi possível gerar o AEJ assinado."));
     } finally {
       setBaixandoAejAssinado(false);
     }
@@ -397,7 +406,7 @@ export function MotoristaDetailPage({
   // Uma linha por dia (não por viagem) , o pedido é ver cada jornada
   // diária separada, com carregamento incremental (padrão: 7 dias mais
   // recentes) em vez do acumulado por viagem. O agrupamento em viagem
-  // em si (Rodada 16) não é mais por gap de tempo , é pelo(s) CT-e que
+  // em si não é mais por gap de tempo , é pelo(s) CT-e que
   // o motorista carrega; cada linha carrega os CT-e da viagem a que
   // pertence, pra mostrar por que ela foi agrupada com as outras.
   const jornadasDiariasOrdenadas = viagens
@@ -414,7 +423,7 @@ export function MotoristaDetailPage({
       (a, b) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime(),
     );
 
-  // Rodada 70 , pedido do usuário: cada linha aqui é uma JORNADA (um
+  // Pedido do usuário: cada linha aqui é uma JORNADA (um
   // par início/fim de jornada), não um "dia" , e é perfeitamente
   // normal (e legalmente relevante) o motorista abrir e fechar jornada
   // mais de uma vez na mesma data-calendário. Antes disso ficava
@@ -458,7 +467,7 @@ export function MotoristaDetailPage({
     return `${ordinal} jornada do dia, de ${grupo.length}`;
   }
 
-  // Rodada 186: ciclo legal = jornadas encadeadas (menos de 11h entre o fim
+  // Ciclo legal = jornadas encadeadas (menos de 11h entre o fim
   // de uma e o início da seguinte). A soma da direção do ciclo é o que
   // dispara os alertas de 8h/10h, então o gestor precisa vê-la.
   const cicloPorJornada = new Map<
@@ -482,7 +491,7 @@ export function MotoristaDetailPage({
       grupoAtual = [];
     };
     for (const j of cronologicas) {
-      // Rodada 229: jornada vazia (aberta e fechada sem direção/espera, até
+      // Jornada vazia (aberta e fechada sem direção/espera, até
       // 5 min) não entra no ciclo nem conta como intervalo de descanso.
       if (
         !j.emAndamento &&
@@ -508,7 +517,7 @@ export function MotoristaDetailPage({
     qtdJornadasExibidas,
   );
 
-  // Rodada 77 , pedido do usuário: salvar algo nesta tela (lançar um
+  // Pedido do usuário: salvar algo nesta tela (lançar um
   // tratamento, anexar evidência, editar cadastro, trocar veículo,
   // vincular/revogar dispositivo etc.) não pode "piscar" a página
   // inteira pro topo. Antes, TODA chamada de `carregarTudo()`
@@ -603,7 +612,7 @@ export function MotoristaDetailPage({
     try {
       const resp = await vincularDispositivo(
         motoristaId,
-        // Rodada 577 (N199): UUID em branco gera um aparelho de teste só em desenvolvimento.
+        // UUID em branco gera um aparelho de teste só em desenvolvimento.
         novaDeviceUuid.trim() || (import.meta.env.DEV ? gerarUuid() : ""),
       );
       setDeviceApiKeyGerada(resp.deviceApiKey);
@@ -677,7 +686,7 @@ export function MotoristaDetailPage({
     }
   }
 
-  // Rodada 157 , integridade: a lista de divergências não pode crescer sem
+  // Integridade: a lista de divergências não pode crescer sem
   // limite na tela. Por padrão só as PENDENTES; filtro de status e de período
   // (De/Até pelo horário do evento), "mostrar N por vez" (100 abre popup) e
   // exportação do que está filtrado.
@@ -757,9 +766,9 @@ export function MotoristaDetailPage({
     );
   }
 
-  // Rodada 107 , mais recentes primeiro (mesmo critério da Rodada 77),
+  // Mais recentes primeiro (mesmo critério da Rodada 77),
   // fatiado pelo "mostrar N por vez".
-  // Rodada 322: não tratados sempre primeiro, depois os mais recentes.
+  // Não tratados sempre primeiro, depois os mais recentes.
   const alertasOrdenados = [
     ...aplicarFiltroTratamento(alertas, filtroTratamentoAlertas),
   ].sort((a, b) => {
@@ -786,7 +795,7 @@ export function MotoristaDetailPage({
     setPaginaAlertas(1);
   }
 
-  // Pedido do usuário (Rodada 153): a tabela "Registros de jornada" não pode
+  // Pedido do usuário: a tabela "Registros de jornada" não pode
   // crescer sem limite. Filtro de período (De/Até), ordenação, "Mostrar
   // 20/50" e, ao escolher 100, a lista abre num popup separado. Os botões de
   // baixar seguem o mesmo período filtrado.
@@ -818,7 +827,7 @@ export function MotoristaDetailPage({
         <td>{r.sequencial}</td>
         <td>
           {r.tipoEvento}
-          {/* Rodada 748: motivo (e observação de "Outro") da parada; texto, nunca HTML. */}
+          {/* Motivo (e observação de "Outro") da parada; texto, nunca HTML. */}
           {r.motivoParada && (
             <div style={{ fontSize: 11 }}>
               {ROTULO_MOTIVO_PARADA[r.motivoParada]}
@@ -848,13 +857,7 @@ export function MotoristaDetailPage({
                 type="button"
                 className="botao-link-externo"
                 title={`${r.latitude}, ${r.longitude}${r.precisaoGpsM != null ? ` (±${Math.round(Number(r.precisaoGpsM))}m)` : ""}${seloFusoMapa(r.timestampEvento, r.fusoOffsetMin)}`}
-                onClick={() =>
-                  window.open(
-                    `https://www.google.com/maps/search/?api=1&query=${r.latitude},${r.longitude}`,
-                    "_blank",
-                    "noopener,noreferrer",
-                  )
-                }
+                onClick={() => abrirNoMapa(r.latitude!, r.longitude!)}
               >
                 Ver no mapa
               </button>
@@ -901,7 +904,7 @@ export function MotoristaDetailPage({
       setPedeJustificativaFolga(false);
       await carregarTudo();
     } catch (err) {
-      // Rodada 387: o servidor pede a justificativa quando a folga vem depois de mais de 6 dias seguidos.
+      // O servidor pede a justificativa quando a folga vem depois de mais de 6 dias seguidos.
       const msg = (err as { response?: { status?: number; data?: { message?: unknown } } })?.response;
       const texto = typeof msg?.data?.message === "string" ? msg.data.message : "";
       if (msg?.status === 400 && texto.includes("Informe a justificativa")) {
@@ -1067,7 +1070,7 @@ export function MotoristaDetailPage({
   }
 
   /**
-   * "Excluir cadastro" (Rodada 65) , pedido explícito do usuário:
+   * "Excluir cadastro" , pedido explícito do usuário:
    * diferente de INATIVO/SUSPENSO acima, isto tira o motorista da
    * listagem normal do painel (ver MotoristasListPage). Continua sendo
    * um soft-delete: nada é apagado de verdade, e nome/CPF continuam
@@ -1098,14 +1101,49 @@ export function MotoristaDetailPage({
       await excluirMotorista(motoristaId, motivo);
       navigate("/motoristas");
     } catch (ex) {
-      // Rodada 724: cadastro com ponto batido nao pode ser excluido; o servidor explica o motivo.
-      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
-      setErroStatus(dados?.message ?? "Não foi possível excluir o cadastro.");
+      // Cadastro com ponto batido nao pode ser excluido; o servidor explica o motivo.
+      setErroStatus(mensagemDoErro(ex, "Não foi possível excluir o cadastro."));
       setAlterandoStatus(false);
     }
   }
 
-  /** Rodada 725: reativa um cadastro excluido (o servidor recusa se CPF/CNH foi reutilizado). */
+  /** Rescisão pela ficha: grava a data, inativa o cadastro e mantém o histórico. */
+  async function onConfirmarRescisao(dataDesligamento: string, motivo: string) {
+    setAlterandoStatus(true);
+    setErroRescisao(null);
+    try {
+      const atualizado = await rescindirMotorista(motoristaId, dataDesligamento, motivo);
+      setMotorista((prev) =>
+        prev
+          ? { ...prev, status: atualizado.status, dataDesligamento: atualizado.dataDesligamento ?? dataDesligamento }
+          : prev,
+      );
+      setRescisaoAberta(false);
+    } catch (ex) {
+      setErroRescisao(mensagemDoErro(ex, "Não foi possível registrar a rescisão."));
+    } finally {
+      setAlterandoStatus(false);
+    }
+  }
+
+  /** Readmissão: quem teve a rescisão registrada volta a ATIVO. */
+  async function onConfirmarReadmissao(dataReadmissao: string, motivo: string) {
+    setAlterandoStatus(true);
+    setErroRescisao(null);
+    try {
+      const atualizado = await readmitirMotorista(motoristaId, dataReadmissao, motivo);
+      setMotorista((prev) =>
+        prev ? { ...prev, status: atualizado.status, dataDesligamento: null } : prev,
+      );
+      setReadmissaoAberta(false);
+    } catch (ex) {
+      setErroRescisao(mensagemDoErro(ex, "Não foi possível readmitir o colaborador."));
+    } finally {
+      setAlterandoStatus(false);
+    }
+  }
+
+  /** Reativa um cadastro excluido (o servidor recusa se CPF/CNH foi reutilizado). */
   async function onReativarCadastro() {
     if (
       !(await confirmarAcao(
@@ -1121,8 +1159,7 @@ export function MotoristaDetailPage({
       await reativarMotorista(motoristaId);
       await carregarTudo();
     } catch (ex) {
-      const dados = (ex as { response?: { data?: { message?: string } } })?.response?.data;
-      setErroStatus(dados?.message ?? "Não foi possível reativar o cadastro.");
+      setErroStatus(mensagemDoErro(ex, "Não foi possível reativar o cadastro."));
     } finally {
       setAlterandoStatus(false);
     }
@@ -1259,7 +1296,20 @@ export function MotoristaDetailPage({
             >
               Editar
             </button>
-            {motorista.status !== "ATIVO" && (
+            {motorista.dataDesligamento && !motorista.excluidoEm && (
+              <button
+                type="button"
+                disabled={alterandoStatus}
+                onClick={() => {
+                  setErroRescisao(null);
+                  setReadmissaoAberta(true);
+                }}
+                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
+              >
+                Readmitir
+              </button>
+            )}
+            {motorista.status !== "ATIVO" && !motorista.dataDesligamento && (
               <button
                 type="button"
                 disabled={alterandoStatus}
@@ -1279,17 +1329,29 @@ export function MotoristaDetailPage({
                 Suspender
               </button>
             )}
-            {motorista.status !== "INATIVO" && (
+            {!motorista.excluidoEm && !motorista.dataDesligamento && (
               <button
                 type="button"
+                className="danger"
                 disabled={alterandoStatus}
-                onClick={() => onAlterarStatus("INATIVO")}
+                onClick={() => {
+                  setErroRescisao(null);
+                  setRescisaoAberta(true);
+                }}
                 style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
               >
-                Inativar (arquivo morto)
+                Registrar rescisão
               </button>
             )}
-            {!motorista.excluidoEm && (
+            {motorista.dataDesligamento && (
+              <span style={{ fontSize: 12, marginLeft: 8, marginTop: 8, display: "inline-block" }}>
+                Rescisão em{" "}
+                <strong>
+                  {motorista.dataDesligamento.slice(0, 10).split("-").reverse().join("/")}
+                </strong>
+              </span>
+            )}
+            {!motorista.excluidoEm && !carregando && registros.length === 0 && tratamentos.length === 0 && (
               <button
                 type="button"
                 className="danger"
@@ -1459,7 +1521,7 @@ export function MotoristaDetailPage({
         )}
       </div>
 
-      {/* Rodada 740: ajudante não tem veículo de tração. */}
+      {/* Ajudante não tem veículo de tração. */}
       {motorista.funcao !== "AJUDANTE" && (
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Veículo de tração vinculado</h3>
@@ -1976,7 +2038,7 @@ export function MotoristaDetailPage({
                   </td>
                   <td>{new Date(j.inicio).toLocaleTimeString("pt-BR")}</td>
                   <td>
-                    {/* Rodada 69 , pedido do usuário: enquanto a jornada
+                    {/* Pedido do usuário: enquanto a jornada
                       ainda está aberta, `j.fim` é só o timestamp do
                       ÚLTIMO EVENTO batido até agora (não um "fim" de
                       verdade) , mostrar essa hora ao lado de "(em
@@ -2179,7 +2241,7 @@ export function MotoristaDetailPage({
         )}
       </div>
 
-      {/* Rodada 740: CT-e/MDF-e é do motorista. */}
+      {/* CT-e/MDF-e é do motorista. */}
       {motorista.funcao !== "AJUDANTE" && (
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Status de carga (CT-e / MDF-e)</h3>
@@ -2341,6 +2403,10 @@ export function MotoristaDetailPage({
       </>
       )}
 
+      {mostrar("trilha") && veLocalizacao && (
+        <TrilhaMotorista motoristaId={motoristaId} />
+      )}
+
       {mostrar("alertas") && (
       <>
       <div className="card" ref={secaoAlertasJornadaRef}>
@@ -2350,7 +2416,7 @@ export function MotoristaDetailPage({
           5h/5h30, jornada de trabalho acima do limite do dia e tempo de espera
           em carga/descarga acima do tempo configurado pela empresa.
         </p>
-        {/* Rodada 107 , mesmo padrão da Rodada 77: "mostrar N por vez" +
+        {/* Mesmo padrão da Rodada 77: "mostrar N por vez" +
             popup dedicado de página quando passar disso, pra essa
             lista nunca crescer sem limite na tela. */}
         <div
@@ -2583,6 +2649,29 @@ export function MotoristaDetailPage({
           tratamentos={tratamentos}
           carregando={carregando}
           onAtualizar={() => carregarTudo()}
+        />
+      )}
+
+      {readmissaoAberta && motorista && (
+        <RescisaoPopup
+          modo="readmissao"
+          nome={motorista.nome}
+          dataMinima={motorista.dataDesligamento}
+          salvando={alterandoStatus}
+          erro={erroRescisao}
+          onConfirmar={onConfirmarReadmissao}
+          onFechar={() => setReadmissaoAberta(false)}
+        />
+      )}
+
+      {rescisaoAberta && motorista && (
+        <RescisaoPopup
+          nome={motorista.nome}
+          dataAdmissao={motorista.dataAdmissao}
+          salvando={alterandoStatus}
+          erro={erroRescisao}
+          onConfirmar={onConfirmarRescisao}
+          onFechar={() => setRescisaoAberta(false)}
         />
       )}
 

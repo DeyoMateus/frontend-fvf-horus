@@ -23,16 +23,16 @@ export type TipoEvento =
   | "FIM_DESCARREGAMENTO"
   | "FIM_JORNADA"
   | "OUTRO"
-  // Rodada 740: eventos do ajudante.
+  // Eventos do ajudante.
   | "INICIO_CARREGAMENTO"
   | "FIM_CARREGAMENTO"
   | "INICIO_DESCARGA"
   | "FIM_DESCARGA"
-  // Rodada 748: parada do motorista (manutenção, trânsito, posto fiscal, outro).
+  // Parada do motorista (manutenção, trânsito, posto fiscal, outro).
   | "INICIO_PARADA"
   | "FIM_PARADA";
 
-/** Rodada 748: motivo da parada (conta na jornada; não é descanso). */
+/** Motivo da parada (conta na jornada; não é descanso). */
 export type MotivoParada = "MANUTENCAO" | "TRANSITO_CONGESTIONADO" | "POSTO_FISCAL" | "OUTRO";
 
 export const ROTULO_MOTIVO_PARADA: Record<MotivoParada, string> = {
@@ -57,7 +57,7 @@ export const TIPOS_EVENTO: TipoEvento[] = [
   "FIM_PARADA",
 ];
 
-/** Rodada 740: motorista e ajudante são colaboradores no mesmo cadastro. */
+/** Motorista e ajudante são colaboradores no mesmo cadastro. */
 export type FuncaoColaborador = "MOTORISTA" | "AJUDANTE";
 
 export const ROTULO_FUNCAO: Record<FuncaoColaborador, string> = {
@@ -88,7 +88,7 @@ export interface UsuarioAutenticado {
   // (Empresa) sob o mesmo login. Renomeado de empresaId em 2026-09.
   grupoId: string;
   papel: PapelUsuario;
-  /** Rodada 688: senha definida por outra pessoa; o painel só abre o popup de trocar a senha. */
+  /** Senha definida por outra pessoa; o painel só abre o popup de trocar a senha. */
   senhaProvisoria?: boolean;
 }
 
@@ -99,7 +99,7 @@ export interface Empresa {
   grupoId: string;
   registroInpiAfd?: string | null;
   fusoHorario?: string;
-  /** Rodada 382: dados do estabelecimento (CAEPF/CNO e endereço). */
+  /** Dados do estabelecimento (CAEPF/CNO e endereço). */
   caepfCno?: string | null;
   enderecoEstabelecimento?: string | null;
   createdAt: string;
@@ -164,8 +164,7 @@ export interface RegraSindical {
   percentualAdicionalInterjornada?: string | number | null;
   incideReflexoDsrInterjornada?: boolean;
   bancoGuarda?: "fictos" | "reais";
-  interjornadaNoBancoPermitida?: boolean;
-  // Rodada 744: opcional, sem padrão (o antigo 30 era a indenização do art. 235-C § 9º, inconstitucional).
+  // Opcional, sem padrão (o antigo 30 era a indenização do art. 235-C § 9º, inconstitucional).
   percentualHoraEspera?: string | null;
   percentualHoraEsperaRefeicao?: string | null;
   acordoColetivo?: boolean;
@@ -216,9 +215,9 @@ export interface Motorista {
   id: string;
   nome: string;
   cpf: string;
-  /** Rodada 740: só motorista tem CNH. */
+  /** Só motorista tem CNH. */
   cnh?: string | null;
-  /** Rodada 740: MOTORISTA ou AJUDANTE (cadastros antigos vêm como MOTORISTA). */
+  /** MOTORISTA ou AJUDANTE (cadastros antigos vêm como MOTORISTA). */
   funcao?: FuncaoColaborador;
   telefone?: string | null;
   status: StatusMotorista;
@@ -227,11 +226,13 @@ export interface Motorista {
   certificadoFingerprint?: string | null;
   certificadoValidoAte?: string | null;
   createdAt: string;
-  /** Rodada 65 , "Excluir cadastro": não nulo quando o cadastro foi excluído (soft-delete, histórico intacto). */
+  /** "Excluir cadastro": não nulo quando o cadastro foi excluído (soft-delete, histórico intacto). */
   excluidoEm?: string | null;
   motivoExclusao?: string | null;
-  /** Rodada 378: dados de contrato. */
+  /** Dados de contrato. */
   dataAdmissao?: string | null;
+  /** Rescisão registrada na ficha (fim do vínculo; inicia o prazo de guarda). */
+  dataDesligamento?: string | null;
   cargo?: string | null;
   matricula?: string | null;
   matriculaEsocial?: string | null;
@@ -263,7 +264,7 @@ export interface Ajudante {
   createdAt: string;
   excluidoEm?: string | null;
   motivoExclusao?: string | null;
-  /** Rodada 743: quando este cadastro antigo virou colaborador (mesmo id). */
+  /** Quando este cadastro antigo virou colaborador (mesmo id). */
   convertidoEmColaboradorEm?: string | null;
   dispositivoVinculado?: {
     deviceUuid: string;
@@ -295,10 +296,10 @@ export interface RegistroJornada {
   deviceUuidUsado: string;
   /** Fuso do motorista no toque (min a leste do UTC; Brasília = -180). Rodada 146. */
   fusoOffsetMin?: number | null;
-  /** Rodada 748: motivo da parada (INICIO_PARADA/FIM_PARADA). */
+  /** Motivo da parada (INICIO_PARADA/FIM_PARADA). */
   motivoParada?: MotivoParada | null;
   createdAt: string;
-  /** Rodada 320: ponto adulterado. CORRIGIDO = o gestor informou a hora certa (`horaCorrigida`); FORA_DO_CALCULO = alerta de relógio ainda não tratado. */
+  /** Ponto adulterado. CORRIGIDO = o gestor informou a hora certa (`horaCorrigida`); FORA_DO_CALCULO = alerta de relógio ainda não tratado. */
   situacaoCalculo?: "CORRIGIDO" | "FORA_DO_CALCULO";
   horaCorrigida?: string;
 }
@@ -365,7 +366,7 @@ export interface DispositivoStatus {
   vinculadoEm?: string;
   atualizadoEm?: string;
   vinculadoPorUsuarioId?: string;
-  /** Rodada 394: telemetria do app (pontos em ERRO guardados no aparelho). */
+  /** Telemetria do app (pontos em ERRO guardados no aparelho). */
   errosAppQtd?: number | null;
   errosAppDesde?: string | null;
   errosAppAtualizadoEm?: string | null;
@@ -373,12 +374,12 @@ export interface DispositivoStatus {
 }
 
 export type TipoAlertaJornada =
-  // Rodadas 367 e 368: refeição pendente e jornada total do dia.
+  // Refeição pendente e jornada total do dia.
   | "INTERVALO_REFEICAO_PENDENTE"
   | "JORNADA_TOTAL_PROXIMA_LIMITE"
   | "JORNADA_TOTAL_EXCEDIDA"
   | "JORNADA_TOTAL_EXTRAS_LIMITE"
-  // Rodadas 364 e 388: repouso semanal e DSR.
+  // Repouso semanal e DSR.
   | "REPOUSO_SEMANAL_PROXIMO_LIMITE"
   | "REPOUSO_SEMANAL_ATRASADO"
   | "DSR_SEM_DESCANSO_SEMANAL"
@@ -414,31 +415,28 @@ export type TipoAlertaJornada =
   // Folga concedida pelo RH conflitando com ponto já batido (ou
   // vice-versa) , ver FolgaConcedidaService/RegistrosJornadaService no backend.
   | "PONTO_REGISTRADO_EM_DIA_DE_FOLGA"
-  // GPS do "Fim de descarregamento" fora da cerca virtual (500m) do
-  // endereço do destinatário do CT-e , ver RegistrosJornadaService.avaliarCercaVirtualEntrega.
-  | "ENTREGA_FORA_DA_CERCA_VIRTUAL"
-  // Rodada 68 , jornada aberta sem etapa em aberto (nem direção, nem
+  // Jornada aberta sem etapa em aberto (nem direção, nem
   // descanso, nem espera, nem "aguardando documentação") por tempo
   // demais , ver JornadaLegalService.avaliarTempoIndefinido.
   | "TEMPO_INDEFINIDO_PROXIMO_LIMITE"
   | "TEMPO_INDEFINIDO_PROLONGADO"
-  // Rodada 71 , descanso interjornada (entre o fim de uma jornada e o
+  // Descanso interjornada (entre o fim de uma jornada e o
   // início da próxima) abaixo do mínimo legal de 11h , ver
   // JornadaLegalService.avaliarDescansoInterjornada.
   | "DESCANSO_INTERJORNADA_INSUFICIENTE"
-  // Rodada 72 , início de direção sem CT-e vinculado/emitido
+  // Início de direção sem CT-e vinculado/emitido
   // recentemente, com um CT-e em aberto (não entregue) pendente , ver
   // RegistrosJornadaService.avaliarCteAbertoSemVinculoRecente.
   | "CTE_EM_ABERTO_SEM_VINCULO_RECENTE"
-  // Rodada 87 , evento sincronizado com atraso grande demais pra ser
+  // Evento sincronizado com atraso grande demais pra ser
   // só "ficou sem sinal" , ver AntifraudeService.avaliarSincronizacaoTardiaSuspeita.
   | "SINCRONIZACAO_TARDIA_SUSPEITA"
-  // Rodada 92 , divergência de relógio detectada RETROATIVAMENTE, só
+  // Divergência de relógio detectada RETROATIVAMENTE, só
   // depois que uma amostra de hora confiável do mesmo boot do aparelho
   // chegou ao servidor (ver RelogioConfiavelService no backend). O
   // registro que gerou o alerta nunca é alterado/apagado (WORM).
   | "RELOGIO_DIVERGENTE_DETECTADO_RETROATIVAMENTE"
-  // Rodada 165 , varredura automática achou divergência na cadeia de hashes.
+  // Varredura automática achou divergência na cadeia de hashes.
   | "INTEGRIDADE_CADEIA_VIOLADA"
   | "FALHA_AVALIACAO_ALERTAS";
 
@@ -475,7 +473,7 @@ export interface RegistroAuditoria {
   id: string;
   actorType: ActorType;
   actorId?: string | null;
-  /** Nome de verdade de quem agiu (Rodada 74) , null quando o ator já foi excluído ou é o próprio SISTEMA. */
+  /** Nome de verdade de quem agiu , null quando o ator já foi excluído ou é o próprio SISTEMA. */
   actorNome?: string | null;
   acao: string;
   entidade: string;
@@ -519,20 +517,20 @@ export interface SolicitacaoTrocaDispositivo {
 // Espelha DashboardService.resumo/tendencia (backend/src/dashboard).
 export interface DashboardResumo {
   atualizadoEm: string;
-  /** Fuso IANA da transportadora (Rodada 146), só para exibição. */
+  /** Fuso IANA da transportadora, só para exibição. */
   fusoHorario?: string;
   motoristas: {
     totalAtivos: number;
     semNenhumRegistro: number;
     emDirecao: number;
     emDescanso: number;
-    /** Rodada 748: último evento foi uma parada (manutenção, trânsito, posto fiscal, outro). */
+    /** Último evento foi uma parada (manutenção, trânsito, posto fiscal, outro). */
     emParada?: number;
     emEspera: number;
     jornadaAbertaSemSubEvento: number;
     aguardandoDocumentacao: number;
     semJornadaAberta: number;
-    /** So a 1a pagina (Rodada 641); as demais vem de `getJornadasAbertasPagina`. */
+    /** So a 1a pagina; as demais vem de `getJornadasAbertasPagina`. */
     jornadasAbertasHaMuitoTempo: JornadaAbertaHaMuitoTempo[];
     totalJornadasAbertasHaMuitoTempo: number;
   };
@@ -570,7 +568,7 @@ export interface DashboardTendenciaDia {
   riscoFraude: number;
   horasDirecao: number;
   horasEspera: number;
-  // Rodada 68 , jornada aberta sem etapa em aberto (nem direção, nem
+  // Jornada aberta sem etapa em aberto (nem direção, nem
   // descanso, nem espera, nem "aguardando documentação").
   horasIndefinido: number;
 }
@@ -645,7 +643,7 @@ export type DashboardTendenciaDetalhe =
   | { tipo: "alertas"; itens: ItemAlertaCard[]; truncado?: boolean }
   | { tipo: "trechos"; itens: ItemTrechoTendencia[] };
 
-// ===== Usuários do grupo (Rodada 31) =====
+// ===== Usuários do grupo =====
 
 export interface UsuarioEmpresaListado {
   id: string;
@@ -655,25 +653,25 @@ export interface UsuarioEmpresaListado {
   ativo: boolean;
   telefoneWhatsapp?: string | null;
   telefoneGerenciamentoRisco?: string | null;
-  /** Rodada 298: só o ADMIN principal do grupo edita o número da GR. */
+  /** Só o ADMIN principal do grupo edita o número da GR. */
   adminPrincipal?: boolean;
   recebeWhatsappAlertas?: boolean;
   recebeWhatsappEquipeGr?: boolean;
-  /** Rodada 385: permissões separadas (só aparecem na lista do ADMIN). */
+  /** Permissões separadas (só aparecem na lista do ADMIN). */
   podeAprovarAjuste?: boolean;
   podeAceitarDivergencia?: boolean;
-  /** Rodada 375: MFA (TOTP) ativo e aviso de cadastro exigido pela empresa. */
+  /** MFA (TOTP) ativo e aviso de cadastro exigido pela empresa. */
   mfaAtivo?: boolean;
   mfaValidoAte?: string | null;
   mfaExpirado?: boolean;
   mfaCadastroPendente?: boolean;
-  /** Rodada 537 (N136): CPF do usuario; vem so em /me. */
+  /** CPF do usuario; vem so em /me. */
   cpf?: string | null;
   cpfPendente?: boolean;
   createdAt: string;
 }
 
-// ===== Super admin da plataforma (Rodada 31) =====
+// ===== Super admin da plataforma =====
 
 export interface SuperAdminAutenticado {
   sub: string;
@@ -703,13 +701,13 @@ export type RegimeDomingoFeriado =
   | "PAGO_NO_HOLERITE"
   | "COMPENSACAO_1_PARA_1";
 
-/** Rodada 377: regime do banco de horas da empresa (definido só pelo super admin). */
+/** Regime do banco de horas da empresa (definido só pelo super admin). */
 export interface RegimeBancoHorasEmpresa {
   regime: RegimeBancoHoras;
   domingoFeriado: RegimeDomingoFeriado;
   documento: string | null;
   vigenciaInicio: string | null;
-  /** Rodada 701: último dia de vigência do instrumento (null = sem fim informado). */
+  /** Último dia de vigência do instrumento (null = sem fim informado). */
   vigenciaFim?: string | null;
   instrumento?: { situacao: "SEM_FIM" | "VIGENTE" | "VENCE_EM_BREVE" | "VENCIDO"; diasParaFim: number | null };
   tetoMin: number | null;
@@ -717,7 +715,7 @@ export interface RegimeBancoHorasEmpresa {
   razaoAtivo: boolean;
 }
 
-/** Rodada 415: chave de liberacao de uma empresa (ligada/desligada pelo super admin). */
+/** Chave de liberacao de uma empresa (ligada/desligada pelo super admin). */
 export interface ChaveLiberacaoEstado {
   chave: string;
   rotulo: string;
@@ -750,7 +748,7 @@ export interface GrupoDetalhe {
   usuarios: UsuarioEmpresaListado[];
 }
 
-// Edição, pelo super admin, de um cadastro já existente (Rodada 32).
+// Edição, pelo super admin, de um cadastro já existente.
 export interface UpdateGrupoInput {
   razaoSocial: string;
   /** null = sem limite; omitido = não altera. */
@@ -762,7 +760,7 @@ export interface UpdateEmpresaInput {
   cnpj?: string;
   registroInpiAfd?: string;
   fusoHorario?: string;
-  /** Rodada 691: cidade e UF da empresa (não exigem motivo). */
+  /** Cidade e UF da empresa (não exigem motivo). */
   cidade?: string;
   uf?: string;
   /** Obrigatório quando algum dado do empregador muda. */
@@ -780,22 +778,22 @@ export interface CreateEmpresaMaeInput {
   cnpjEmpresa: string;
   razaoSocialEmpresa: string;
   nomeAdmin: string;
-  /** Rodada 537 (N136): CPF do admin, obrigatorio (11 digitos). */
+  /** CPF do admin, obrigatorio (11 digitos). */
   cpfAdmin: string;
   emailAdmin: string;
   senhaAdmin: string;
   registroInpiAfd?: string;
-  /** Rodada 691: fuso, cidade e UF da empresa, definidos no cadastro. */
+  /** Fuso, cidade e UF da empresa, definidos no cadastro. */
   fusoHorario?: string;
   cidade?: string;
   uf?: string;
 }
 
-// Rodada 38: criar/ativar-desativar funcionário de um grupo já
+// Criar/ativar-desativar funcionário de um grupo já
 // existente virou exclusividade do super admin.
 export interface CreateUsuarioGrupoInput {
   nome: string;
-  /** Rodada 537 (N136): obrigatorio (11 digitos). */
+  /** Obrigatorio (11 digitos). */
   cpf: string;
   email: string;
   senha: string;
@@ -803,11 +801,11 @@ export interface CreateUsuarioGrupoInput {
   telefoneWhatsapp?: string;
 }
 
-// ===== Meu perfil (Rodada 38) =====
+// ===== Meu perfil =====
 
 export interface UpdatePerfilProprioInput {
   nome?: string;
-  /** Rodada 537 (N136): informado uma vez; 11 digitos. */
+  /** Informado uma vez; 11 digitos. */
   cpf?: string;
   email?: string;
   /** Obrigatória só quando o e-mail muda. */

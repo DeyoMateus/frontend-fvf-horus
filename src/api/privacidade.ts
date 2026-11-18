@@ -1,3 +1,4 @@
+import { avisarPendenciasMudaram } from "../utils/avisarPendenciasMudaram";
 import { api } from "./client";
 
 // Espelha PrivacidadePublicaController / PrivacidadePainelController (Rodada 206, LGPD).
@@ -33,7 +34,7 @@ export type SolicitacaoTitularPainel = {
   protocolo?: string | null;
 };
 
-/** Rodada 733: decisao por tipo de dado num pedido de eliminacao/bloqueio. */
+/** Decisao por tipo de dado num pedido de eliminacao/bloqueio. */
 export type CategoriaDadoTitular = "GPS_PERIODICO" | "ANEXOS" | "APARELHOS" | "ALERTAS";
 export type DecisaoCategoriaTitular = {
   categoria: CategoriaDadoTitular;
@@ -118,9 +119,12 @@ export const responderSolicitacaoTitular = (
 ) =>
   api
     .patch(`/privacidade/painel/solicitacoes/${id}`, { status, resposta, decisoes })
-    .then((r) => r.data);
+    .then((r) => {
+      avisarPendenciasMudaram();
+      return r.data;
+    });
 
-/** Rodada 733: dados que passaram do prazo fixo, por tipo (tela Retencao). */
+/** Dados que passaram do prazo fixo, por tipo (tela Retencao). */
 export type VencidosRetencao = {
   prazos: Record<string, string>;
   GPS_PERIODICO: number;
@@ -128,7 +132,7 @@ export type VencidosRetencao = {
   APARELHOS: number;
 };
 
-/** Rodada 728: canal de privacidade da transportadora (aparece na politica). */
+/** Canal de privacidade da transportadora (aparece na politica). */
 export type CanalPrivacidade = { encarregado: string | null; contato: string | null };
 
 export const obterCanalPrivacidade = () =>
@@ -153,7 +157,7 @@ export const listarSolicitacoesTitularPendentes = () =>
     .get<SolicitacaoPendenteSino[]>("/privacidade/painel/solicitacoes-pendentes")
     .then((r) => r.data);
 
-// Rodada 281: Política de Privacidade para o usuário do painel (primeiro acesso).
+// Política de Privacidade para o usuário do painel (primeiro acesso).
 export type MinhaPolitica = {
   versao: string;
   aceita: boolean;
@@ -173,7 +177,19 @@ export const aceitarMinhaPolitica = (versao: string) =>
     )
     .then((r) => r.data);
 
-/** Rodada 734: o RH registra um pedido recebido pelo canal de privacidade (e-mail, RH). */
+// Termo de responsabilidade do usuario do painel (mesmo formato da politica).
+export const obterTermoGestor = () =>
+  api.get<MinhaPolitica>("/privacidade/painel/termo-gestor").then((r) => r.data);
+
+export const aceitarTermoGestor = (versao: string) =>
+  api
+    .post<{ aceita: boolean; versao: string; aceitaEm: string }>(
+      "/privacidade/painel/termo-gestor/aceitar",
+      { versao },
+    )
+    .then((r) => r.data);
+
+/** O RH registra um pedido recebido pelo canal de privacidade (e-mail, RH). */
 export const registrarSolicitacaoTitularPainel = (dados: {
   motoristaId: string;
   tipo: string;

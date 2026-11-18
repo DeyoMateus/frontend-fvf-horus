@@ -20,7 +20,7 @@ function msg(e: unknown, padrao: string) {
   return padrao;
 }
 
-/** Rodada 712 (N529): fechamentos do motorista, verificacao de integridade e comparacao com a apuracao viva. */
+/** Fechamentos do motorista, verificacao de integridade e comparacao com a apuracao viva. */
 export function FechamentosPeriodoPainel({ motoristaId }: { motoristaId: string }) {
   const [lista, setLista] = useState<FechamentoPeriodo[]>([]);
   const [erro, setErro] = useState<string | null>(null);

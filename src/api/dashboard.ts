@@ -14,7 +14,7 @@ export function getDashboardResumo() {
   return api.get<DashboardResumo>("/dashboard/resumo").then((r) => r.data);
 }
 
-// Rodada 641: paginas da lista "Jornadas aguardando encerramento pelo gestor".
+// Paginas da lista "Jornadas aguardando encerramento pelo gestor".
 export function getJornadasAbertasPagina(page: number, pageSize: number) {
   return api
     .get<PaginaJornadasAbertas>("/dashboard/jornadas-abertas", {

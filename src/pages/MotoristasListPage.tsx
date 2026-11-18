@@ -55,10 +55,10 @@ export function MotoristasListPage() {
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [cnh, setCnh] = useState("");
-  // Rodada 740: colaborador é motorista ou ajudante (ajudante sem CNH e sem veículo).
+  // Colaborador é motorista ou ajudante (ajudante sem CNH e sem veículo).
   const [funcaoNova, setFuncaoNova] = useState<FuncaoColaborador>("MOTORISTA");
   const ehAjudanteNovo = funcaoNova === "AJUDANTE";
-  // Rodada 749: filtro por função como abas no topo (linha do sino), no mesmo padrão do Painel e do
+  // Filtro por função como abas no topo (linha do sino), no mesmo padrão do Painel e do
   // Fechamento (`?aba=`). Vale para a lista, o radar de dias sem interação e as trocas de aparelho.
   // Link antigo com `?funcao=` ainda abre a aba certa.
   const [searchParams] = useSearchParams();
@@ -77,7 +77,7 @@ export function MotoristasListPage() {
   const [criando, setCriando] = useState(false);
   const [contratoNovo, setContratoNovo] =
     useState<ValoresContrato>(CONTRATO_VAZIO);
-  // Rodada 96 , pedido do usuário: formulário de cadastro minimizado por
+  // Pedido do usuário: formulário de cadastro minimizado por
   // padrão, só abre ao clicar em "+ Novo motorista" (a lista de
   // motoristas é o que mais se usa no dia a dia; o formulário ocupava
   // espaço acima dela o tempo todo).
@@ -100,7 +100,7 @@ export function MotoristasListPage() {
     dia: string;
   } | null>(null);
 
-  // Rodada 65 , busca por nome/CPF (inclusive de cadastros excluídos,
+  // Busca por nome/CPF (inclusive de cadastros excluídos,
   // se a caixa "mostrar excluídos" estiver marcada): "Excluir cadastro"
   // tira o motorista da listagem normal, mas pesquisando o nome dele
   // aqui (com essa caixa marcada) ainda é possível achar o cadastro ,
@@ -108,7 +108,7 @@ export function MotoristasListPage() {
   const [busca, setBusca] = useState("");
   const [mostrarExcluidos, setMostrarExcluidos] = useState(false);
 
-  // Rodada 99 , pedido do usuário: digitar na busca ou marcar "mostrar
+  // Pedido do usuário: digitar na busca ou marcar "mostrar
   // excluídos" não pode "piscar" a tela inteira trocando a lista por
   // "Carregando…" , mesmo padrão já usado em
   // MotoristaDetailPage.tsx/DocumentosCargaPage.tsx desde a Rodada 77.
@@ -257,7 +257,7 @@ export function MotoristasListPage() {
       setFormAberto(false);
       await carregar();
     } catch (erro) {
-      // Rodada 42 , antes qualquer falha (inclusive um erro 500 de
+      // Antes qualquer falha (inclusive um erro 500 de
       // servidor, ex.: coluna nova faltando no banco) caía nessa
       // mesma mensagem genérica de "CPF/CNH inválidos", escondendo o
       // problema real. Agora só mostra essa mensagem pra erro de
@@ -281,9 +281,9 @@ export function MotoristasListPage() {
     }
   }
 
-  // Rodada 108 , pedido do usuário: ordenar, filtrar por período e
+  // Pedido do usuário: ordenar, filtrar por período e
   // paginar com popup dedicado em toda tabela de listagem do painel.
-  // Rodada 745: função de cada colaborador, para filtrar também o radar e as trocas de aparelho.
+  // Função de cada colaborador, para filtrar também o radar e as trocas de aparelho.
   // Quem não está na lista carregada (ex.: fora da busca) continua aparecendo.
   const funcaoPorId = new Map(motoristas.map((m) => [m.id, m.funcao ?? "MOTORISTA"]));
   const passaFiltro = (motoristaId: string) =>

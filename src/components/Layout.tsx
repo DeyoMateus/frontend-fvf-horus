@@ -1,3 +1,4 @@
+import { useEstadoLembrado } from "../hooks/useEstadoLembrado";
 import { Esqueleto } from "./Esqueleto";
 import { obterDadosGrupo, type DadosGrupo } from "../api/empresas";
 import { obterMeuPerfil } from "../api/usuariosEmpresa";
@@ -10,6 +11,7 @@ import RodapeLegal from "./RodapeLegal";
 import { BolinhaPendencia } from "./BolinhaPen";
 import { usePendenciasDoMenu } from "./penMenu";
 import { PoliticaGate } from "./PoliticaGate";
+import { TermoGestorGate } from "./TermoGestorGate";
 import { SenhaProvisoriaGate } from "./SenhaProvisoriaGate";
 import { TourProvider, useTour } from "../tour/TourProvider";
 import { rotuloPapel } from "../utils/rotulos";
@@ -22,7 +24,7 @@ const CHAVE_SIDEBAR_COLAPSADA = "fvfhorus.sidebarColapsada";
 // "Fechamento") e Feriados foi para dentro de Regras sindicais
 // (renomeado "Regras sindicais") , cada página agora traz o conteúdo
 // combinado, só a rota/nav é que foi unificada.
-// Rodada 72 , pedido do usuário: separar "fechamento de ponto e
+// Pedido do usuário: separar "fechamento de ponto e
 // extração de relatório" (ficou em /indicadores, nav "Fechamento") de
 // "indicadores e métricas" (foi para dentro do Painel, como seção
 // própria , ver PainelIndicadores.tsx). A rota /indicadores continua
@@ -34,24 +36,24 @@ const ITENS_NAV: {
   somenteAdmin?: boolean;
 }[] = [
   { to: "/dashboard", label: "Painel", abreviacao: "PA" },
-  // Rodada 753: fila única com tudo o que espera uma decisão do gestor.
+  // Fila única com tudo o que espera uma decisão do gestor.
   { to: "/pendencias", label: "Pendências", abreviacao: "PE" },
-  // Rodada 216: percurso do motorista no mapa (coordenadas + sentido), com PDF.
+  // Percurso do motorista no mapa (coordenadas + sentido), com PDF.
   { to: "/indicadores", label: "Fechamento", abreviacao: "FE" },
-  // Rodada 740: motoristas e ajudantes são colaboradores (um cadastro só, com a função).
+  // Motoristas e ajudantes são colaboradores (um cadastro só, com a função).
   { to: "/motoristas", label: "Colaboradores", abreviacao: "CO" },
-  // Rodada 221: pedidos de folga dos motoristas (aprovar/negar com justificativa).
+  // Pedidos de folga dos motoristas (aprovar/negar com justificativa).
   { to: "/pedidos-folga", label: "Pedidos de folga", abreviacao: "PF" },
   { to: "/documentos-carga", label: "Documentos de carga", abreviacao: "DC" },
   { to: "/regras-sindicais", label: "Regras sindicais", abreviacao: "RS" },
   { to: "/empresas", label: "Empresas", abreviacao: "EM" },
-  // Rodada 74 , pedido do usuário: a trilha de auditoria (antes uma
+  // Pedido do usuário: a trilha de auditoria (antes uma
   // seção dentro do Painel, ver DashboardPage) passou a ter aba/rota
   // própria, com um detalhamento mais claro (ver AuditoriaPage.tsx).
   { to: "/auditoria", label: "Auditoria", abreviacao: "AU" },
   // Rodada 206 (LGPD): pedidos de titulares e ciências.
   { to: "/lgpd", label: "Privacidade (LGPD)", abreviacao: "LG" },
-  // Rodada 109 , gestão do time do próprio grupo, exclusiva do ADMIN
+  // Gestão do time do próprio grupo, exclusiva do ADMIN
   // (ver UsuariosEmpresaPage.tsx e UsuariosEmpresaController).
   { to: "/usuarios", label: "Usuários", abreviacao: "US", somenteAdmin: true },
   {
@@ -62,7 +64,7 @@ const ITENS_NAV: {
   },
 ];
 
-// Rodada 42 , abaixo dessa largura a barra lateral expandida (220px)
+// Abaixo dessa largura a barra lateral expandida (220px)
 // não cabe mais junto com o conteúdo de forma confortável, então ela
 // fica minimizada automaticamente (mesmo visual de quando a pessoa
 // clica no botão de recolher), independente da preferência salva.
@@ -70,16 +72,18 @@ const ITENS_NAV: {
 // valer normalmente.
 const LARGURA_MINIMA_MENU_EXPANDIDO = 860;
 
-// Rodada 264 , o tour guiado envolve todo o painel.
-// Rodada 688: senha provisória (definida por outra pessoa) abre só o popup de trocar a senha, sem menu,
+// O tour guiado envolve todo o painel.
+// Senha provisória (definida por outra pessoa) abre só o popup de trocar a senha, sem menu,
 // e depois da troca a pessoa segue logada para a Política de Privacidade.
 export function Layout() {
   return (
     <SenhaProvisoriaGate>
       <PoliticaGate>
-        <TourProvider>
-          <LayoutInterno />
-        </TourProvider>
+        <TermoGestorGate>
+          <TourProvider>
+            <LayoutInterno />
+          </TourProvider>
+        </TermoGestorGate>
       </PoliticaGate>
     </SenhaProvisoriaGate>
   );
@@ -95,26 +99,13 @@ function LayoutInterno() {
       .catch(() => setMfaPendente(false));
   }, [usuario?.sub, usuario?.papel]);
   const { iniciarTour } = useTour();
-  const [colapsada, setColapsada] = useState(() => {
-    try {
-      return localStorage.getItem(CHAVE_SIDEBAR_COLAPSADA) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [colapsada, setColapsada] = useEstadoLembrado(CHAVE_SIDEBAR_COLAPSADA);
   const [telaEstreita, setTelaEstreita] = useState(
     () =>
       typeof window !== "undefined" &&
       window.innerWidth < LARGURA_MINIMA_MENU_EXPANDIDO,
   );
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(CHAVE_SIDEBAR_COLAPSADA, colapsada ? "1" : "0");
-    } catch {
-      // localStorage indisponível (modo privado, etc.) , só não persiste a preferência.
-    }
-  }, [colapsada]);
 
   useEffect(() => {
     function aoRedimensionar() {

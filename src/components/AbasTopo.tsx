@@ -1,9 +1,10 @@
 import { createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useSearchParams } from "react-router-dom";
+import { gravarLocal, lerLocal } from "../utils/armazenamentoLocal";
 
 /**
- * Rodada 626: barra de abas no topo do conteúdo (mesma linha do sino de
+ * Barra de abas no topo do conteúdo (mesma linha do sino de
  * notificações), no estilo do menu lateral. O `Layout` entrega o elemento onde
  * as abas são desenhadas (portal) e cada página declara suas abas. A aba
  * ativa fica na URL (`?aba=`), então o tour guiado e os links das
@@ -18,26 +19,18 @@ export interface AbaDef {
 
 const PREFIXO_ABA_LEMBRADA = "fvfhorus.aba.";
 
-/** Rodada 755: última aba usada em cada tela, guardada só neste navegador. */
+/** Última aba usada em cada tela, guardada só neste navegador. */
 function lerAbaLembrada(caminho: string): string | null {
-  try {
-    return window.localStorage.getItem(PREFIXO_ABA_LEMBRADA + caminho);
-  } catch {
-    return null;
-  }
+  return lerLocal(PREFIXO_ABA_LEMBRADA + caminho);
 }
 
 function guardarAbaLembrada(caminho: string, aba: string): void {
-  try {
-    window.localStorage.setItem(PREFIXO_ABA_LEMBRADA + caminho, aba);
-  } catch {
-    // Navegador sem armazenamento (janela anônima etc.): só não lembra.
-  }
+  gravarLocal(PREFIXO_ABA_LEMBRADA + caminho, aba);
 }
 
 /**
  * Ordem de escolha da aba: a da URL (`?aba=`); a `padrao`, quando o link pede uma seção
- * específica; a última usada nesta tela (rodada 755); a `inicial` da tela; a primeira.
+ * específica; a última usada nesta tela; a `inicial` da tela; a primeira.
  */
 export function useAbaAtiva(abas: AbaDef[], padrao?: string, inicial?: string): string {
   const [params] = useSearchParams();

@@ -1,7 +1,7 @@
 import { api } from "./client";
 import { baixarArquivo } from "../utils/baixarArquivo";
 
-// Espelha FechamentoFiscalController (Rodada 66) , extração em lote
+// Espelha FechamentoFiscalController , extração em lote
 // dos Espelhos de Ponto Eletrônico (REP-P, assinados digitalmente com
 // o certificado de cada motorista) para uma fiscalização.
 export async function baixarEspelhosRepPFiscalizacaoPdf(

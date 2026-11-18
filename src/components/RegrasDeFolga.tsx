@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useCallback, useEffect, useState } from "react";
 import {
   atualizarRegraFolga,
@@ -12,13 +13,6 @@ import { useConfirm } from "./ConfirmProvider";
 import { useToast } from "./ToastProvider";
 
 const LIMITE_REGRAS = 10;
-
-function mensagemDoErro(err: unknown, padrao: string): string {
-  const msg = (err as { response?: { data?: { message?: unknown } } })?.response
-    ?.data?.message;
-  if (Array.isArray(msg)) return msg.join(" ");
-  return typeof msg === "string" && msg ? msg : padrao;
-}
 
 interface Formulario {
   id: string | null;
@@ -37,7 +31,7 @@ const FORM_VAZIO: Formulario = {
 };
 
 /**
- * Rodada 278: regras de folga. Ficam salvas no grupo, podem ser abertas,
+ * Regras de folga. Ficam salvas no grupo, podem ser abertas,
  * editadas e excluídas, e cada CNPJ tem no máximo uma regra vinculada por
  * vez (vincular outra troca a anterior; "Desvincular" deixa o CNPJ sem
  * regra). O motorista é tratado pela regra do CNPJ em que está cadastrado.

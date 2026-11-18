@@ -24,7 +24,7 @@ export function somenteDigitos(texto: string): string {
 }
 
 /**
- * Rodada 141 , datas "só dia" (folga) chegam da API como
+ * Datas "só dia" (folga) chegam da API como
  * "2026-10-04T00:00:00.000Z". `new Date(...).toLocaleDateString` converte
  * pro fuso local (UTC-3) e mostrava o dia ANTERIOR (03/10). Aqui só se
  * reformata o texto "AAAA-MM-DD", sem conversão de fuso.
@@ -37,7 +37,7 @@ export function dataCalendarioBr(dataIso: string): string {
 /**
  * "AAAA-MM-DD" do dia no relógio LOCAL do navegador (Brasília para os
  * usuários do sistema). `toISOString().slice(0, 10)` devolve o dia UTC, que
- * já é "amanhã" a partir das 21h em Brasília (Rodada 144).
+ * já é "amanhã" a partir das 21h em Brasília.
  */
 export function dataLocalIso(data: Date): string {
   const ano = data.getFullYear();

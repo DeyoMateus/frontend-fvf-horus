@@ -16,7 +16,7 @@ export interface RegraFolgaInput {
   limiteFolgasVencidas: number;
 }
 
-/** Rodada 278: regras de folga do grupo, vinculadas aos CNPJs. */
+/** Regras de folga do grupo, vinculadas aos CNPJs. */
 export function listarRegrasFolga() {
   return api.get<RegraFolga[]>("/regras-folga").then((r) => r.data);
 }

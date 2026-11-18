@@ -1,5 +1,5 @@
 /**
- * Rodada 584: aviso de vencimento da CCT/ACT. Convenção ou acordo não vale depois do fim da
+ * Aviso de vencimento da CCT/ACT. Convenção ou acordo não vale depois do fim da
  * vigência (CLT art. 614 §3º, sem ultratividade; Portaria MTP 671/2021 art. 77 §2º para o REP-A).
  */
 export const DIAS_AVISO_VENCIMENTO_CCT = 60;

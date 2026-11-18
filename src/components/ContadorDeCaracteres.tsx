@@ -108,7 +108,7 @@ export function ContadorDeCaracteres() {
       agendar();
     }
 
-    // Rodada 512 (N200): o laco por quadro so roda enquanto ha atividade (rolagem, digitacao,
+    // O laco por quadro so roda enquanto ha atividade (rolagem, digitacao,
     // redimensionamento, foco); parado, confere a cada 400 ms (1 s com a aba oculta).
     let ativoAte = 0;
     let temporizador = 0;

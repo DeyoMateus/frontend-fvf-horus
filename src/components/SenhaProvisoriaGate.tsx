@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { validarSenhaNova } from "../utils/senha";
 
 /**
- * Rodada 688: a senha foi definida por outra pessoa (ex.: o super admin ao criar a empresa mãe).
+ * A senha foi definida por outra pessoa (ex.: o super admin ao criar a empresa mãe).
  * Enquanto for provisória o servidor bloqueia todo o resto, então o painel mostra SÓ este popup (sem
  * menu e sem os dados do perfil). Trocada a senha, a pessoa continua logada: o gate libera e a
  * Política de Privacidade (`PoliticaGate`) abre em seguida para o aceite.

@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 
 /**
- * Rodada 154 , pedido do usuário: "quando selecionar 100, abrir um popup
+ * Pedido do usuário: "quando selecionar 100, abrir um popup
  * separado" em todas as listagens. Quando `ativo`, o conteúdo (controles +
  * tabela) sai da página e passa a aparecer numa janela à parte (portal no
  * <body>), em vez de esticar a tela com 100 linhas. Fechar a janela chama

@@ -19,11 +19,12 @@ import {
   PASSOS_DO_TOUR,
   type PassoDoTour,
 } from "./passosDoTour";
-// Rodada 746: o palco (ilustrações do tour) só é baixado quando um passo usa.
+// O palco (ilustrações do tour) só é baixado quando um passo usa.
 const PalcoDoTour = lazy(() => import("./PalcoDoTour").then((m) => ({ default: m.PalcoDoTour })));
 import { localizarAlvo, retanguloDe, type Retangulo } from "./localizarAlvo";
+import { gravarJsonLocal, gravarLocal, lerJsonLocal } from "../utils/armazenamentoLocal";
 
-// Rodada 264 , tour guiado do primeiro acesso (e botão "Refazer tour").
+// Tour guiado do primeiro acesso (e botão "Refazer tour").
 // Mostra, passo a passo, um balão com seta apontando para cada campo, com
 // Próximo e Voltar. Abre sozinho no primeiro acesso de cada usuário e pode
 // ser refeito pelo menu lateral ou pela tela de Configuração.
@@ -49,7 +50,7 @@ const LARGURA_BALAO = 360;
 const FOLGA = 46;
 
 /**
- * Rodada 346: leva o alvo para a área visível. Alvo baixo fica no centro da
+ * Leva o alvo para a área visível. Alvo baixo fica no centro da
  * tela; alvo mais alto que a tela fica com o topo à vista. Rolagem instantânea
  * (sem animação) para o tour não ficar "no meio do caminho".
  */
@@ -76,29 +77,16 @@ function lerVisto(chave: string): boolean {
 }
 
 function gravarVisto(chave: string) {
-  try {
-    localStorage.setItem(chave, "1");
-  } catch {
-    // sem armazenamento, o tour só volta a abrir se o usuário pedir
-  }
+  gravarLocal(chave, "1");
 }
 
 function lerModulos(chave: string): string[] {
-  try {
-    const bruto = localStorage.getItem(chave);
-    const lista = bruto ? JSON.parse(bruto) : [];
-    return Array.isArray(lista) ? lista.filter((x) => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
+  const lista = lerJsonLocal<unknown>(chave, []);
+  return Array.isArray(lista) ? lista.filter((x): x is string => typeof x === "string") : [];
 }
 
 function gravarModulos(chave: string, lista: string[]) {
-  try {
-    localStorage.setItem(chave, JSON.stringify(lista));
-  } catch {
-    // sem armazenamento, o progresso só vale enquanto a página estiver aberta
-  }
+  gravarJsonLocal(chave, lista);
 }
 
 function dormir(ms: number) {
@@ -132,12 +120,12 @@ function acharBotaoVerDetalhes(): HTMLButtonElement | null {
 export function TourProvider({ children }: { children: ReactNode }) {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  // Rodada 617: rota que o React JA desenhou. `window.location.pathname` muda na hora do navigate(),
+  // Rota que o React JA desenhou. `window.location.pathname` muda na hora do navigate(),
   // antes de a nova pagina existir no DOM; o tour achava o alvo na pagina antiga (ou nao achava nada)
   // e se perdia. Esta rota so muda depois do commit da nova pagina.
   const localizacao = useLocation();
   const rotaDesenhada = useRef(localizacao.pathname);
-  // Rodada 626: rota com query (?aba=) para os passos que abrem uma aba específica.
+  // Rota com query (?aba=) para os passos que abrem uma aba específica.
   const rotaCompleta = useRef(localizacao.pathname + localizacao.search);
   useLayoutEffect(() => {
     rotaDesenhada.current = localizacao.pathname;
@@ -279,7 +267,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       setPreparando(true);
-      // Rodada 346: o balão e a seta ficam onde estavam enquanto o próximo
+      // O balão e a seta ficam onde estavam enquanto o próximo
       // passo é preparado (antes iam para o centro da tela e depois
       // pulavam para o alvo). Só passos sem alvo limpam o destaque.
       if (!passo.alvo) setRetangulo(null);
@@ -330,13 +318,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
           3000,
           foiCancelado,
         );
-        // Rodada 617: deixa a pagina nova assentar (primeiros quadros) antes de procurar o alvo.
+        // Deixa a pagina nova assentar (primeiros quadros) antes de procurar o alvo.
         await dormir(120);
       }
       if (cancelado) return;
 
       if (passo.alvo) {
-        // Rodada 617: 3,5 s eram pouco para telas que carregam dados do servidor logo depois de abrir
+        // 3,5 s eram pouco para telas que carregam dados do servidor logo depois de abrir
         // (ex.: o painel). Se ainda assim nao achar, o acompanhamento abaixo continua procurando.
         const els = await esperarAte(
           () => localizarAlvo(passo.alvo!),
@@ -346,7 +334,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         if (cancelado) return;
         if (els && els.length > 0) {
           elementosAlvo.current = els;
-          // Rodada 346: ao chegar de outra página, o conteúdo ainda está
+          // Ao chegar de outra página, o conteúdo ainda está
           // carregando e o alvo muda de lugar. Espera o alvo parar (até
           // 1,5 s) antes de rolar; depois o acompanhamento abaixo
           // reajusta a rolagem se ele ainda sair do lugar.
@@ -380,7 +368,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (!ativo || preparando) return;
     let quadro = 0;
     const alvoExpr = passo?.alvo;
-    // Rodada 346: se o alvo sair da área visível (a página mudou de
+    // Se o alvo sair da área visível (a página mudou de
     // tamanho depois da primeira rolagem), rola de novo. Como o usuário
     // não pode rolar durante o tour, o tour precisa garantir sozinho que
     // o alvo está à vista. Limita as tentativas para não brigar com o
@@ -395,7 +383,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         elementosAlvo.current = els;
         tentativas = 0;
       }
-      // Rodada 617: alvo ainda nao encontrado (a tela carregou depois do tempo de espera, ou foi
+      // Alvo ainda nao encontrado (a tela carregou depois do tempo de espera, ou foi
       // trocada): continua procurando, no maximo 4 vezes por segundo. Antes o tour nunca mais tentava,
       // ficava com o balao no centro sem destaque, e so achava o campo se fosse reaberto.
       if ((!els || els.length === 0) && alvoExpr) {
@@ -466,7 +454,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", aoTeclar, true);
   }, [ativo, seletor, proximo, voltar, encerrar]);
 
-  // Rodada 339: enquanto o tour está aberto, a página de fundo não rola
+  // Enquanto o tour está aberto, a página de fundo não rola
   // (roda do mouse, toque e teclas de rolagem). Só rola o que está dentro da
   // camada do tour (o balão, se for maior que a tela). A rolagem feita pelo
   // próprio tour para mostrar o alvo (scrollIntoView) continua funcionando.
@@ -621,7 +609,7 @@ function CamadaDoTour(props: {
       }
     : null;
 
-  // Rodada 617: o lado do balao nao muda enquanto o lado atual ainda cabe. Antes, qualquer variacao de
+  // O lado do balao nao muda enquanto o lado atual ainda cabe. Antes, qualquer variacao de
   // poucos pixels no alvo (pagina ainda carregando) trocava o balao de baixo para cima e a seta virava.
   if (ladoMemoria.current.passo !== passo) ladoMemoria.current = { passo, lado: "centro" };
   const ladoAnterior = ladoMemoria.current.lado;

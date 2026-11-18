@@ -21,7 +21,7 @@ export function excluirGestor(id: string) {
   return api.delete(`/usuarios-empresa/${id}`).then((r) => r.data);
 }
 
-// Rodada 385: o ADMIN liga/desliga "aprovar ajuste" e "aceitar divergência" de outro usuário.
+// O ADMIN liga/desliga "aprovar ajuste" e "aceitar divergência" de outro usuário.
 export function atualizarPermissoesUsuario(
   id: string,
   permissoes: { podeAprovarAjuste?: boolean; podeAceitarDivergencia?: boolean },
@@ -29,7 +29,7 @@ export function atualizarPermissoesUsuario(
   return api.patch(`/usuarios-empresa/${id}/permissoes`, permissoes).then((r) => r.data);
 }
 
-// ===== Meu perfil (Rodada 38) =====
+// ===== Meu perfil =====
 // O próprio usuário vê/edita o PRÓPRIO cadastro aqui.
 
 export function obterMeuPerfil() {
@@ -44,7 +44,7 @@ export function atualizarMeuPerfil(input: UpdatePerfilProprioInput) {
     .then((r) => r.data);
 }
 
-// ===== Limites de espera do grupo (Rodada 174) =====
+// ===== Limites de espera do grupo =====
 export interface LimitesEspera {
   infoMin: number;
   atencaoMin: number;
@@ -59,7 +59,7 @@ export function obterLimitesEspera() {
     .then((r) => r.data);
 }
 
-// ===== Limites de "Aguardando documentação" do grupo (Rodada 341) =====
+// ===== Limites de "Aguardando documentação" do grupo =====
 export function obterLimitesDocumentacao() {
   return api
     .get<LimitesEspera & { padrao: LimitesEspera }>(

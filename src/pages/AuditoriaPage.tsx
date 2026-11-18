@@ -1,5 +1,6 @@
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useSelecao } from "../hooks/useSelecao";
 import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
 import { rotuloAcaoAuditoria, rotuloPermissaoAusente } from "../utils/rotuloAcaoAuditoria";
 import {
@@ -35,7 +36,7 @@ function formatarValorDetalhe(valor: unknown): string {
 }
 
 /**
- * Painel visual de trilha de auditoria (Rodada 66) , pedido do usuário:
+ * Painel visual de trilha de auditoria , pedido do usuário:
  * "verificar a trilha de auditoria de forma visual selecionando os
  * ocorridos". `ocorridos` = combinações ação/entidade que já existem de
  * fato no grupo (vindas de GET /auditoria/ocorrencias, não uma lista
@@ -48,10 +49,10 @@ function formatarValorDetalhe(valor: unknown): string {
  */
 export function AuditoriaPage() {
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaAuditoria[]>([]);
-  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const { selecionados: selecionadas, alternar: alternarSelecao } = useSelecao();
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  // Rodada 347: "Quem fez" = pessoas escolhidas numa busca automática por
+  // "Quem fez" = pessoas escolhidas numa busca automática por
   // nome ou CPF (nada de digitar e apertar botão).
   const [atoresSel, setAtoresSel] = useState<AtorBuscado[]>([]);
   const [buscaAtor, setBuscaAtor] = useState("");
@@ -76,13 +77,13 @@ export function AuditoriaPage() {
   const [registros, setRegistros] = useState<RegistroAuditoria[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  // Rodada 94 , faltava o seletor "mostrar N por vez" que as outras
+  // Faltava o seletor "mostrar N por vez" que as outras
   // páginas paginadas já têm (ver qtdTratamentosPorPagina em
   // MotoristaDetailPage.tsx) , aqui é paginação de servidor (manda
   // page/pageSize pro backend), não fatiamento no cliente, mas o
   // controle visual é o mesmo.
   const [pageSize, setPageSize] = useState<10 | 20 | 50 | 100>(50);
-  // Rodada 108 , pedido do usuário: ordenar do mais recente pro mais
+  // Pedido do usuário: ordenar do mais recente pro mais
   // antigo (ou o inverso) em toda tabela de listagem do painel. Esta
   // tela já pagina no servidor, então o toggle vai direto pro backend
   // (ver `ordem` em FiltroAuditoria/ListarAuditoriaDto).
@@ -98,7 +99,7 @@ export function AuditoriaPage() {
       .catch(() => setOcorrencias([]));
   }, []);
 
-  // Rodada 99 , pedido do usuário: mudar um filtro não pode "piscar" a
+  // Pedido do usuário: mudar um filtro não pode "piscar" a
   // tela inteira trocando a tabela por "Carregando…" , só a carga
   // INICIAL (mount) passa por essa tela cheia (mesmo padrão já usado em
   // MotoristaDetailPage.tsx/DocumentosCargaPage.tsx desde a Rodada 77);
@@ -147,17 +148,9 @@ export function AuditoriaPage() {
     return mapa;
   }, [ocorrencias]);
 
-  function alternarSelecao(chave: string) {
-    setSelecionadas((prev) => {
-      const novo = new Set(prev);
-      if (novo.has(chave)) novo.delete(chave);
-      else novo.add(chave);
-      return novo;
-    });
-  }
 
   function aplicarFiltros() {
-    // Rodada 94 , antes chamava `carregar()` logo depois de `setPage(1)`:
+    // Antes chamava `carregar()` logo depois de `setPage(1)`:
     // como `setPage` é assíncrono, `carregar()` ainda lia o `page` ANTIGO
     // nesse mesmo tick (buscava a página errada), e o `useEffect` abaixo
     // disparava de novo logo em seguida quando `page` finalmente mudava

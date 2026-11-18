@@ -35,7 +35,7 @@ const ABAS_FECHAMENTO: AbaDef[] = [
   { id: "solicitacoes", rotulo: "Solicitações de ajuste de ponto" },
   { id: "historico", rotulo: "Histórico de solicitações decididas" },
   { id: "fiscalizacao", rotulo: "Documentos para fiscalização" },
-  // Rodada 739: vieram da ficha do motorista; cada aba tem o seletor de motorista.
+  // Vieram da ficha do motorista; cada aba tem o seletor de motorista.
   { id: "tratamento", rotulo: "Tratamento de ponto" },
   { id: "banco", rotulo: "Banco de horas" },
   { id: "relatorio", rotulo: "Relatório de horas apuradas" },
@@ -45,7 +45,7 @@ const ABAS_FECHAMENTO: AbaDef[] = [
 const ABAS_POR_MOTORISTA = new Set(["tratamento", "banco", "relatorio", "periodos"]);
 
 /**
- * Rodada 739: seletor de motorista das abas que tratam um motorista por vez. A escolha fica
+ * Seletor de motorista das abas que tratam um motorista por vez. A escolha fica
  * na URL (`?motorista=`), então continua a mesma ao trocar de aba e os links das
  * notificações conseguem abrir o motorista certo.
  */
@@ -117,7 +117,7 @@ export function IndicadoresPage() {
 
       {aba === "fechamento" && (
         <>
-          {/* Rodada 489: indicadores do banco de horas no topo do Fechamento. */}
+          {/* Indicadores do banco de horas no topo do Fechamento. */}
           <BancoHorasResumoFechamento />
 
           <div

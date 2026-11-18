@@ -35,7 +35,7 @@ export function MfaCard({
   /** Verificação expirou e precisa ser refeita. */
   expirado?: boolean;
   onMudou: () => void;
-  /** Rodada 384: padrão é o MFA do painel; o super admin passa as suas. */
+  /** Padrão é o MFA do painel; o super admin passa as suas. */
   acoes?: AcoesMfa;
 }) {
   const a = acoes ?? { iniciar: iniciarMfa, confirmar: confirmarMfa, desativar: desativarMfa };
@@ -43,7 +43,7 @@ export function MfaCard({
   const [segredo, setSegredo] = useState("");
   const [uri, setUri] = useState("");
   const [codigo, setCodigo] = useState("");
-  // Rodada 493: por quantos dias o MFA vale; vencido, e preciso cadastrar de novo.
+  // Por quantos dias o MFA vale; vencido, e preciso cadastrar de novo.
   const [validadeDias, setValidadeDias] = useState(90);
   const [senha, setSenha] = useState("");
   const [reservas, setReservas] = useState<string[]>([]);

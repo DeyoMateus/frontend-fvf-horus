@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -92,7 +93,7 @@ const PROXIMOS: Record<TipoEvento, TipoEvento[]> = {
   FIM_DESCARGA: [],
 };
 
-/** Rodada 740: sequência do ajudante (igual ao app e ao servidor). */
+/** Sequência do ajudante (igual ao app e ao servidor). */
 const LIVRE_AJUDANTE: TipoEvento[] = ["INICIO_CARREGAMENTO", "INICIO_DESCARGA", "INICIO_DESCANSO", "FIM_JORNADA"];
 const PROXIMOS_AJUDANTE: Record<TipoEvento, TipoEvento[]> = {
   INICIO_JORNADA: LIVRE_AJUDANTE,
@@ -160,7 +161,7 @@ export function LancarJornadaInteira({
   funcao,
 }: {
   motoristaId: string;
-  /** Rodada 740: a sequência de eventos depende da função (motorista ou ajudante). */
+  /** A sequência de eventos depende da função (motorista ou ajudante). */
   funcao?: FuncaoColaborador | null;
   registros: { timestampEvento: string; fusoOffsetMin?: number | null }[];
   dataInicial?: string;
@@ -315,12 +316,7 @@ export function LancarJornadaInteira({
       setEvidencias([]);
       await onLancado();
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string | string[] } } })
-        ?.response?.data?.message;
-      setErro(
-        (Array.isArray(msg) ? msg.join(" ") : msg) ||
-          "Não foi possível lançar a jornada. Confira os dados.",
-      );
+      setErro(mensagemDoErro(err, "Não foi possível lançar a jornada. Confira os dados."));
     } finally {
       setEnviando(false);
     }

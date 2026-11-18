@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Rodada 335: pendências por aba do menu lateral. O sininho (NotificationBell)
+ * Pendências por aba do menu lateral. O sininho (NotificationBell)
  * já consulta o servidor de tempos em tempos; ele publica aqui um resumo por
  * rota e o menu lateral mostra uma bolinha na aba que tem pendência
  */
@@ -38,7 +38,7 @@ export function usePendenciasDoMenu(): Record<string, PendenciaDaAba> {
 }
 
 /**
- * Rodada 753: fila única de pendências. O sino já busca tudo no servidor; aqui ele publica
+ * Fila única de pendências. O sino já busca tudo no servidor; aqui ele publica
  * também a lista item a item, e a tela "Pendências" só lê (nenhuma consulta nova).
  */
 export type TipoItemDaFila = "alerta" | "ajuste" | "folga" | "privacidade" | "banco" | "radar";
@@ -52,7 +52,7 @@ export type ItemDaFila = {
   desde?: string;
   /** Onde a pendência é tratada. */
   to: string;
-  /** Rodada 755: id do pedido (ajuste ou folga), para a decisão em lote. */
+  /** Id do pedido (ajuste ou folga), para a decisão em lote. */
   id?: string;
   /** Colaborador da pendência, quando há um. */
   motoristaId?: string;

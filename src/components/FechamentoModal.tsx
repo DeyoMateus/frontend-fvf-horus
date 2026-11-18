@@ -1,5 +1,6 @@
 import { PopupBase } from "./PopupBase";
 import { useState } from "react";
+import { useSelecao } from "../hooks/useSelecao";
 import { aplicarMascaraCpf, somenteDigitos } from "../utils/mascaras";
 import {
   baixarFechamentoPdf,
@@ -9,7 +10,7 @@ import {
 import type { Motorista } from "../api/types";
 
 /**
- * "Janela de fechamento" (Rodada 36) , pedido explícito do usuário:
+ * "Janela de fechamento" , pedido explícito do usuário:
  * o gestor extrair o holerite individual OU em grupo (fechar a frota
  * inteira de uma vez) num lugar só. Selecionar nenhum motorista =
  * fechamento da frota inteira; selecionar um ou mais = só esses.
@@ -29,7 +30,7 @@ export function FechamentoModal({
 }: FechamentoModalProps) {
   const [inicio, setInicio] = useState(inicioInicial);
   const [fim, setFim] = useState(fimInicial);
-  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const { selecionados, alternar: alternarMotorista } = useSelecao();
   const [direcaoEspera, setDirecaoEspera] = useState(true);
   const [normalExtra, setNormalExtra] = useState(true);
   const [adicionalNoturno, setAdicionalNoturno] = useState(true);
@@ -55,21 +56,13 @@ export function FechamentoModal({
           (termoDigitos !== "" && somenteDigitos(m.cpf ?? "").includes(termoDigitos)),
       )
     : motoristas;
-  // Rodada 82: o rótulo do botão avisa quando o download vai sair como
+  // O rótulo do botão avisa quando o download vai sair como
   // .zip (mais de um motorista) , o backend só combina num PDF só
   // quando dá exatamente 1 motorista (ver `FechamentoHoleriteController`).
   const quantidadeEfetiva = todosSelecionados
     ? motoristas.length
     : selecionados.size;
 
-  function alternarMotorista(id: string) {
-    setSelecionados((atual) => {
-      const novo = new Set(atual);
-      if (novo.has(id)) novo.delete(id);
-      else novo.add(id);
-      return novo;
-    });
-  }
 
   async function onBaixarEventosCsv() {
     setErro(null);
@@ -115,7 +108,7 @@ export function FechamentoModal({
       );
       setBloqueados(naoFechados);
     } catch (e) {
-      // Rodada 453: 409 = ninguém pôde ser fechado (resposta vem como blob).
+      // 409 = ninguém pôde ser fechado (resposta vem como blob).
       let mensagem =
         "Não foi possível gerar o fechamento agora (confira o período e tente de novo).";
       try {

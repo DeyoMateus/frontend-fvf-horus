@@ -13,7 +13,7 @@ import {
   vencimentosRazao,
 } from "../api/bancoHoras";
 import type { LancamentoBanco, TipoLancamentoBanco, VencimentosRazao, VerificacaoRazao } from "../api/bancoHoras";
-import { minParaHoras } from "../utils/formatarDuracao";
+import { minParaHoras, segParaHms } from "../utils/formatarDuracao";
 import { dataLocalIso } from "../utils/mascaras";
 import { ContestacoesBancoHoras } from "./ContestacoesBancoHoras";
 import { useConfirm } from "./ConfirmProvider";
@@ -69,7 +69,7 @@ export function BancoHorasRazaoPainel({
   const [dHoras, setDHoras] = useState("1");
   const [dData, setDData] = useState(dataLocalIso(new Date()));
   const [dObs, setDObs] = useState("");
-  // Rodada 510 (N142): mesma chave no reenvio/duplo clique; renovada depois de um lançamento aceito.
+  // Mesma chave no reenvio/duplo clique; renovada depois de um lançamento aceito.
   const [chaveDebito, setChaveDebito] = useState(() => crypto.randomUUID());
   const [kSentido, setKSentido] = useState<"CREDITO" | "DEBITO">("CREDITO");
   const [kHoras, setKHoras] = useState("1");
@@ -271,7 +271,14 @@ export function BancoHorasRazaoPainel({
               <td>{l.sequencial}</td>
               <td>{dia(l.dataEvento)}</td>
               <td>{ROTULO[l.tipoLancamento] ?? l.tipoLancamento}</td>
-              <td>{minParaHoras(l.minutosEquivalentes)}</td>
+              <td>
+                {minParaHoras(l.minutosEquivalentes)}
+                {l.segundosBrutos != null && (
+                  <small style={{ display: "block", color: "#4b5563" }} title="Tempo real apurado, com precisão em segundos">
+                    {segParaHms(l.segundosBrutos)} apurado
+                  </small>
+                )}
+              </td>
               <td>{minParaHoras(l.saldoAposMin)}</td>
               <td>{dia(l.venceEm)}</td>
               <td>{l.observacao ?? ""}</td>
@@ -281,7 +288,7 @@ export function BancoHorasRazaoPainel({
         </tbody>
       </table>
       <p style={{ fontSize: 12, marginTop: 6 }}>
-        Os lançamentos não se apagam nem se editam: um erro se corrige com outro lançamento.
+        Os lançamentos não se apagam nem se editam: um erro se corrige com outro lançamento. Os créditos vindos da apuração guardam também o tempo em segundos; o saldo continua em minutos.
       </p>
       <ContestacoesBancoHoras motoristaId={motoristaId} />
     </div>
