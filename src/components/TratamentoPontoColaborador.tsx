@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import { mensagemDoErro } from "../utils/mensagemDoErro";
 import {
   formatarRegistro,
@@ -413,24 +414,13 @@ export function TratamentoPontoColaborador({
             alignItems: "center",
           }}
         >
-          <button
-            type="button"
-            className="secondary"
-            style={{ fontSize: 13 }}
-            disabled={listaTratamentos.itensFiltrados.length === 0}
-            onClick={onBaixarCsvTratamentos}
-          >
-            Baixar relatório (CSV)
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            style={{ fontSize: 13 }}
-            disabled={listaTratamentos.itensFiltrados.length === 0}
-            onClick={onImprimirTratamentos}
-          >
-            Imprimir / PDF
-          </button>
+          <MenuDownload
+  desabilitado={listaTratamentos.itensFiltrados.length === 0}
+  opcoes={[
+    { rotulo: "Baixar relatório (CSV)", onClick: onBaixarCsvTratamentos },
+    { rotulo: "Imprimir / PDF", onClick: onImprimirTratamentos },
+  ]}
+/>
           <span style={{ fontSize: 12, color: "#000000" }}>
             O relatório segue o período filtrado (agora:{" "}
             {rotuloPeriodoTratamentos()}).

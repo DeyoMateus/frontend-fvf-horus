@@ -64,6 +64,7 @@ import { atualizarContratoMotorista } from "../api/dadosContrato";
 import { TelefoneInput } from "../components/TelefoneInput";
 import { TrilhaMotorista } from "../components/TrilhaMotorista";
 import { RescisaoPopup } from "../components/RescisaoPopup";
+import { MenuDownload } from "../components/MenuDownload";
 import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
@@ -1256,6 +1257,70 @@ export function MotoristaDetailPage({
               </button>
             </div>
           </form>
+          <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid #e5e7eb" }}>
+            <strong style={{ fontSize: 13 }}>Situação do cadastro</strong>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                {motorista.dataDesligamento && !motorista.excluidoEm && (
+                  <button
+                    type="button"
+                    disabled={alterandoStatus}
+                    onClick={() => {
+                      setErroRescisao(null);
+                      setReadmissaoAberta(true);
+                    }}
+                    style={{ fontSize: 12 }}
+                  >
+                    Readmitir
+                  </button>
+                )}
+                {motorista.status !== "ATIVO" && !motorista.dataDesligamento && (
+                  <button
+                    type="button"
+                    disabled={alterandoStatus}
+                    onClick={() => onAlterarStatus("ATIVO")}
+                    style={{ fontSize: 12 }}
+                  >
+                    Reativar
+                  </button>
+                )}
+                {motorista.status !== "SUSPENSO" && (
+                  <button
+                    type="button"
+                    disabled={alterandoStatus}
+                    onClick={() => onAlterarStatus("SUSPENSO")}
+                    style={{ fontSize: 12 }}
+                  >
+                    Suspender
+                  </button>
+                )}
+                {!motorista.excluidoEm && !motorista.dataDesligamento && (
+                  <button
+                    type="button"
+                    className="danger"
+                    disabled={alterandoStatus}
+                    onClick={() => {
+                      setErroRescisao(null);
+                      setRescisaoAberta(true);
+                    }}
+                    style={{ fontSize: 12 }}
+                  >
+                    Registrar rescisão
+                  </button>
+                )}
+                {!motorista.excluidoEm && !carregando && registros.length === 0 && tratamentos.length === 0 && (
+                  <button
+                    type="button"
+                    className="danger"
+                    disabled={alterandoStatus}
+                    onClick={onExcluirCadastro}
+                    style={{ fontSize: 12 }}
+                  >
+                    Excluir cadastro
+                  </button>
+                )}
+            </div>
+            {erroStatus && <p className="error-text" style={{ margin: "8px 0 0" }}>{erroStatus}</p>}
+          </div>
         </div>
       ) : (
         <>
@@ -1299,53 +1364,6 @@ export function MotoristaDetailPage({
             >
               Editar
             </button>
-            {motorista.dataDesligamento && !motorista.excluidoEm && (
-              <button
-                type="button"
-                disabled={alterandoStatus}
-                onClick={() => {
-                  setErroRescisao(null);
-                  setReadmissaoAberta(true);
-                }}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Readmitir
-              </button>
-            )}
-            {motorista.status !== "ATIVO" && !motorista.dataDesligamento && (
-              <button
-                type="button"
-                disabled={alterandoStatus}
-                onClick={() => onAlterarStatus("ATIVO")}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Reativar
-              </button>
-            )}
-            {motorista.status !== "SUSPENSO" && (
-              <button
-                type="button"
-                disabled={alterandoStatus}
-                onClick={() => onAlterarStatus("SUSPENSO")}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Suspender
-              </button>
-            )}
-            {!motorista.excluidoEm && !motorista.dataDesligamento && (
-              <button
-                type="button"
-                className="danger"
-                disabled={alterandoStatus}
-                onClick={() => {
-                  setErroRescisao(null);
-                  setRescisaoAberta(true);
-                }}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Registrar rescisão
-              </button>
-            )}
             {motorista.dataDesligamento && (
               <span style={{ fontSize: 12, marginLeft: 8, marginTop: 8, display: "inline-block" }}>
                 Rescisão em{" "}
@@ -1353,17 +1371,6 @@ export function MotoristaDetailPage({
                   {motorista.dataDesligamento.slice(0, 10).split("-").reverse().join("/")}
                 </strong>
               </span>
-            )}
-            {!motorista.excluidoEm && !carregando && registros.length === 0 && tratamentos.length === 0 && (
-              <button
-                type="button"
-                className="danger"
-                disabled={alterandoStatus}
-                onClick={onExcluirCadastro}
-                style={{ fontSize: 12, marginLeft: 8, marginTop: 8 }}
-              >
-                Excluir cadastro
-              </button>
             )}
             {erroStatus && (
               <span
@@ -1665,24 +1672,13 @@ export function MotoristaDetailPage({
                       <option value="TODAS">Todas</option>
                     </select>
                   </label>
-                  <button
-                    type="button"
-                    className="secondary"
-                    style={{ fontSize: 13 }}
-                    disabled={listaDivergencias.itensFiltrados.length === 0}
-                    onClick={onBaixarCsvDivergencias}
-                  >
-                    Baixar histórico (CSV)
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary"
-                    style={{ fontSize: 13 }}
-                    disabled={listaDivergencias.itensFiltrados.length === 0}
-                    onClick={onImprimirDivergencias}
-                  >
-                    Imprimir / PDF
-                  </button>
+                  <MenuDownload
+                    desabilitado={listaDivergencias.itensFiltrados.length === 0}
+                    opcoes={[
+                      { rotulo: "Baixar histórico (CSV)", onClick: onBaixarCsvDivergencias },
+                      { rotulo: "Imprimir / PDF", onClick: onImprimirDivergencias },
+                    ]}
+                  />
                 </div>
                 <ControlesListaPaginada
                   ordem={listaDivergencias.ordem}
@@ -1844,53 +1840,43 @@ export function MotoristaDetailPage({
           }}
         >
           <h3 style={{ marginTop: 0 }}>Registros de jornada</h3>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button
-              onClick={onBaixarComprovante}
-              disabled={baixandoComprovante}
-            >
-              {baixandoComprovante ? "Gerando..." : "Baixar comprovante (PDF)"}
-            </button>
-            <button
-              onClick={onBaixarAej}
-              disabled={baixandoAej}
-              title="Arquivo Eletrônico de Jornada no leiaute vigente do AEJ publicado pelo MTE (sem a assinatura digital, que depende do certificado ICP-Brasil)"
-            >
-              {baixandoAej ? "Gerando..." : "Baixar AEJ (oficial)"}
-            </button>
-            <button
-              onClick={onBaixarAejAssinado}
-              disabled={baixandoAejAssinado}
-              title="Baixa o AEJ e a assinatura digital CAdES destacada (.p7s) da FVF. Com certificado de teste, a assinatura não tem validade legal."
-            >
-              {baixandoAejAssinado ? "Assinando..." : "Baixar AEJ assinado (.p7s)"}
-            </button>
-            {avisoAejAssinado && <p style={{ fontSize: 13 }}>{avisoAejAssinado}</p>}
-            <button
-              onClick={onBaixarDirecaoEspera}
-              disabled={baixandoDirecaoEspera}
-              title="Tempos de direção e de espera em CSV. O AEJ oficial não tem registro para eles; este relatório complementa o AEJ com os mesmos horários."
-            >
-              {baixandoDirecaoEspera ? "Gerando..." : "Baixar direção e espera (CSV)"}
-            </button>
-            <button
-              onClick={onBaixarPlanilha}
-              disabled={baixandoPlanilha}
-              title="Planilha CSV com todos os campos da jornada. Não é o AEJ oficial."
-            >
-              {baixandoPlanilha ? "Gerando..." : "Baixar planilha (CSV)"}
-            </button>
-            <button
-              onClick={onBaixarEspelhoRepP}
-              disabled={baixandoEspelhoRepP}
-              title="Espelho de Ponto Eletrônico (REP-P), Lei 13.103/2015 + Portaria 671/2021: marcações com GPS/NSR/categoria legal, resumo diário categorizado e rodapé com cadeia de hash"
-            >
-              {baixandoEspelhoRepP
-                ? "Gerando..."
-                : "Baixar Espelho de Ponto (REP-P)"}
-            </button>
-          </div>
+          <MenuDownload
+            opcoes={[
+              { rotulo: "Baixar comprovante (PDF)", onClick: onBaixarComprovante, carregando: baixandoComprovante },
+              {
+                rotulo: "Baixar AEJ (oficial)",
+                onClick: onBaixarAej,
+                carregando: baixandoAej,
+                dica: "Arquivo Eletrônico de Jornada no leiaute vigente do AEJ publicado pelo MTE (sem a assinatura digital, que depende do certificado ICP-Brasil)",
+              },
+              {
+                rotulo: "Baixar AEJ assinado (.p7s)",
+                onClick: onBaixarAejAssinado,
+                carregando: baixandoAejAssinado,
+                dica: "Baixa o AEJ e a assinatura digital CAdES destacada (.p7s) da FVF. Com certificado de teste, a assinatura não tem validade legal.",
+              },
+              {
+                rotulo: "Baixar direção e espera (CSV)",
+                onClick: onBaixarDirecaoEspera,
+                carregando: baixandoDirecaoEspera,
+                dica: "Tempos de direção e de espera em CSV. O AEJ oficial não tem registro para eles; este relatório complementa o AEJ com os mesmos horários.",
+              },
+              {
+                rotulo: "Baixar planilha (CSV)",
+                onClick: onBaixarPlanilha,
+                carregando: baixandoPlanilha,
+                dica: "Planilha CSV com todos os campos da jornada. Não é o AEJ oficial.",
+              },
+              {
+                rotulo: "Baixar Espelho de Ponto (REP-P)",
+                onClick: onBaixarEspelhoRepP,
+                carregando: baixandoEspelhoRepP,
+                dica: "Espelho de Ponto Eletrônico (REP-P), Lei 13.103/2015 + Portaria 671/2021: marcações com GPS/NSR/categoria legal, resumo diário categorizado e rodapé com cadeia de hash",
+              },
+            ]}
+          />
         </div>
+        {avisoAejAssinado && <p style={{ fontSize: 13 }}>{avisoAejAssinado}</p>}
         <p style={{ fontSize: 12, color: "#000000", margin: "0 0 8px" }}>
           Os downloads seguem o período filtrado abaixo (agora:{" "}
           {rotuloPeriodoRegistros}).

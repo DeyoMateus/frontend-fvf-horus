@@ -1,3 +1,4 @@
+import { MenuDownload } from "../components/MenuDownload";
 import { primeiroESegundoNome } from "../utils/nomeMotorista";
 import { rotuloCampoDetalhe } from "../utils/rotuloCampoDetalhe";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
@@ -290,12 +291,10 @@ export function AlertasJornadaPage() {
                 {o.rotulo}
               </button>
             ))}
-            <button
-              type="button"
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12, marginLeft: 12 }}
-              disabled={paginacao.itensFiltrados.length === 0}
-              onClick={() =>
+            <MenuDownload
+  desabilitado={paginacao.itensFiltrados.length === 0}
+  opcoes={[
+    { rotulo: `Baixar Excel (${paginacao.itensFiltrados.length})`, onClick: () =>
                 baixarCsvTabela(
                   `alertas-de-jornada${paginacao.dataInicio ? `-${paginacao.dataInicio}` : ""}${paginacao.dataFim ? `-a-${paginacao.dataFim}` : ""}.xlsx`,
                   [
@@ -325,11 +324,9 @@ export function AlertasJornadaPage() {
                         ? `Período: ${paginacao.dataInicio || "início"} a ${paginacao.dataFim || "hoje"}`
                         : "Todos os períodos",
                   },
-                )
-              }
-            >
-              Baixar Excel ({paginacao.itensFiltrados.length})
-            </button>
+                ) },
+  ]}
+/>
           </div>
           <ControlesListaPaginada
             ordem={paginacao.ordem}

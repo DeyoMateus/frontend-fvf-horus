@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import { useEstadoLembrado } from "../hooks/useEstadoLembrado";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -652,36 +653,25 @@ export function ModalDetalheTendencia({
         >
           <strong style={{ fontSize: 15 }}>{ponto.rotulo}</strong>
           <div style={{ display: "flex", gap: 6 }}>
-            <button
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={!temDadosParaExportar}
-              onClick={() =>
+            <MenuDownload
+  desabilitado={!temDadosParaExportar}
+  opcoes={[
+    { rotulo: "Baixar Excel", onClick: () =>
                 baixarCsvTabela(
                   `${ponto.rotulo}-${ponto.dia}.xlsx`,
                   cabecalhosExportacao,
                   linhasExportacao,
                   { titulo: ponto.rotulo, subtitulo: dataFormatada },
-                )
-              }
-            >
-              Baixar Excel
-            </button>
-            <button
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={!temDadosParaExportar}
-              onClick={() =>
+                ) },
+    { rotulo: "Imprimir", onClick: () =>
                 imprimirTabela(
                   ponto.rotulo,
                   dataFormatada,
                   cabecalhosExportacao,
                   linhasExportacao,
-                )
-              }
-            >
-              Imprimir
-            </button>
+                ) },
+  ]}
+/>
             <button
               className="secondary"
               style={{ padding: "4px 10px", fontSize: 12 }}

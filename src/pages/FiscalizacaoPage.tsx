@@ -1,3 +1,4 @@
+import { TituloComDownload } from "../components/MenuDownload";
 import { DicaAoPassar } from "../components/DicaAoPassar";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useEffect, useRef, useState } from "react";
@@ -217,7 +218,19 @@ export function FiscalizacaoPage() {
 
       {/* ===== AFD oficial ===== */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>AFD oficial (Portaria MTP 671/2021)</h3>
+        <TituloComDownload
+          opcoes={[
+            { rotulo: "Baixar AFD (.txt)", onClick: onBaixarAfd, carregando: gerandoAfd, desabilitado: !empresaId },
+            {
+              rotulo: "Baixar AFD assinado (.p7s)",
+              onClick: onBaixarAfdAssinado,
+              desabilitado: gerandoAfd || !empresaId,
+              dica: "Baixa o AFD e a assinatura digital (.p7s) juntos",
+            },
+          ]}
+        >
+          <h3 style={{ marginTop: 0 }}>AFD oficial (Portaria MTP 671/2021)</h3>
+        </TituloComDownload>
         <p style={{ fontSize: 13, color: "#000000" }}>
           Arquivo Fonte de Dados (arquivo de texto) no leiaute oficial exigido
           pela fiscalização. A versão assinada baixa o arquivo e a assinatura digital (.p7s) da FVF juntos; o arquivo e o .p7s devem ser entregues lado a lado. É o documento que a Portaria 671/2021 pede diretamente.
@@ -247,17 +260,6 @@ export function FiscalizacaoPage() {
               </select>
             </label>
           )}
-          <button onClick={onBaixarAfd} disabled={gerandoAfd || !empresaId}>
-            {gerandoAfd ? "Gerando…" : "Baixar AFD (.txt)"}
-          </button>
-          <button
-            className="secondary"
-            onClick={onBaixarAfdAssinado}
-            disabled={gerandoAfd || !empresaId}
-            title="Baixa o AFD e a assinatura digital (.p7s) juntos"
-          >
-            Baixar AFD assinado (.p7s)
-          </button>
         </div>
         {avisoAfd && <p style={{ color: "#b45309", fontSize: 13 }}>{avisoAfd}</p>}
         {erroAfd && <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroAfd}</p>}
@@ -265,7 +267,13 @@ export function FiscalizacaoPage() {
 
       {/* ===== Relatório de Espera ===== */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Relatório de espera em carga/descarga</h3>
+        <TituloComDownload
+          opcoes={[
+            { rotulo: "Baixar relatório de espera (PDF)", onClick: onBaixarEsperaPdf, carregando: gerandoEsperaPdf },
+          ]}
+        >
+          <h3 style={{ marginTop: 0 }}>Relatório de espera em carga/descarga</h3>
+        </TituloComDownload>
         <p style={{ fontSize: 13, color: "#000000" }}>
           Esperas em carga/descarga que passaram do tempo configurado pela
           empresa, com data, horários e duração. É um registro que a empresa
@@ -286,9 +294,6 @@ export function FiscalizacaoPage() {
             .
           </p>
         )}
-        <button onClick={onBaixarEsperaPdf} disabled={gerandoEsperaPdf}>
-          {gerandoEsperaPdf ? "Gerando…" : "Baixar relatório de espera (PDF)"}
-        </button>
         {erroEspera && (
           <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroEspera}</p>
         )}
@@ -296,9 +301,15 @@ export function FiscalizacaoPage() {
 
       {/* ===== Espelhos REP-P assinados, em lote ===== */}
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>
-          Espelhos de Ponto (REP-P) da frota
-        </h3>
+        <TituloComDownload
+          opcoes={[
+            { rotulo: "Extrair espelhos (PDF)", onClick: onBaixarRepPLote, carregando: gerandoRepP },
+          ]}
+        >
+          <h3 style={{ marginTop: 0 }}>
+            Espelhos de Ponto (REP-P) da frota
+          </h3>
+        </TituloComDownload>
         <p style={{ fontSize: 13, color: "#000000" }}>
           Cada espelho traz a cadeia de hash do período e a assinatura interna
           do sistema em cada registro. Ainda não tem a assinatura digital
@@ -339,11 +350,6 @@ export function FiscalizacaoPage() {
             </label>
           ))}
         </div>
-        <button onClick={onBaixarRepPLote} disabled={gerandoRepP}>
-          {gerandoRepP
-            ? "Gerando… (pode levar um pouco para a frota inteira)"
-            : "Extrair espelhos (PDF)"}
-        </button>
         {erroRepP && (
           <p style={{ color: "#b91c1c", fontSize: 13 }}>{erroRepP}</p>
         )}

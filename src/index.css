@@ -1430,3 +1430,44 @@ a[href^="/motoristas/"]:hover,
   background: #f3f4f6;
   border-color: #9ca3af;
 }
+
+/* Menu de download no fim da linha do título do bloco. */
+.menu-download {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+button.menu-download-icone {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.menu-download-lista {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+button.menu-download-item {
+  background: transparent;
+  color: #000;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+button.menu-download-item:hover:not(:disabled) {
+  background: #fff1e8;
+}

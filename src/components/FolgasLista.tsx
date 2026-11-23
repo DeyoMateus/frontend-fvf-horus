@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import type { ReactNode } from "react";
 import { baixarCsvTabela, imprimirTabela } from "../utils/exportarTabelaModal";
 import { useListaPaginada } from "../hooks/useListaPaginada";
@@ -59,42 +60,24 @@ export function FolgasLista({
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-        <button
-          type="button"
-          className="secondary"
-          style={{ padding: "4px 10px", fontSize: 12 }}
-          disabled={lista.itensFiltrados.length === 0}
-          onClick={() =>
-            void baixarCsvTabela(
-              `${nomeBase}.xlsx`.replace(/\s+/g, "-"),
-              cabecalhos,
-              matriz(),
-              {
-                titulo: nomeBase,
-                subtitulo: `Período: ${rotuloPeriodo()}`,
-              },
-            )
-          }
-        >
-          Baixar Excel
-        </button>
-        <button
-          type="button"
-          className="secondary"
-          style={{ padding: "4px 10px", fontSize: 12 }}
-          disabled={lista.itensFiltrados.length === 0}
-          onClick={() =>
-            imprimirTabela(
-              nomeBase,
-              `Período: ${rotuloPeriodo()}`,
-              cabecalhos,
-              matriz(),
-            )
-          }
-        >
-          Baixar PDF
-        </button>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+        <MenuDownload
+          desabilitado={lista.itensFiltrados.length === 0}
+          opcoes={[
+            {
+              rotulo: "Baixar Excel",
+              onClick: () =>
+                baixarCsvTabela(`${nomeBase}.xlsx`.replace(/\s+/g, "-"), cabecalhos, matriz(), {
+                  titulo: nomeBase,
+                  subtitulo: `Período: ${rotuloPeriodo()}`,
+                }),
+            },
+            {
+              rotulo: "Baixar PDF",
+              onClick: () => imprimirTabela(nomeBase, `Período: ${rotuloPeriodo()}`, cabecalhos, matriz()),
+            },
+          ]}
+        />
       </div>
       <ControlesListaPaginada
         ordem={lista.ordem}

@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import { Link } from "react-router-dom";
 import { minParaHoras } from "../utils/formatarDuracao";
 import { baixarCsvTabela, travarRolagemFundo } from "../utils/exportarTabelaModal";
@@ -63,12 +64,10 @@ export function RankingCompletoPopup({
         >
           <strong style={{ fontSize: 15 }}>{titulo} , relatório completo</strong>
           <div style={{ display: "flex", gap: 6 }}>
-            <button
-              type="button"
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={itens.length === 0}
-              onClick={() =>
+            <MenuDownload
+  desabilitado={itens.length === 0}
+  opcoes={[
+    { rotulo: "Baixar Excel", onClick: () =>
                 baixarCsvTabela(
                   `${titulo.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.xlsx`,
                   ["Posição", "Motorista", "Valor"],
@@ -78,11 +77,9 @@ export function RankingCompletoPopup({
                     minParaHoras(item.valorMin),
                   ]),
                   { titulo: `${titulo} , relatório completo` },
-                )
-              }
-            >
-              Baixar Excel
-            </button>
+                ) },
+  ]}
+/>
             <button
               type="button"
               className="secondary"

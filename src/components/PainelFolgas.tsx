@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getFolgaDashboard } from "../api/folgaDashboard";
@@ -288,26 +289,19 @@ function DetalheIndicador({
             {titulo} ({linhas.length})
           </strong>
           <div style={{ display: "flex", gap: 6 }}>
-            <button
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={vazio}
-              onClick={() =>
-                void baixarCsvTabela(`${titulo}.xlsx`, cabecalhos, linhas, {
-                  titulo,
-                })
-              }
-            >
-              Baixar Excel
-            </button>
-            <button
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={vazio}
-              onClick={() => imprimirTabela(titulo, null, cabecalhos, linhas)}
-            >
-              Baixar PDF
-            </button>
+            <MenuDownload
+              desabilitado={vazio}
+              opcoes={[
+                {
+                  rotulo: "Baixar Excel",
+                  onClick: () => baixarCsvTabela(`${titulo}.xlsx`, cabecalhos, linhas, { titulo }),
+                },
+                {
+                  rotulo: "Baixar PDF",
+                  onClick: () => imprimirTabela(titulo, null, cabecalhos, linhas),
+                },
+              ]}
+            />
             <button
               className="secondary"
               style={{ padding: "4px 10px", fontSize: 12 }}
@@ -617,15 +611,9 @@ export function PainelFolgas({ versao = 0 }: { versao?: number }) {
         }}
       >
         <h2 style={{ margin: 0 }}>Dashboard de folgas</h2>
-        <button
-          type="button"
-          className="secondary"
-          style={{ padding: "4px 10px", fontSize: 12 }}
-          onClick={baixarTudo}
-          data-tour="folgas-exportar"
-        >
-          Baixar tudo (Excel)
-        </button>
+        <div data-tour="folgas-exportar">
+          <MenuDownload opcoes={[{ rotulo: "Baixar tudo (Excel)", onClick: baixarTudo }]} />
+        </div>
       </div>
 
       <div

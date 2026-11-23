@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import { useEstadoLembrado } from "../hooks/useEstadoLembrado";
 import { inicioDoDiaLocalIso, fimDoDiaLocalIso } from "../utils/fusoHorario";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -619,9 +620,12 @@ export function PainelIndicadores() {
           <button onClick={() => carregarPainel()} disabled={atualizando}>
             {atualizando ? "Atualizando…" : "Atualizar"}
           </button>
-          <button onClick={exportar} disabled={exportando || atualizando}>
-            {exportando ? "Gerando…" : "Exportar Excel (RH)"}
-          </button>
+          <MenuDownload
+  desabilitado={exportando || atualizando}
+  opcoes={[
+    { rotulo: "Exportar Excel (RH)", onClick: exportar, carregando: exportando },
+  ]}
+/>
         </div>
       </div>
 
@@ -795,12 +799,10 @@ export function PainelIndicadores() {
               >
                 <h3 style={{ margin: 0 }}>Evolução ao longo do período</h3>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button
-                    type="button"
-                    className="secondary"
-                    style={{ padding: "4px 10px", fontSize: 12 }}
-                    disabled={tendenciaDiaria.length === 0}
-                    onClick={() =>
+                  <MenuDownload
+  desabilitado={tendenciaDiaria.length === 0}
+  opcoes={[
+    { rotulo: "Baixar Excel", onClick: () =>
                       baixarCsvTabela(
                         `evolucao-indicadores-${inicioEvolucao}-a-${fimEvolucao}.xlsx`,
                         [
@@ -829,11 +831,9 @@ export function PainelIndicadores() {
                           titulo: "Evolução dos indicadores",
                           subtitulo: `Período: ${inicioEvolucao} a ${fimEvolucao}`,
                         },
-                      )
-                    }
-                  >
-                    Baixar Excel
-                  </button>
+                      ) },
+  ]}
+/>
                   <button
                     type="button"
                     className="secondary"

@@ -1,3 +1,4 @@
+import { MenuDownload } from "../components/MenuDownload";
 import { useEffect, useState } from "react";
 import { renderizarHorarios } from "../utils/fusoHorario";
 import { Link } from "react-router-dom";
@@ -317,36 +318,26 @@ function PainelDetalheCard({
         >
           <strong style={{ fontSize: 15 }}>{estado.titulo}</strong>
           <div style={{ display: "flex", gap: 6 }}>
-            <button
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={!temDadosParaExportar}
-              onClick={() =>
-                baixarCsvTabela(
-                  `${estado.titulo}.xlsx`,
-                  cabecalhosExportacao,
-                  linhasExportacao,
-                  { titulo: estado.titulo },
-                )
-              }
-            >
-              Baixar Excel
-            </button>
-            <button
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={!temDadosParaExportar}
-              onClick={() =>
-                imprimirTabela(
-                  estado.titulo,
-                  null,
-                  cabecalhosExportacao,
-                  linhasExportacao,
-                )
-              }
-            >
-              Imprimir
-            </button>
+            <MenuDownload
+              desabilitado={!temDadosParaExportar}
+              opcoes={[
+                {
+                  rotulo: "Baixar Excel",
+                  onClick: () =>
+                    baixarCsvTabela(
+                      `${estado.titulo}.xlsx`,
+                      cabecalhosExportacao,
+                      linhasExportacao,
+                      { titulo: estado.titulo },
+                    ),
+                },
+                {
+                  rotulo: "Imprimir",
+                  onClick: () =>
+                    imprimirTabela(estado.titulo, null, cabecalhosExportacao, linhasExportacao),
+                },
+              ]}
+            />
             <button
               className="secondary"
               style={{ padding: "4px 10px", fontSize: 12 }}
@@ -894,12 +885,13 @@ export function DashboardPage() {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className="secondary"
-          style={{ padding: "4px 10px", fontSize: 12 }}
-          disabled={tendencia.length === 0}
-          onClick={() =>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <MenuDownload
+            desabilitado={tendencia.length === 0}
+            opcoes={[
+              {
+                rotulo: "Baixar Excel",
+                onClick: () =>
             baixarCsvTabela(
               `evolucao-painel-${periodoPersonalizado ? `${periodoPersonalizado.desde}-a-${periodoPersonalizado.ate}` : `${periodoDias}dias`}.xlsx`,
               [
@@ -930,11 +922,11 @@ export function DashboardPage() {
                   ? `Período: ${periodoPersonalizado.desde} a ${periodoPersonalizado.ate}`
                   : `Período: últimos ${periodoDias} dias`,
               },
-            )
-          }
-        >
-          Baixar Excel
-        </button>
+            ),
+              },
+            ]}
+          />
+        </div>
       </div>
 
       <GraficoTendencia dados={tendencia} />

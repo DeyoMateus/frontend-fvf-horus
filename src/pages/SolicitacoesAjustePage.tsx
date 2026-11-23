@@ -1,3 +1,4 @@
+import { MenuDownload } from "../components/MenuDownload";
 import { Esqueleto } from "../components/Esqueleto";
 import { DicaAoPassar } from "../components/DicaAoPassar";
 import { useEffect, useRef, useState } from "react";
@@ -469,17 +470,12 @@ export function SolicitacoesAjustePage({
                 </select>{" "}
                 por vez
               </label>
-              <button
-                type="button"
-                className="secondary"
-                style={{ padding: "4px 10px", fontSize: 12 }}
-                disabled={exportandoHistorico || totalHistorico === 0}
-                onClick={() => void exportarHistoricoCompleto()}
-              >
-                {exportandoHistorico
-                  ? "Exportando..."
-                  : `Baixar Excel (${totalHistorico})`}
-              </button>
+              <MenuDownload
+  desabilitado={exportandoHistorico || totalHistorico === 0}
+  opcoes={[
+    { rotulo: `Baixar Excel (${totalHistorico})`, onClick: () => void exportarHistoricoCompleto(), carregando: exportandoHistorico },
+  ]}
+/>
             </div>
 
             <ListaEmPopup

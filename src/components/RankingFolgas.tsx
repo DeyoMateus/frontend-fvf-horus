@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import type {
@@ -216,40 +217,26 @@ export function RankingFolgas({ dados }: { dados: FolgaDashboard }) {
             só, descumprimento de norma.
           </div>
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          <button
-            type="button"
-            className="secondary"
-            style={{ padding: "4px 10px", fontSize: 12 }}
-            disabled={lista.length === 0}
-            onClick={() =>
-              void baixarCsvTabela(
-                "ranking-de-folgas.xlsx",
-                CABECALHOS,
-                todasLinhas,
-                { titulo: "Ranking de folgas" },
-              )
-            }
-          >
-            Baixar Excel
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            style={{ padding: "4px 10px", fontSize: 12 }}
-            disabled={lista.length === 0}
-            onClick={() =>
-              imprimirTabela(
-                "Ranking de folgas",
-                "Motoristas ordenados por dias sem folga",
-                CABECALHOS,
-                todasLinhas,
-              )
-            }
-          >
-            Baixar PDF
-          </button>
-        </div>
+        <MenuDownload
+          desabilitado={lista.length === 0}
+          opcoes={[
+            {
+              rotulo: "Baixar Excel",
+              onClick: () =>
+                baixarCsvTabela("ranking-de-folgas.xlsx", CABECALHOS, todasLinhas, { titulo: "Ranking de folgas" }),
+            },
+            {
+              rotulo: "Baixar PDF",
+              onClick: () =>
+                imprimirTabela(
+                  "Ranking de folgas",
+                  "Motoristas ordenados por dias sem folga",
+                  CABECALHOS,
+                  todasLinhas,
+                ),
+            },
+          ]}
+        />
       </div>
 
       {historico && (

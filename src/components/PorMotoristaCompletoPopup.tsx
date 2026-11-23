@@ -1,3 +1,4 @@
+import { MenuDownload } from "./MenuDownload";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { IndicadoresMotorista } from "../api/indicadores";
@@ -111,12 +112,10 @@ export function PorMotoristaCompletoPopup({
         >
           <strong style={{ fontSize: 15 }}>Por motorista , relatório completo</strong>
           <div style={{ display: "flex", gap: 6 }}>
-            <button
-              type="button"
-              className="secondary"
-              style={{ padding: "4px 10px", fontSize: 12 }}
-              disabled={motoristas.length === 0}
-              onClick={() =>
+            <MenuDownload
+  desabilitado={motoristas.length === 0}
+  opcoes={[
+    { rotulo: "Baixar Excel", onClick: () =>
                 baixarCsvTabela(
                   "por-motorista-relatorio-completo.xlsx",
                   ["Motorista", ...colunas.map((c) => c.titulo)],
@@ -125,11 +124,9 @@ export function PorMotoristaCompletoPopup({
                     titulo: "Por motorista , relatório completo",
                     subtitulo: subtitulo ?? null,
                   },
-                )
-              }
-            >
-              Baixar Excel
-            </button>
+                ) },
+  ]}
+/>
             <button
               type="button"
               className="secondary"
