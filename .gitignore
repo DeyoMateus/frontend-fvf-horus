@@ -34,3 +34,4 @@ seeds/
 # Artefatos gerados (N202)
 *.tsbuildinfo
 vite.config.ts.timestamp-*
+!src/utils/avisarPendenciasMudaram.ts
