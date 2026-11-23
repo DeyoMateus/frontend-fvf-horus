@@ -729,6 +729,7 @@ export interface GrupoDetalhe {
   razaoSocial: string;
   createdAt: string;
   limiteMotoristas?: number | null;
+  limiteAjudantes?: number | null;
   ativo?: boolean;
   inativadoEm?: string | null;
   motivoInativacao?: string | null;
@@ -753,6 +754,7 @@ export interface UpdateGrupoInput {
   razaoSocial: string;
   /** null = sem limite; omitido = não altera. */
   limiteMotoristas?: number | null;
+  limiteAjudantes?: number | null;
 }
 
 export interface UpdateEmpresaInput {
@@ -775,6 +777,9 @@ export interface UpdateUsuarioSuperAdminInput {
 
 export interface CreateEmpresaMaeInput {
   razaoSocialGrupo: string;
+  /** Máximo de motoristas da empresa mãe; omitido = sem limite. */
+  limiteMotoristas?: number;
+  limiteAjudantes?: number;
   cnpjEmpresa: string;
   razaoSocialEmpresa: string;
   nomeAdmin: string;

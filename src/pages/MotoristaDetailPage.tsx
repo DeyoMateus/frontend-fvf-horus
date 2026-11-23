@@ -68,6 +68,9 @@ import { AbasTopo, useAbaAtiva, type AbaDef } from "../components/AbasTopo";
 import { listAlertasByMotorista } from "../api/alertas";
 import {
   BarraTratamentoEmLote,
+  BotaoMarcarVisto,
+  SituacaoDoAlerta,
+  alertaResolvido,
   FiltrosTratamento,
   FormularioTratamentoAlerta,
   alertaPodeTratarEmLote,
@@ -772,8 +775,8 @@ export function MotoristaDetailPage({
   const alertasOrdenados = [
     ...aplicarFiltroTratamento(alertas, filtroTratamentoAlertas),
   ].sort((a, b) => {
-    const pa = a.tratadoEm ? 1 : 0;
-    const pb = b.tratadoEm ? 1 : 0;
+    const pa = alertaResolvido(a) ? 1 : 0;
+    const pb = alertaResolvido(b) ? 1 : 0;
     if (pa !== pb) return pa - pb;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
@@ -2527,7 +2530,7 @@ export function MotoristaDetailPage({
             <tbody>
               {alertasExibidos.map((a) => (
                 <Fragment key={a.id}>
-                  <tr style={{ opacity: a.tratadoEm ? 0.6 : 1 }}>
+                  <tr style={{ opacity: alertaResolvido(a) ? 0.6 : 1 }}>
                     <td>
                       {alertaPodeTratarEmLote(a) && (
                         <input
@@ -2567,14 +2570,7 @@ export function MotoristaDetailPage({
                     <td>{formatarMinutos(a.minutosAcumulados)}</td>
                     <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
                     <td>
-                      {a.tratadoEm ? (
-                        <span style={{ color: "#166534", fontSize: 12 }}>
-                          ✓ tratado em{" "}
-                          {new Date(a.tratadoEm).toLocaleDateString("pt-BR")}
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: 12 }}>pendente</span>
-                      )}
+                      <SituacaoDoAlerta alerta={a} />
                     </td>
                     <td>
                       <button
@@ -2589,7 +2585,12 @@ export function MotoristaDetailPage({
                           : a.tratadoEm
                             ? "Ver"
                             : "Tratar"}
-                      </button>
+                      </button>{" "}
+                      <BotaoMarcarVisto
+                        alerta={a}
+                        onConcluido={() => recarregarAlertas()}
+                        onErro={setErroAlertas}
+                      />
                     </td>
                   </tr>
                   {alertaExpandidoId === a.id && (

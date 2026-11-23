@@ -55,8 +55,9 @@ export function RegimeBancoHorasForm({
     setErro(null);
     // Entrada invalida nao vira "1" em silencio; mostra o erro.
     const fatorNum = Number(fator.replace(",", "."));
-    if (!Number.isFinite(fatorNum) || fatorNum < 1 || fatorNum > 3) {
-      setErro("O fator de conversão deve ser um número entre 1 e 3.");
+    const fatorAntigo = Number(inicial?.fator ?? 1);
+    if (!Number.isFinite(fatorNum) || (fatorNum !== 1 && fatorNum !== fatorAntigo)) {
+      setErro("O banco é 1:1: use 1 ou mantenha o fator antigo já cadastrado.");
       return;
     }
     const tetoNum = tetoHoras.trim() ? Number(tetoHoras.replace(",", ".")) : null;
@@ -131,8 +132,18 @@ export function RegimeBancoHorasForm({
           </small>
           <label>Teto do saldo, em horas (opcional)</label>
           <input inputMode="decimal" value={tetoHoras} onChange={(e) => setTetoHoras(e.target.value)} />
-          <label>Fator de conversão (1 a 3)</label>
-          <input inputMode="decimal" value={fator} onChange={(e) => setFator(e.target.value)} />
+          {Number(inicial?.fator ?? 1) !== 1 ? (
+            <>
+              <label>Fator de conversão antigo (1 a 3)</label>
+              <input inputMode="decimal" value={fator} onChange={(e) => setFator(e.target.value)} />
+              <small>
+                O banco passou a ser 1:1 (o adicional não multiplica o saldo). Este fator antigo só pode
+                ser mantido ou trocado por 1.
+              </small>
+            </>
+          ) : (
+            <small>O saldo do banco é 1:1: o adicional é pago pela folha e não multiplica as horas.</small>
+          )}
         </>
       )}
       <small>

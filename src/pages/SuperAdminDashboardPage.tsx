@@ -40,6 +40,8 @@ export function SuperAdminDashboardPage() {
   const [erro, setErro] = useState<string | null>(null);
 
   const [form, setForm] = useState<CreateEmpresaMaeInput>(FORM_PADRAO);
+  const [limiteMotoristasTxt, setLimiteMotoristasTxt] = useState("");
+  const [limiteAjudantesTxt, setLimiteAjudantesTxt] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState<string | null>(null);
   const [sucessoForm, setSucessoForm] = useState<string | null>(null);
@@ -72,6 +74,12 @@ export function SuperAdminDashboardPage() {
     try {
       await criarEmpresaMae({
         ...form,
+        limiteMotoristas: limiteMotoristasTxt.trim()
+          ? Number(limiteMotoristasTxt)
+          : undefined,
+        limiteAjudantes: limiteAjudantesTxt.trim()
+          ? Number(limiteAjudantesTxt)
+          : undefined,
         registroInpiAfd: form.registroInpiAfd?.trim()
           ? form.registroInpiAfd.trim()
           : undefined,
@@ -80,6 +88,8 @@ export function SuperAdminDashboardPage() {
         `Empresa "${form.razaoSocialGrupo}" cadastrada. Envie as credenciais do admin (${form.emailAdmin}) para o cliente por um canal seguro.`,
       );
       setForm(FORM_PADRAO);
+      setLimiteMotoristasTxt("");
+      setLimiteAjudantesTxt("");
       await carregar();
     } catch {
       setErroForm(
@@ -117,6 +127,26 @@ export function SuperAdminDashboardPage() {
                   setForm((f) => ({ ...f, razaoSocialGrupo: e.target.value }))
                 }
                 required
+              />
+            </div>
+            <div>
+              <label>Limite de motoristas (vazio = sem limite)</label>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={limiteMotoristasTxt}
+                onChange={(e) => setLimiteMotoristasTxt(e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Limite de ajudantes (vazio = sem limite)</label>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={limiteAjudantesTxt}
+                onChange={(e) => setLimiteAjudantesTxt(e.target.value)}
               />
             </div>
             <div>

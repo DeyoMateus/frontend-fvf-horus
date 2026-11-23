@@ -76,8 +76,9 @@ export function SuperAdminGrupoDetailPage() {
   const [erro, setErro] = useState<string | null>(null);
 
   const [editandoGrupo, setEditandoGrupo] = useState(false);
-  const [razaoSocialGrupo, setRazaoSocialGrupo] = useState("");
   const [limiteMotoristasGrupo, setLimiteMotoristasGrupo] = useState("");
+  const [limiteAjudantesGrupo, setLimiteAjudantesGrupo] = useState("");
+  const [razaoSocialGrupo, setRazaoSocialGrupo] = useState("");
   const [chavesEmpresaId, setChavesEmpresaId] = useState<string | null>(null);
   const [empresaEditandoId, setEmpresaEditandoId] = useState<string | null>(
     null,
@@ -164,6 +165,9 @@ export function SuperAdminGrupoDetailPage() {
     setLimiteMotoristasGrupo(
       grupo.limiteMotoristas != null ? String(grupo.limiteMotoristas) : "",
     );
+    setLimiteAjudantesGrupo(
+      grupo.limiteAjudantes != null ? String(grupo.limiteAjudantes) : "",
+    );
     setErroEdicao(null);
     setEditandoGrupo(true);
   }
@@ -174,16 +178,18 @@ export function SuperAdminGrupoDetailPage() {
     setErroEdicao(null);
     setSalvando(true);
     try {
-      const limiteTxt = limiteMotoristasGrupo.trim();
-      const limite = limiteTxt === "" ? null : Number(limiteTxt);
-      if (limite !== null && (!Number.isInteger(limite) || limite < 1)) {
-        setErroEdicao("O limite de motoristas deve ser um número inteiro maior que zero, ou vazio para sem limite.");
+      const limites = [limiteMotoristasGrupo.trim(), limiteAjudantesGrupo.trim()].map(
+        (txt) => (txt === "" ? null : Number(txt)),
+      );
+      if (limites.some((l) => l !== null && (!Number.isInteger(l) || l < 1))) {
+        setErroEdicao("Os limites devem ser números inteiros maiores que zero, ou vazios para sem limite.");
         setSalvando(false);
         return;
       }
       await atualizarGrupo(grupoId, {
         razaoSocial: razaoSocialGrupo,
-        limiteMotoristas: limite,
+        limiteMotoristas: limites[0],
+        limiteAjudantes: limites[1],
       });
       setEditandoGrupo(false);
       await carregar();
@@ -378,6 +384,16 @@ export function SuperAdminGrupoDetailPage() {
               value={limiteMotoristasGrupo}
               onChange={(e) => setLimiteMotoristasGrupo(e.target.value)}
             />
+            <label style={{ marginTop: 8, display: "block" }}>
+              Limite de ajudantes (vazio = sem limite)
+            </label>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={limiteAjudantesGrupo}
+              onChange={(e) => setLimiteAjudantesGrupo(e.target.value)}
+            />
           </div>
           <button type="submit" disabled={salvando}>
             Salvar
@@ -422,11 +438,13 @@ export function SuperAdminGrupoDetailPage() {
           O painel está bloqueado; os motoristas continuam batendo ponto.
         </p>
       )}
-      <p style={{ fontSize: 13, color: "#000000", marginTop: -8 }}>
+      <p style={{ fontSize: 13, color: "#000000", marginTop: 12 }}>
         Empresa mãe desde{" "}
         {new Date(grupo.createdAt).toLocaleDateString("pt-BR")} · Limite de
         motoristas:{" "}
         {grupo.limiteMotoristas != null ? grupo.limiteMotoristas : "sem limite"}
+        {" "}· Limite de ajudantes:{" "}
+        {grupo.limiteAjudantes != null ? grupo.limiteAjudantes : "sem limite"}
       </p>
       {erroEdicao && <p className="error-text">{erroEdicao}</p>}
       <div className="card">

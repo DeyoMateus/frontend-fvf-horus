@@ -1,3 +1,4 @@
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 import { Esqueleto } from "../components/Esqueleto";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { AxiosError } from "axios";
@@ -234,11 +235,15 @@ export function MotoristasListPage() {
         empresaId,
         telefone: telefone.trim(),
       });
-      if (contratoPreenchido(contratoNovo)) {
+      const contratoFinal = {
+        ...contratoNovo,
+        cargo: ehAjudanteNovo ? "" : "Motorista",
+      };
+      if (contratoPreenchido(contratoFinal)) {
         try {
           await atualizarContratoMotorista(
             criado.id,
-            contratoParaPayload(contratoNovo),
+            contratoParaPayload(contratoFinal),
           );
         } catch {
           setErro(
@@ -264,6 +269,11 @@ export function MotoristasListPage() {
       // validação (400/409); erro de servidor mostra algo que deixa
       // claro que não é a pessoa que errou o preenchimento.
       if (
+        erro instanceof AxiosError &&
+        erro.response?.data?.codigo === "LIMITE_COLABORADORES_ATINGIDO"
+      ) {
+        setErroForm(mensagemDoErro(erro, "Você atingiu a cota de colaboradores contratada. Solicite a ampliação ao suporte."));
+      } else if (
         erro instanceof AxiosError &&
         erro.response?.status &&
         erro.response.status < 500
@@ -442,6 +452,7 @@ export function MotoristasListPage() {
               valores={contratoNovo}
               onChange={setContratoNovo}
               empresaId={empresaId}
+              semCargo
             />
             {erroForm && <p className="error-text">{erroForm}</p>}
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>

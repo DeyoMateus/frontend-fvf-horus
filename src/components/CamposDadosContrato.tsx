@@ -71,10 +71,13 @@ export function CamposDadosContrato({
   valores,
   onChange,
   empresaId,
+  semCargo = false,
 }: {
   valores: ValoresContrato;
   onChange: (v: ValoresContrato) => void;
   empresaId?: string | null;
+  /** Esconde o campo de cargo (no cadastro novo, a função já define o cargo). */
+  semCargo?: boolean;
 }) {
   const [horarios, setHorarios] = useState<HorarioContratual[]>([]);
 
@@ -114,22 +117,26 @@ export function CamposDadosContrato({
         value={valores.dataAdmissao}
         onChange={(e) => set("dataAdmissao", e.target.value)}
       />
-      <label style={rotulo}>Cargo / função</label>
-      <select
-        value={valores.cargo}
-        onChange={(e) => set("cargo", e.target.value)}
-      >
-        <option value="">Selecione...</option>
-        {CARGOS_MOTORISTA.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-        {/* Cadastro antigo com texto livre: mantém o valor visível para não apagá-lo sem querer. */}
-        {valores.cargo && !CARGOS_MOTORISTA.includes(valores.cargo) && (
-          <option value={valores.cargo}>{valores.cargo}</option>
-        )}
-      </select>
+      {!semCargo && (
+        <>
+        <label style={rotulo}>Cargo / função</label>
+        <select
+          value={valores.cargo}
+          onChange={(e) => set("cargo", e.target.value)}
+        >
+          <option value="">Selecione...</option>
+          {CARGOS_MOTORISTA.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+          {/* Cadastro antigo com texto livre: mantém o valor visível para não apagá-lo sem querer. */}
+          {valores.cargo && !CARGOS_MOTORISTA.includes(valores.cargo) && (
+            <option value={valores.cargo}>{valores.cargo}</option>
+          )}
+        </select>
+        </>
+      )}
       <label style={rotulo}>Matrícula</label>
       <input
         maxLength={40}

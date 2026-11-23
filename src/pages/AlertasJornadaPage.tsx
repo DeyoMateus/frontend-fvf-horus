@@ -7,9 +7,12 @@ import { DicaAoPassar } from "../components/DicaAoPassar";
 import { listAlertasByEmpresa } from "../api/alertas";
 import {
   BarraTratamentoEmLote,
+  BotaoMarcarVisto,
+  SituacaoDoAlerta,
   FiltrosTratamento,
   FormularioTratamentoAlerta,
   alertaPodeTratarEmLote,
+  alertaResolvido,
   aplicarFiltroTratamento,
 } from "../components/TratamentoAlertas";
 import type { FiltroTratamento } from "../components/TratamentoAlertas";
@@ -154,7 +157,7 @@ export function AlertasJornadaPage() {
     alertasFiltradosPorTratamento,
     (a) => a.createdAt,
     // Não tratados sempre no topo, depois a ordem por data.
-    { fixarNoTopo: (a) => !a.tratadoEm },
+    { fixarNoTopo: (a) => !alertaResolvido(a) },
   );
   const idsSelecionaveisNaPagina = paginacao.itensExibidos
     .filter(alertaPodeTratarEmLote)
@@ -313,7 +316,7 @@ export function AlertasJornadaPage() {
                     new Date(a.janelaFim).toLocaleString("pt-BR"),
                     minParaHoras(a.minutosAcumulados),
                     new Date(a.createdAt).toLocaleString("pt-BR"),
-                    a.tratadoEm ? "Tratado" : "Pendente",
+                    a.tratadoEm ? "Tratado" : alertaResolvido(a) ? "Visto" : "Pendente",
                   ]),
                   {
                     titulo: "Alertas de jornada",
@@ -391,7 +394,7 @@ export function AlertasJornadaPage() {
                   const expandido = expandidoId === a.id;
                   return (
                     <Fragment key={a.id}>
-                      <tr style={{ opacity: a.tratadoEm ? 0.6 : 1 }}>
+                      <tr style={{ opacity: alertaResolvido(a) ? 0.6 : 1 }}>
                         <td>
                           {alertaPodeTratarEmLote(a) && (
                             <input
@@ -443,18 +446,7 @@ export function AlertasJornadaPage() {
                         <td>{minParaHoras(a.minutosAcumulados)}</td>
                         <td>{new Date(a.createdAt).toLocaleString("pt-BR")}</td>
                         <td>
-                          {a.tratadoEm ? (
-                            <span style={{ color: "#166534", fontSize: 12 }}>
-                              ✓ tratado em{" "}
-                              {new Date(a.tratadoEm).toLocaleDateString(
-                                "pt-BR",
-                              )}
-                            </span>
-                          ) : (
-                            <span style={{ color: "#000000", fontSize: 12 }}>
-                              pendente
-                            </span>
-                          )}
+                          <SituacaoDoAlerta alerta={a} />
                         </td>
                         <td
                           style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
@@ -470,6 +462,11 @@ export function AlertasJornadaPage() {
                                 ? "Ver"
                                 : "Tratar"}
                           </button>
+                          <BotaoMarcarVisto
+                            alerta={a}
+                            onConcluido={() => aposTratar()}
+                            onErro={setErro}
+                          />
                         </td>
                       </tr>
                       {expandido && (

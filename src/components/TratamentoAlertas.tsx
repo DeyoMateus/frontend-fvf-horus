@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   corrigirHoraPontoAlerta,
   liberarRelogioAlerta,
+  marcarAlertaVisualizado,
   tratarAlerta,
   tratarAlertasEmLote,
 } from "../api/alertas";
@@ -15,11 +16,76 @@ import type { AlertaJornada } from "../api/types";
 
 export type FiltroTratamento = "TODOS" | "NAO_TRATADOS" | "TRATADOS";
 
-export function alertaPodeTratarEmLote(a: AlertaJornada): boolean {
+/** Atenção e info podem ser só "vistos" (sem observação); crítico exige tratamento. */
+export function alertaPodeMarcarVisto(a: AlertaJornada): boolean {
   return (
     !a.tratadoEm &&
+    !a.visualizadoEm &&
     a.severidade !== "CRITICO" &&
     a.tipo !== "RELOGIO_PONTO_RECUSADO"
+  );
+}
+
+/** Visto sem tratamento: vale só para alerta que não é crítico. */
+export function alertaVistoSemTratar(a: AlertaJornada): boolean {
+  return !a.tratadoEm && !!a.visualizadoEm && a.severidade !== "CRITICO";
+}
+
+/** Resolvido = tratado, ou (não crítico) marcado como visto. */
+export function alertaResolvido(a: AlertaJornada): boolean {
+  return !!a.tratadoEm || alertaVistoSemTratar(a);
+}
+
+export function alertaPodeTratarEmLote(a: AlertaJornada): boolean {
+  return alertaPodeMarcarVisto(a);
+}
+
+/** Texto da coluna de situação do alerta. */
+export function SituacaoDoAlerta({ alerta }: { alerta: AlertaJornada }) {
+  if (alerta.tratadoEm) {
+    return (
+      <span style={{ color: "#166534", fontSize: 12 }}>
+        ✓ tratado em {new Date(alerta.tratadoEm).toLocaleDateString("pt-BR")}
+      </span>
+    );
+  }
+  if (alertaVistoSemTratar(alerta)) {
+    return (
+      <span style={{ color: "#166534", fontSize: 12 }}>
+        ✓ visto em {new Date(alerta.visualizadoEm as string).toLocaleDateString("pt-BR")}
+      </span>
+    );
+  }
+  return <span style={{ fontSize: 12 }}>pendente</span>;
+}
+
+/** Botão de "marcar como visto" (só aparece para alerta não crítico ainda pendente). */
+export function BotaoMarcarVisto({
+  alerta,
+  onConcluido,
+  onErro,
+}: {
+  alerta: AlertaJornada;
+  onConcluido: () => void | Promise<void>;
+  onErro: (mensagem: string) => void;
+}) {
+  const [salvando, setSalvando] = useState(false);
+  if (!alertaPodeMarcarVisto(alerta)) return null;
+  async function marcar() {
+    setSalvando(true);
+    try {
+      await marcarAlertaVisualizado(alerta.id);
+      await onConcluido();
+    } catch (e) {
+      onErro(mensagemDoErro(e, "Não foi possível marcar o alerta como visto."));
+    } finally {
+      setSalvando(false);
+    }
+  }
+  return (
+    <button type="button" className="secondary" disabled={salvando} onClick={marcar}>
+      {salvando ? "Salvando…" : "Marcar como visto"}
+    </button>
   );
 }
 
@@ -27,8 +93,8 @@ export function aplicarFiltroTratamento(
   alertas: AlertaJornada[],
   filtro: FiltroTratamento,
 ): AlertaJornada[] {
-  if (filtro === "NAO_TRATADOS") return alertas.filter((a) => !a.tratadoEm);
-  if (filtro === "TRATADOS") return alertas.filter((a) => !!a.tratadoEm);
+  if (filtro === "NAO_TRATADOS") return alertas.filter((a) => !alertaResolvido(a));
+  if (filtro === "TRATADOS") return alertas.filter((a) => alertaResolvido(a));
   return alertas;
 }
 
@@ -329,17 +395,40 @@ export function BarraTratamentoEmLote({
     }
   }
 
+  async function marcarTodosComoVistos() {
+    setSalvando(true);
+    try {
+      const resultados = await Promise.allSettled(
+        idsSelecionados.map((id) => marcarAlertaVisualizado(id)),
+      );
+      const feitos = resultados.filter((r) => r.status === "fulfilled").length;
+      const falhas = resultados.length - feitos;
+      await onConcluido(
+        `${feitos} alerta(s) marcado(s) como visto(s).${falhas > 0 ? ` ${falhas} não pôde(ram) ser marcado(s).` : ""}`,
+      );
+    } catch (e) {
+      onErro(mensagemDoErro(e, "Não foi possível marcar os alertas como vistos."));
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   return (
     <div
       className="card"
       style={{ marginBottom: 12, background: "#f9fafb", padding: "10px 14px" }}
     >
       <strong style={{ fontSize: 13 }}>
-        {idsSelecionados.length} alerta(s) selecionado(s) para tratar juntos
+        {idsSelecionados.length} alerta(s) selecionado(s)
       </strong>
       <div style={{ fontSize: 12, margin: "4px 0" }}>
-        A mesma anotação vale para todos. Alertas críticos não entram aqui, são
-        tratados um a um.
+        Marque como visto (sem anotação) ou trate juntos com uma anotação. Alertas
+        críticos não entram aqui, são tratados um a um.
+      </div>
+      <div style={{ margin: "6px 0" }}>
+        <button type="button" disabled={salvando} onClick={marcarTodosComoVistos}>
+          {`Marcar ${idsSelecionados.length} como visto(s)`}
+        </button>
       </div>
       <textarea
         maxLength={400}
