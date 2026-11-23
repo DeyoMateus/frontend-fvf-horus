@@ -53,13 +53,11 @@ const REGRA_PADRAO: RegraSindicalInput = {
   duracaoMinutoNoturnoMin: "60",
   intervaloRefeicaoMinimoMin: 60,
   intervaloEntreJornadasMin: 660,
-  bancoHorasAtivo: false,
   janelaNoturnaInicioMin: 1320,
   janelaNoturnaFimMin: 300,
   prorrogacaoNoturna: true,
   declaracaoRespaldoCct: false,
   bancoHorasTipo: "SEM_BANCO",
-  bancoHorasFator: 1,
   feriadoFonte: "BASE_DA_EMPRESA",
 };
 
@@ -139,13 +137,10 @@ export function RegrasSindicaisPage() {
         regra.percentualHoraExtraDomingoFeriado ?? undefined,
       percentualAdicionalNoturno: regra.percentualAdicionalNoturno,
       duracaoMinutoNoturnoMin: regra.duracaoMinutoNoturnoMin,
-      bancoHorasAtivo: regra.bancoHorasAtivo,
       bancoHorasPrazoExpiracaoMeses:
         regra.bancoHorasPrazoExpiracaoMeses ?? undefined,
       bancoHorasLimiteAlertaMin: regra.bancoHorasLimiteAlertaMin ?? undefined,
       intervaloRefeicaoMinimoMin: regra.intervaloRefeicaoMinimoMin,
-      refeicaoFracionamentoPermitido: regra.refeicaoFracionamentoPermitido ?? false,
-      refeicaoFracionamentoClausula: regra.refeicaoFracionamentoClausula ?? undefined,
       intervaloEntreJornadasMin: regra.intervaloEntreJornadasMin ?? 660,
       repousoSemanalMinimoH: regra.repousoSemanalMinimoH ?? null,
       dsrMinimoH: regra.dsrMinimoH ?? null,
@@ -175,13 +170,9 @@ export function RegrasSindicaisPage() {
       cctDocumentoRef: regra.cctDocumentoRef ?? undefined,
       declaracaoRespaldoCct: regra.declaracaoRespaldoCct ?? false,
       bancoHorasTipo: regra.bancoHorasTipo ?? "SEM_BANCO",
-      bancoHorasFator:
-        regra.bancoHorasFator !== undefined ? Number(regra.bancoHorasFator) : 1,
       feriadoTratamento: regra.feriadoTratamento ?? undefined,
       feriadoFonte: regra.feriadoFonte ?? "BASE_DA_EMPRESA",
       folgaDomingoACadaSemanas: regra.folgaDomingoACadaSemanas ?? undefined,
-      marcoAdi5322Data: dataCurta(regra.marcoAdi5322Data),
-      marcoAdi5322Referencia: regra.marcoAdi5322Referencia ?? undefined,
       ativo: regra.ativo,
     });
   }
@@ -594,56 +585,17 @@ export function RegrasSindicaisPage() {
                   onChange={(v) =>
                     setForm((f) => ({
                       ...f,
-                      intervaloRefeicaoMinimoMin: v ?? 60,
+                      intervaloRefeicaoMinimoMin: Math.max(v ?? 60, 60),
                     }))
                   }
                 />
               </div>
 
-              <div>
-                <label>
-                  <input
-                    name="refeicaoFracionamentoPermitido"
-                    type="checkbox"
-                    checked={form.refeicaoFracionamentoPermitido ?? false}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        refeicaoFracionamentoPermitido: e.target.checked,
-                      }))
-                    }
-                  />{" "}
-                  Convenção coletiva permite fracionar a refeição
-                </label>
-                <small>
-                  Desmarcado por padrão: a refeição conta em um único período. Marque só com acordo ou convenção
-                  coletiva registrada (informe o número do Mediador acima). Marcado, a soma dos períodos de refeição
-                  da jornada vale para o mínimo (ex.: 2 períodos de 30 min); só contam os períodos de pelo menos 30 minutos. Refeição menor que 1 hora também exige
-                  acordo ou convenção, e nunca pode ser menor que 30 minutos.
-                </small>
-                {form.refeicaoFracionamentoPermitido && (
-                  <div>
-                    <label>Cláusula da convenção que autoriza o fracionamento e suas condições</label>
-                    <textarea
-                      name="refeicaoFracionamentoClausula"
-                      rows={3}
-                      maxLength={600}
-                      placeholder="Ex.: Cláusula 12ª — fica autorizado fracionar a refeição em 2 períodos de no mínimo 30 minutos cada."
-                      value={form.refeicaoFracionamentoClausula ?? ""}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          refeicaoFracionamentoClausula: e.target.value || undefined,
-                        }))
-                      }
-                    />
-                    <small>
-                      A convenção ou acordo precisa citar e autorizar expressamente o fracionamento, com as condições.
-                      Texto genérico como "conforme a lei" não basta numa fiscalização.
-                    </small>
-                  </div>
-                )}
-              </div>
+              <small>
+                A refeição tem no mínimo 60 minutos contínuos. Não é possível reduzir esse tempo nem somar períodos
+                separados (por exemplo, 2 de 30 minutos), nem com convenção coletiva; só é possível aumentá-lo. Se o
+                motorista encerrar a refeição antes, o app avisa que o tempo não será computado como refeição.
+              </small>
 
               <div>
                 <label>Descanso mínimo entre jornadas (mínimo 11:00)</label>
@@ -1097,44 +1049,6 @@ export function RegrasSindicaisPage() {
                 />
               </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
-                <h4 style={{ margin: "8px 0 0" }}>
-                  Marco da modulação da ADI 5322
-                </h4>
-                <p style={{ color: "#000000", fontSize: 12, marginTop: 2 }}>
-                  Em branco, vale a data padrão do sistema (12/07/2023). Se a
-                  empresa adotar outra data, registre a referência da decisão.
-                </p>
-              </div>
-              <div>
-                <label>Data do marco<ParametroInativo campo="marcoAdi5322Data" /></label>
-                <input
-                  name="marcoAdi5322Data"
-                  type="date"
-                  value={form.marcoAdi5322Data ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      marcoAdi5322Data: e.target.value || undefined,
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <label>Referência da decisão (ata, publicação)<ParametroInativo campo="marcoAdi5322Referencia" /></label>
-                <input
-                  name="marcoAdi5322Referencia"
-                  type="text"
-                  maxLength={300}
-                  value={form.marcoAdi5322Referencia ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      marcoAdi5322Referencia: e.target.value || undefined,
-                    }))
-                  }
-                />
-              </div>
             </div>
 
             {tentouSalvar && (

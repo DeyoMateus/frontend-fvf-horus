@@ -104,7 +104,8 @@ import type {
   TratamentoPonto,
   VerificacaoIntegridade,
 } from "../api/types";
-import { ROTULO_FUNCAO, ROTULO_MOTIVO_PARADA } from "../api/types";
+import { ROTULO_FUNCAO } from "../api/types";
+import { MotivoParadaCelula } from "../components/MotivoParadaCelula";
 import { CampoTextoExpansivel } from "../components/CampoTextoExpansivel";
 
 function gerarUuid() {
@@ -832,12 +833,7 @@ export function MotoristaDetailPage({
         <td>
           {r.tipoEvento}
           {/* Motivo (e observação de "Outro") da parada; texto, nunca HTML. */}
-          {r.motivoParada && (
-            <div style={{ fontSize: 11 }}>
-              {ROTULO_MOTIVO_PARADA[r.motivoParada]}
-              {r.tipoEvento === "INICIO_PARADA" && r.observacao ? `: ${r.observacao}` : ""}
-            </div>
-          )}
+          <MotivoParadaCelula registro={r} motoristaId={motoristaId} onCorrigido={() => void carregarTudo()} />
         </td>
         <td>
           {formatarRegistro(r.timestampEvento, r.fusoOffsetMin)}

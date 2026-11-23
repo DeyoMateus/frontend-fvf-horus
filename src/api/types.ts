@@ -148,12 +148,9 @@ export interface RegraSindical {
   percentualHoraExtraDomingoFeriado?: string | null;
   percentualAdicionalNoturno: string;
   duracaoMinutoNoturnoMin: string;
-  bancoHorasAtivo: boolean;
   bancoHorasPrazoExpiracaoMeses?: number | null;
   bancoHorasLimiteAlertaMin?: number | null;
   intervaloRefeicaoMinimoMin: number;
-  refeicaoFracionamentoPermitido?: boolean;
-  refeicaoFracionamentoClausula?: string | null;
   intervaloEntreJornadasMin?: number;
   repousoSemanalMinimoH?: number | null;
   dsrMinimoH?: number | null;
@@ -179,12 +176,9 @@ export interface RegraSindical {
   cctDocumentoRef?: string | null;
   declaracaoRespaldoCct?: boolean;
   bancoHorasTipo?: BancoHorasTipo;
-  bancoHorasFator?: string | number;
   feriadoTratamento?: TratamentoFeriado | null;
   feriadoFonte?: FonteFeriado;
   folgaDomingoACadaSemanas?: number | null;
-  marcoAdi5322Data?: string | null;
-  marcoAdi5322Referencia?: string | null;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -298,6 +292,10 @@ export interface RegistroJornada {
   fusoOffsetMin?: number | null;
   /** Motivo da parada (INICIO_PARADA/FIM_PARADA). */
   motivoParada?: MotivoParada | null;
+  /** Correção do motivo pelo gestor (rodada 781): o original acima não muda. */
+  motivoParadaVigente?: MotivoParada | null;
+  observacaoParadaVigente?: string | null;
+  motivoParadaCorrigido?: boolean;
   createdAt: string;
   /** Ponto adulterado. CORRIGIDO = o gestor informou a hora certa (`horaCorrigida`); FORA_DO_CALCULO = alerta de relógio ainda não tratado. */
   situacaoCalculo?: "CORRIGIDO" | "FORA_DO_CALCULO";
