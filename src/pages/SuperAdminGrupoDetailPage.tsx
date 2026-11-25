@@ -38,6 +38,7 @@ type FormEmpresa = {
   fusoHorario: string;
   cidade: string;
   uf: string;
+  amostrasHorariasAtivas: boolean;
   motivo: string;
 };
 type FormUsuario = { nome: string; email: string };
@@ -90,6 +91,7 @@ export function SuperAdminGrupoDetailPage() {
     fusoHorario: "America/Sao_Paulo",
     cidade: "",
     uf: "",
+    amostrasHorariasAtivas: false,
     motivo: "",
   });
   const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(
@@ -210,6 +212,7 @@ export function SuperAdminGrupoDetailPage() {
       fusoHorario: e.fusoHorario ?? "America/Sao_Paulo",
       cidade: e.cidade ?? "",
       uf: e.uf ?? "",
+      amostrasHorariasAtivas: e.amostrasHorariasAtivas === true,
       motivo: "",
     });
     setErroEdicao(null);
@@ -231,6 +234,7 @@ export function SuperAdminGrupoDetailPage() {
         fusoHorario: formEmpresa.fusoHorario,
         cidade: formEmpresa.cidade.trim() || undefined,
         uf: formEmpresa.uf || undefined,
+        amostrasHorariasAtivas: formEmpresa.amostrasHorariasAtivas,
         motivo: formEmpresa.motivo.trim() || undefined,
       });
       setEmpresaEditandoId(null);
@@ -549,6 +553,27 @@ export function SuperAdminGrupoDetailPage() {
                         uf={formEmpresa.uf}
                         onChange={(v) => setFormEmpresa((f) => ({ ...f, ...v }))}
                       />
+                      <div>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={formEmpresa.amostrasHorariasAtivas}
+                            onChange={(ev) =>
+                              setFormEmpresa((f) => ({
+                                ...f,
+                                amostrasHorariasAtivas: ev.target.checked,
+                              }))
+                            }
+                          />{" "}
+                          Amostras horárias de localização na direção
+                        </label>
+                        <small>
+                          Opcional e desligado por padrão. Ligado, o app passa a
+                          exigir a permissão de localização &quot;o tempo
+                          todo&quot; dos motoristas desta empresa. Ligue só a
+                          pedido da transportadora, com o motorista informado.
+                        </small>
+                      </div>
                       <div>
                         <label>Motivo da alteração (obrigatório se mudar razão social, CNPJ, INPI ou fuso)</label>
                         <input

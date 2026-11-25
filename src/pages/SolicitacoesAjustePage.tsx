@@ -22,6 +22,14 @@ import { Paginador } from "../components/Paginador";
 import { PaginacaoPopup } from "../components/PaginacaoPopup";
 import { baixarCsvTabela } from "../utils/exportarTabelaModal";
 import { TextoLongo } from "../components/TextoLongo";
+import { mensagemDoErro } from "../utils/mensagemDoErro";
+
+/** Instante -> "AAAA-MM-DDTHH:mm" no horário deste computador (campo datetime-local). */
+function paraCampoLocal(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 const ROTULO_STATUS: Record<string, string> = {
   APROVADA: "Aprovada",
@@ -65,6 +73,10 @@ export function SolicitacoesAjustePage({
   const [motivoRejeicao, setMotivoRejeicao] = useState<Record<string, string>>(
     {},
   );
+  // Rodada 789: horário que o RH vai aprovar (começa com o horário pedido; pode corrigir na tela).
+  const [horarioEditado, setHorarioEditado] = useState<Record<string, string>>(
+    {},
+  );
 
   async function carregar() {
     setCarregando(true);
@@ -91,10 +103,33 @@ export function SolicitacoesAjustePage({
     });
   }, [carregando, searchParams]);
 
-  async function onAprovar(id: string) {
+  async function onAprovar(s: SolicitacaoAjustePonto) {
+    const id = s.id;
+    const pedido = paraCampoLocal(s.timestampEvento);
+    const escolhido = horarioEditado[id] ?? pedido;
+    const mudou = escolhido !== pedido;
+    const motivo = (motivoRejeicao[id] ?? "").trim();
+    if (!escolhido) {
+      toast.erro("Informe o horário do ajuste.");
+      return;
+    }
+    if (mudou && motivo.length < 10) {
+      toast.erro(
+        "Você corrigiu o horário pedido: explique o motivo no campo de motivo (pelo menos 10 caracteres).",
+      );
+      return;
+    }
+    const horarioTexto = new Date(escolhido).toLocaleString("pt-BR");
+    const textoHorario = mudou
+      ? `Horário corrigido: o motorista pediu ${new Date(s.timestampEvento).toLocaleString("pt-BR")} e será lançado ${horarioTexto}.`
+      : `Horário: ${horarioTexto}, como o motorista pediu.`;
+    const textoFechamento =
+      s.tipoEvento === "FIM_JORNADA"
+        ? " Se o colaborador ainda estava num trecho aberto (ex.: descanso), esse trecho é encerrado no mesmo horário, junto com o fim da jornada."
+        : "";
     if (
       !(await confirm(
-        "Aprovar este pedido? Será lançado um ajuste de ponto com o horário informado pelo motorista (o registro original não é alterado) e ele entra na apuração/holerite.",
+        `Aprovar este pedido? ${textoHorario} Será lançado um ajuste de ponto (o registro original não é alterado) e ele entra na apuração/holerite.${textoFechamento}`,
         { textoConfirmar: "Aprovar" },
       ))
     ) {
@@ -102,9 +137,16 @@ export function SolicitacoesAjustePage({
     }
     setProcessandoId(id);
     try {
-      await aprovarSolicitacao(id);
+      await aprovarSolicitacao(
+        id,
+        motivo || undefined,
+        mudou ? new Date(escolhido).toISOString() : undefined,
+      );
+      toast.sucesso("Pedido aprovado.");
       await carregar();
       await carregarHistorico();
+    } catch (err) {
+      toast.erro(mensagemDoErro(err, "Não foi possível aprovar o pedido."));
     } finally {
       setProcessandoId(null);
     }
@@ -123,6 +165,8 @@ export function SolicitacoesAjustePage({
       await rejeitarSolicitacao(id, motivo);
       await carregar();
       await carregarHistorico();
+    } catch (err) {
+      toast.erro(mensagemDoErro(err, "Não foi possível rejeitar o pedido."));
     } finally {
       setProcessandoId(null);
     }
@@ -350,17 +394,30 @@ export function SolicitacoesAjustePage({
                           minWidth: 220,
                         }}
                       >
+                        <label style={{ fontSize: 12 }}>
+                          Horário a aprovar (pode corrigir)
+                          <input
+                            type="datetime-local"
+                            value={horarioEditado[s.id] ?? paraCampoLocal(s.timestampEvento)}
+                            onChange={(e) =>
+                              setHorarioEditado((h) => ({
+                                ...h,
+                                [s.id]: e.target.value,
+                              }))
+                            }
+                          />
+                        </label>
                         <button
                           type="button"
                           disabled={processandoId === s.id}
-                          onClick={() => onAprovar(s.id)}
+                          onClick={() => onAprovar(s)}
                         >
                           {processandoId === s.id
                             ? "Processando..."
                             : "Aprovar"}
                         </button>
                         <textarea maxLength={400}
-                          placeholder="Motivo da rejeição (obrigatório se rejeitar)"
+                          placeholder="Motivo (obrigatório se rejeitar ou corrigir o horário)"
                           rows={2}
                           value={motivoRejeicao[s.id] ?? ""}
                           onChange={(e) =>

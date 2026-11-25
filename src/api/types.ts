@@ -740,6 +740,8 @@ export interface GrupoDetalhe {
     fusoHorario?: string;
     cidade?: string | null;
     uf?: string | null;
+    /** Amostras horárias de localização na direção (opcional, desligado por padrão). */
+    amostrasHorariasAtivas?: boolean;
     totalMotoristas: number;
     bancoHoras?: RegimeBancoHorasEmpresa;
     chaves?: ChaveLiberacaoEstado[];
@@ -763,6 +765,8 @@ export interface UpdateEmpresaInput {
   /** Cidade e UF da empresa (não exigem motivo). */
   cidade?: string;
   uf?: string;
+  /** Liga/desliga as amostras horárias de localização (exigem "o tempo todo" no app). */
+  amostrasHorariasAtivas?: boolean;
   /** Obrigatório quando algum dado do empregador muda. */
   motivo?: string;
 }

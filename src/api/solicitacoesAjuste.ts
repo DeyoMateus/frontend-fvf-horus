@@ -31,10 +31,16 @@ export function listarHistoricoSolicitacoes(
 }
 
 // Cada decisão mexe só na solicitação em questão , nunca em lote.
-export function aprovarSolicitacao(id: string, motivoDecisao?: string) {
+export function aprovarSolicitacao(
+  id: string,
+  motivoDecisao?: string,
+  /** Rodada 789: horário corrigido pelo RH (ISO). Ausente = o horário pedido. */
+  horarioAjustado?: string,
+) {
   return api
     .patch<SolicitacaoAjustePonto>(`/solicitacoes-ajuste-ponto/${id}/aprovar`, {
-      motivoDecisao,
+      motivoDecisao: motivoDecisao || undefined,
+      horarioAjustado,
     })
     .then((r) => {
       avisarPendenciasMudaram();
