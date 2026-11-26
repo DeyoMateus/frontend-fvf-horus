@@ -762,6 +762,10 @@ button.danger {
   padding: 16px;
 }
 
+/* Rodada 791: o modal nunca passa da altura da tela. Antes, em telas
+   baixas, o conteúdo longo (ex.: "Tratar dia sem interação") estourava
+   para cima e para baixo e cortava o título e os botões. Agora o miolo
+   rola dentro do modal e os botões ficam presos no pé. */
 .confirm-modal {
   background: #fff;
   border-radius: 10px;
@@ -769,6 +773,11 @@ button.danger {
   padding: 20px;
   width: 100%;
   max-width: 420px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
 }
 
 .confirm-modal h3 {
@@ -787,7 +796,32 @@ button.danger {
 .confirm-modal-acoes {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
+  position: sticky;
+  bottom: -20px;
+  margin-bottom: -20px;
+  padding: 12px 0 20px;
+  background: #fff;
+}
+
+@media (max-width: 480px) {
+  .confirm-overlay {
+    padding: 8px;
+  }
+  .confirm-modal {
+    padding: 16px;
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .confirm-modal-acoes {
+    bottom: -16px;
+    margin-bottom: -16px;
+    padding-bottom: 16px;
+  }
+  .confirm-modal-acoes > button {
+    flex: 1 1 auto;
+  }
 }
 
 /* O ContadorDeCaracteres.tsx desenha um "n/limite" flutuante

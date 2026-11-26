@@ -2,10 +2,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import { mensagemDoErro } from "../utils/mensagemDoErro";
 
 type TipoToast = "sucesso" | "erro" | "info";
 
@@ -47,6 +49,34 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [remover],
   );
+
+  // Rodada 790: rede de segurança. Ação do painel que chama a API sem `catch` (ex.: baixar PDF,
+  // aprovar troca de aparelho) deixava o erro só no console, sem aviso nenhum. Qualquer erro de
+  // requisição que ninguém tratou vira um aviso com a mensagem do servidor. 401 fica de fora
+  // (o interceptor já leva ao login) e requisição cancelada também.
+  useEffect(() => {
+    function aoRejeitarSemTratamento(evento: PromiseRejectionEvent) {
+      const r = evento.reason as {
+        isAxiosError?: boolean;
+        code?: string;
+        response?: { status?: number };
+      } | null;
+      if (!r?.isAxiosError) return;
+      if (r.code === "ERR_CANCELED" || r.response?.status === 401) return;
+      adicionar(
+        "erro",
+        mensagemDoErro(
+          r,
+          r.response
+            ? "Não foi possível concluir a ação."
+            : "Sem conexão com o servidor. Tente de novo.",
+        ),
+      );
+    }
+    window.addEventListener("unhandledrejection", aoRejeitarSemTratamento);
+    return () =>
+      window.removeEventListener("unhandledrejection", aoRejeitarSemTratamento);
+  }, [adicionar]);
 
   const valor: ToastContextValor = {
     sucesso: (mensagem) => adicionar("sucesso", mensagem),

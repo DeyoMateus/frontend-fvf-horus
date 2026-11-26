@@ -152,12 +152,22 @@ export function SolicitacoesAjustePage({
     }
   }
 
-  async function onRejeitar(id: string) {
+  async function onRejeitar(id: string, tipoEvento?: string) {
     const motivo = (motivoRejeicao[id] ?? "").trim();
     if (!motivo) {
       toast.erro(
         "Informe o motivo da rejeição, o motorista precisa entender por quê.",
       );
+      return;
+    }
+    // Rodada 790: rejeitar o fim de jornada deixa a jornada aberta no sistema.
+    if (
+      tipoEvento === "FIM_JORNADA" &&
+      !(await confirm(
+        "Rejeitar este fim de jornada? A jornada do colaborador continua ABERTA no sistema (horas e alertas seguem contando). Se o horário pedido estiver errado, prefira corrigir o horário e aprovar, ou lance o fim correto em Tratamentos de ponto.",
+        { textoConfirmar: "Rejeitar mesmo assim", perigo: true },
+      ))
+    ) {
       return;
     }
     setProcessandoId(id);
@@ -431,7 +441,7 @@ export function SolicitacoesAjustePage({
                           type="button"
                           className="secondary"
                           disabled={processandoId === s.id}
-                          onClick={() => onRejeitar(s.id)}
+                          onClick={() => onRejeitar(s.id, s.tipoEvento)}
                         >
                           Rejeitar
                         </button>
