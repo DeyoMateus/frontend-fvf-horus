@@ -10,6 +10,22 @@ export function listSolicitacoesPendentes() {
     .then((r) => r.data);
 }
 
+/** Rodada 799: se cada pedido pendente encaixa na jornada (mesma conferência da aprovação). */
+export interface EncaixePedido {
+  ok: boolean | null;
+  mensagem: string | null;
+  fechamentoAutomatico: string | null;
+  /** Rodada 803: o pedido corrige um ponto real batido mais tarde (o original sai do cálculo). */
+  corrigeRegistro?: boolean;
+  /** Horário do ponto real que será desconsiderado (ISO). */
+  registroCorrigidoEm?: string | null;
+}
+export function conferirEncaixePendentes() {
+  return api
+    .get<Record<string, EncaixePedido>>("/solicitacoes-ajuste-ponto/pendentes/encaixe")
+    .then((r) => r.data);
+}
+
 export interface PaginaHistoricoSolicitacoes {
   dados: SolicitacaoAjustePonto[];
   total: number;

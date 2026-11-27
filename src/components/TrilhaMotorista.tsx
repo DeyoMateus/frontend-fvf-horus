@@ -91,9 +91,11 @@ export function TrilhaMotorista({ motoristaId }: { motoristaId: string }) {
     <div className="card">
       <h3 style={{ marginTop: 0 }}>Trilha de localização</h3>
       <p style={{ fontSize: 13, color: "#000000" }}>
-        Coletas feitas pelo aparelho durante a direção, uma por hora, apenas entre o
-        início e o fim de direção. As mais recentes aparecem primeiro. Cada abertura
-        desta aba fica registrada no log de consultas de localização.
+        Coleta horária ligada para esta empresa: o aparelho registra a posição durante a
+        direção, no máximo uma vez por hora, só entre o início e o fim de direção, e de forma
+        esparsa (o celular pode deixar de coletar com a tela apagada ou parado; veículo com
+        rastreador cadastrado não coleta pelo celular). As mais recentes aparecem primeiro.
+        Cada abertura desta aba fica registrada no log de consultas de localização.
       </p>
       {erro && <p style={{ color: "#b91c1c" }}>{erro}</p>}
       <ControlesListaPaginada

@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   aprovarSolicitacao,
+  conferirEncaixePendentes,
+  type EncaixePedido,
   baixarEvidenciaSolicitacao,
   listarHistoricoSolicitacoes,
   listSolicitacoesPendentes,
@@ -74,6 +76,7 @@ export function SolicitacoesAjustePage({
     {},
   );
   // Rodada 789: horário que o RH vai aprovar (começa com o horário pedido; pode corrigir na tela).
+  const [encaixe, setEncaixe] = useState<Record<string, EncaixePedido>>({});
   const [horarioEditado, setHorarioEditado] = useState<Record<string, string>>(
     {},
   );
@@ -83,6 +86,10 @@ export function SolicitacoesAjustePage({
     try {
       setSolicitacoes(await listSolicitacoesPendentes());
       setErro(null);
+      // Rodada 799: confere o encaixe em segundo plano (não atrasa a lista).
+      conferirEncaixePendentes()
+        .then(setEncaixe)
+        .catch(() => setEncaixe({}));
     } catch {
       setErro("Não foi possível carregar as solicitações pendentes.");
     } finally {
@@ -127,9 +134,16 @@ export function SolicitacoesAjustePage({
       s.tipoEvento === "FIM_JORNADA"
         ? " Se o colaborador ainda estava num trecho aberto (ex.: descanso), esse trecho é encerrado no mesmo horário, junto com o fim da jornada."
         : "";
+    // Rodada 804: deixa explícito quando o ajuste desconsidera um ponto batido mais tarde.
+    const corrigido = encaixe[id]?.corrigeRegistro
+      ? encaixe[id]?.registroCorrigidoEm
+      : null;
+    const textoCorrecao = corrigido
+      ? ` Este ajuste vai desconsiderar o ponto de "${s.tipoEvento}" batido em ${new Date(corrigido).toLocaleString("pt-BR")}; o registro original fica guardado e sai do cálculo.`
+      : "";
     if (
       !(await confirm(
-        `Aprovar este pedido? ${textoHorario} Será lançado um ajuste de ponto (o registro original não é alterado) e ele entra na apuração/holerite.${textoFechamento}`,
+        `Aprovar este pedido? ${textoHorario} Será lançado um ajuste de ponto (o registro original não é alterado) e ele entra na apuração/holerite.${textoFechamento}${textoCorrecao}`,
         { textoConfirmar: "Aprovar" },
       ))
     ) {
@@ -404,6 +418,24 @@ export function SolicitacoesAjustePage({
                           minWidth: 220,
                         }}
                       >
+                        {/* Rodada 799: encaixe conferido antes de aprovar. */}
+                        {encaixe[s.id]?.ok === true && (
+                          <span style={{ fontSize: 12, color: "#15803d" }}>
+                            ✓ Encaixa na jornada
+                            {encaixe[s.id].fechamentoAutomatico
+                              ? " (o trecho aberto será encerrado junto)"
+                              : ""}
+                            {encaixe[s.id].corrigeRegistro
+                              ? " (corrige o ponto batido mais tarde; o original fica guardado e sai do cálculo)"
+                              : ""}
+                          </span>
+                        )}
+                        {encaixe[s.id]?.ok === false && (
+                          <span style={{ fontSize: 12, color: "#b91c1c" }}>
+                            ⚠ Não encaixa no horário pedido: {encaixe[s.id].mensagem}{" "}
+                            Corrija o horário abaixo ou rejeite.
+                          </span>
+                        )}
                         <label style={{ fontSize: 12 }}>
                           Horário a aprovar (pode corrigir)
                           <input

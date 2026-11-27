@@ -188,6 +188,11 @@ export function MotoristaDetailPage({
   const prompt = usePrompt();
 
   const [motorista, setMotorista] = useState<Motorista | null>(null);
+  // Rodada 802: empresa com a coleta horária desligada (padrão) não vê a aba Trilha.
+  const trilhaLigada = motorista?.empresa?.amostrasHorariasAtivas === true;
+  const abasVisiveis = trilhaLigada
+    ? ABAS_MOTORISTA
+    : ABAS_MOTORISTA.filter((a) => a.id !== "trilha");
   const [registros, setRegistros] = useState<RegistroJornada[]>([]);
   const [dispositivo, setDispositivo] = useState<DispositivoStatus | null>(
     null,
@@ -1170,7 +1175,7 @@ export function MotoristaDetailPage({
       {!somente && (
       <>
       <AbasTopo
-        abas={ABAS_MOTORISTA}
+        abas={abasVisiveis}
         padrao={searchParams.get("secao") === "alertas-jornada" ? "alertas" : undefined}
         inicial={abaInicial}
       />
@@ -1629,6 +1634,24 @@ export function MotoristaDetailPage({
                   ? "nenhuma"
                   : integridade.assinaturasInvalidas.join(", ")}
               </li>
+              {integridade.totalAjustes !== undefined && (
+                <li>
+                  Ajustes de ponto conferidos: {integridade.totalAjustes}
+                  {(integridade.ajustesDivergentes?.length ?? 0) === 0
+                    ? " (todos conferem)"
+                    : ` , ${integridade.ajustesDivergentes!.length} não confere(m): ` +
+                      integridade.ajustesDivergentes!
+                        .map(
+                          (a) =>
+                            `${a.tipoEvento} de ${new Date(a.timestampEvento).toLocaleString("pt-BR")} (${
+                              a.motivo === "HASH_NAO_CONFERE"
+                                ? "conteúdo alterado"
+                                : "referência fora da cadeia"
+                            })`,
+                        )
+                        .join("; ")}
+                </li>
+              )}
             </ul>
             {integridade.divergencias.length > 0 && (
               <div style={{ marginTop: -4 }}>
@@ -2388,7 +2411,7 @@ export function MotoristaDetailPage({
       </>
       )}
 
-      {mostrar("trilha") && veLocalizacao && (
+      {mostrar("trilha") && veLocalizacao && trilhaLigada && (
         <TrilhaMotorista motoristaId={motoristaId} />
       )}
 

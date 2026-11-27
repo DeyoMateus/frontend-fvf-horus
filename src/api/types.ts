@@ -208,6 +208,8 @@ export interface SolicitacaoAjustePonto {
 export interface Motorista {
   id: string;
   nome: string;
+  /** Rodada 802: coleta horária de localização ligada na empresa (aba Trilha). */
+  empresa?: { amostrasHorariasAtivas?: boolean } | null;
   cpf: string;
   /** Só motorista tem CNH. */
   cnh?: string | null;
@@ -329,6 +331,15 @@ export interface VerificacaoIntegridade {
   totalRegistros: number;
   certificadoFingerprintOk: boolean;
   assinaturasInvalidas: number[];
+  /** Rodada 800: ajustes de ponto conferidos e os que não conferem com o hash gravado. */
+  totalAjustes?: number;
+  ajustesDivergentes?: {
+    ajusteId: string;
+    tipoEvento: string;
+    timestampEvento: string;
+    criadoEm: string;
+    motivo: "HASH_NAO_CONFERE" | "REFERENCIA_FORA_DA_CADEIA";
+  }[];
   /** Verdadeiro só quando não há NENHUMA divergência pendente (não aceita) , divergências já aceitas não impedem "integro". */
   integro: boolean;
 }
